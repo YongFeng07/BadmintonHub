@@ -1,0 +1,20 @@
+@model BadmintonHub.ViewModels.CourtFormViewModel
+@{
+    ViewData["Title"] = "Edit Court";
+    Layout = "_AdminLayout";
+}
+
+<div class="bh-admin-topbar">
+    <div>
+        <h2 class="bh-page-title mb-0">Edit Court @Model.CourtNumber</h2>
+        <p class="bh-page-sub mb-0">Update court details and pricing.</p>
+    </div>
+</div>
+
+<form asp-action="Edit" method="post">
+    <partial name="_Form" model="Model" />
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

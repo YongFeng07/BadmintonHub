@@ -1,0 +1,67 @@
+@model BadmintonHub.Models.Court
+@{
+    ViewData["Title"] = "Court " + Model.CourtNumber;
+    Layout = "_AdminLayout";
+    var upcoming = ViewBag.UpcomingReservations as List<BadmintonHub.Models.Reservation> ?? new List<BadmintonHub.Models.Reservation>();
+}
+
+<div class="bh-admin-topbar">
+    <div>
+        <h2 class="bh-page-title mb-0">Court @Model.CourtNumber</h2>
+        <p class="bh-page-sub mb-0">@Model.CourtType · RM @Model.HourlyRate.ToString("0.00")/hour · @Model.Facility?.Name</p>
+    </div>
+    <div>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">Edit</a>
+        <a asp-action="ManagePhotos" asp-route-id="@Model.Id" class="btn btn-outline-info btn-sm">Photos</a>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Back</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="bh-form-section">
+            <h5 class="mb-2">Status</h5>
+            @if (Model.Status == BadmintonHub.Models.CourtStatus.Available)
+            {
+                <span class="badge badge-status badge-open">Available</span>
+            }
+            else if (Model.Status == BadmintonHub.Models.CourtStatus.Maintenance)
+            {
+                <span class="badge badge-status badge-maintenance">Maintenance</span>
+            }
+            else
+            {
+                <span class="badge badge-status badge-unavailable">Unavailable</span>
+            }
+            <h5 class="mt-4 mb-2">Description</h5>
+            <p class="text-muted mb-0">@(string.IsNullOrEmpty(Model.Description) ? "No description." : Model.Description)</p>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="bh-form-section">
+            <h5 class="mb-3">Upcoming Reservations</h5>
+            @if (upcoming.Count == 0)
+            {
+                <p class="text-muted mb-0">No upcoming reservations on this court.</p>
+            }
+            else
+            {
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Ref</th><th>Member</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
+                    <tbody>
+                        @foreach (var r in upcoming)
+                        {
+                            <tr>
+                                <td>@r.ReservationReference</td>
+                                <td>@r.User?.FullName</td>
+                                <td>@r.ReservationDate.ToString("dd MMM yyyy")</td>
+                                <td class="text-nowrap">@r.StartTime.ToString("HH:mm")–@r.EndTime.ToString("HH:mm")</td>
+                                <td><span class="badge badge-status badge-@r.Status.ToString().ToLower()">@r.Status</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>

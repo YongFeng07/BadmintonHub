@@ -1,0 +1,82 @@
+@model BadmintonHub.Models.Facility
+@{
+    ViewData["Title"] = "Facility";
+}
+
+<div class="bh-hero mt-3">
+    <h1 class="display-5 mb-2">@Model.Name</h1>
+    <p class="lead mb-0">@Model.Description</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="bh-form-section">
+            <h4 class="mb-3">🏛️ About Us</h4>
+            <p class="text-muted">
+                We run a friendly, well-maintained badminton centre with courts for every level —
+                from casual weekend games to competitive training and tournaments.
+            </p>
+            <hr />
+            <h5 class="mb-2">Our Courts</h5>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var court in Model.Courts.OrderBy(c => c.CourtNumber))
+                {
+                    <a asp-controller="Courts" asp-action="Details" asp-route-id="@court.Id" class="btn btn-outline-success btn-sm">
+                        Court @court.CourtNumber · @court.CourtType
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="bh-form-section">
+            <h4 class="mb-3">📋 Facility Rules</h4>
+            @if (string.IsNullOrWhiteSpace(Model.Rules))
+            {
+                <p class="text-muted mb-0">No rules posted.</p>
+            }
+            else
+            {
+                <div style="white-space: pre-line;" class="text-muted mb-0">@Model.Rules</div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="bh-form-section">
+            <h4 class="mb-3">🕗 Opening Information</h4>
+            <dl class="row mb-0">
+                <dt class="col-5">Opening Hours</dt>
+                <dd class="col-7">@Model.OpeningTime.ToString(@"hh\:mm") – @Model.ClosingTime.ToString(@"hh\:mm")</dd>
+                <dt class="col-5">Operating Days</dt>
+                <dd class="col-7">@Model.OperatingDays</dd>
+                <dt class="col-5">Status</dt>
+                <dd class="col-7">
+                    @if (Model.Status == FacilityStatus.Open)
+                    {
+                        <span class="badge badge-status badge-open">Open</span>
+                    }
+                    else if (Model.Status == FacilityStatus.Maintenance)
+                    {
+                        <span class="badge badge-status badge-maintenance">Maintenance</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-status badge-closed">Closed</span>
+                    }
+                </dd>
+            </dl>
+        </div>
+
+        <div class="bh-form-section">
+            <h4 class="mb-3">📞 Contact</h4>
+            <dl class="row mb-0">
+                <dt class="col-5">Address</dt>
+                <dd class="col-7">@Model.Address</dd>
+                <dt class="col-5">Phone</dt>
+                <dd class="col-7">@(string.IsNullOrEmpty(Model.Phone) ? "—" : Model.Phone)</dd>
+                <dt class="col-5">Email</dt>
+                <dd class="col-7">@(string.IsNullOrEmpty(Model.Email) ? "—" : Model.Email)</dd>
+            </dl>
+        </div>
+    </div>
+</div>
