@@ -1,0 +1,40 @@
+## Visual Studio / .NET build artifacts
+bin/
+obj/
+*.user
+.vs/
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+publish/
+
+## Local database files (LocalDB / SQL Server Express file-based)
+*.mdf
+*.ldf
+App_Data/
+
+## User-uploaded runtime files (seed photos only are committed)
+BadmintonHub/wwwroot/uploads/
+
+## Test results
+[Tt]est[Rr]esults/
+*.trx
+
+## Rider / VS Code
+.idea/
+.vscode/
+
+## Secrets
+appsettings.Secrets.json
+*.pfx
+
+## Logs
+*.log
+logs/
