@@ -237,6 +237,34 @@ public class ReservationsController : Controller
     }
 
     /// <summary>
+    /// PDF e-receipt for a paid booking (M3). Owner or staff only; requires a
+    /// Paid/Refunded payment record.
+    /// </summary>
+    public async Task<IActionResult> Receipt(int id)
+    {
+        var reservation = await _db.Reservations
+            .Include(r => r.Court).ThenInclude(c => c!.Facility)
+            .Include(r => r.User)
+            .Include(r => r.Payment)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (reservation == null)
+            return NotFound();
+
+        if (reservation.UserId != CurrentUserId && !IsAdminOrStaff)
+            return Forbid();
+
+        if (reservation.Payment == null || reservation.Payment.Status is not (PaymentStatus.Paid or PaymentStatus.Refunded))
+        {
+            TempData["ErrorMessage"] = "A receipt is only available for paid bookings.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var pdf = ReceiptPdfGenerator.Generate(reservation);
+        return File(pdf, "application/pdf", $"Receipt-{reservation.ReservationReference}.pdf");
+    }
+
+    /// <summary>
     /// QR scan landing page. Anonymous scans only ever see the reference, status,
     /// court and time — no personal data unless the viewer is the owner or staff.
     /// </summary>

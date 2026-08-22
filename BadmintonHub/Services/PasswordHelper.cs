@@ -34,4 +34,16 @@ public static class PasswordHelper
             return false;
         }
     }
+
+    /// <summary>Shared password policy for registration, reset and change-password. Null when valid.</summary>
+    public static string? ValidatePassword(string password)
+    {
+        if (string.IsNullOrEmpty(password) || password.Length < 8)
+            return "Password must be at least 8 characters long.";
+        if (password.Length > 100)
+            return "Password must be at most 100 characters long.";
+        if (!password.Any(char.IsLetter) || !password.Any(char.IsDigit))
+            return "Password must contain at least one letter and one digit.";
+        return null;
+    }
 }

@@ -1,0 +1,38 @@
+@model List<Notification>
+@{
+    var unread = Model.Count(n => !n.IsRead);
+}
+<li class="nav-item dropdown me-lg-2">
+    <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+        🔔
+        @if (unread > 0)
+        {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: .65rem;">
+                @(unread > 9 ? "9+" : unread.ToString())
+            </span>
+        }
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" style="min-width: 320px; max-height: 380px; overflow-y: auto;">
+        @if (Model.Count == 0)
+        {
+            <li><span class="dropdown-item-text text-muted">No notifications yet.</span></li>
+        }
+        else
+        {
+            @foreach (var n in Model)
+            {
+                <li>
+                    <form asp-controller="Notifications" asp-action="MarkRead" asp-route-id="@n.Id" method="post" class="mark-read-form">
+                        <button type="submit" class="dropdown-item @(n.IsRead ? "" : "fw-semibold")">
+                            <div class="small">@n.Title</div>
+                            <div class="text-muted" style="font-size: .75rem;">@n.Message</div>
+                            <div class="text-muted" style="font-size: .7rem;">@n.CreatedAt.ToString("dd MMM HH:mm")</div>
+                        </button>
+                    </form>
+                </li>
+            }
+            <li><hr class="dropdown-divider" /></li>
+            <li><a class="dropdown-item text-center small" asp-controller="Notifications" asp-action="Index">View all notifications</a></li>
+        }
+    </ul>
+</li>

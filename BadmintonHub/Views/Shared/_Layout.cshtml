@@ -33,17 +33,28 @@
                             <li class="nav-item me-lg-2 mt-1 mt-lg-0">
                                 <a class="btn btn-bh-amber btn-sm px-3" asp-controller="Reservations" asp-action="Create">+ Book a Court</a>
                             </li>
+                            <li class="nav-item me-lg-2 mt-1 mt-lg-0">
+                                @await Component.InvokeAsync("NotificationBell")
+                            </li>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     👤 @User.Identity.Name
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" asp-controller="Reservations" asp-action="MyReservations">📋 My Reservations</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Payments" asp-action="Index">💳 My Payments</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Notifications" asp-action="Index">🔔 Notifications</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">👤 Profile &amp; Password</a></li>
                                     @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
                                     {
+                                        <li><hr class="dropdown-divider" /></li>
                                         <li><a class="dropdown-item" asp-controller="AdminFacility" asp-action="Edit">🏛️ Facility Settings</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminCourts" asp-action="Index">🏸 Manage Courts</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminAvailability" asp-action="Index">🗓️ Manage Availability</a></li>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <li><a class="dropdown-item" asp-controller="AdminUsers" asp-action="Index">👥 User Accounts</a></li>
+                                        }
                                     }
                                     <li><hr class="dropdown-divider" /></li>
                                     <li>

@@ -1,0 +1,58 @@
+@model EditProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+    var changeModel = ViewBag.ChangePasswordModel as ChangePasswordViewModel ?? new ChangePasswordViewModel();
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-7">
+        <div class="bh-form-section">
+            <h1 class="h4 mb-3">👤 My Profile</h1>
+            <form asp-action="Profile" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Phone" class="form-label"></label>
+                        <input asp-for="Phone" class="form-control" />
+                        <span asp-validation-for="Phone" class="text-danger small"></span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-bh">Save Profile</button>
+            </form>
+        </div>
+
+        <div class="bh-form-section mt-4">
+            <h2 class="h5 mb-3">🔒 Change Password</h2>
+            <form asp-action="ChangePassword" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="@changeModel.CurrentPassword" class="form-label"></label>
+                        <input asp-for="@changeModel.CurrentPassword" class="form-control" autocomplete="current-password" />
+                        <span asp-validation-for="@changeModel.CurrentPassword" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="@changeModel.NewPassword" class="form-label"></label>
+                        <input asp-for="@changeModel.NewPassword" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="@changeModel.NewPassword" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="@changeModel.ConfirmPassword" class="form-label"></label>
+                        <input asp-for="@changeModel.ConfirmPassword" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="@changeModel.ConfirmPassword" class="text-danger small"></span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-outline-success">Change Password</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

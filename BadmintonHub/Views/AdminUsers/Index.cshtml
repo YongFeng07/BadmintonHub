@@ -1,0 +1,66 @@
+@model List<User>
+@{
+    ViewData["Title"] = "User Accounts";
+    var lockedUsers = Model.Count(u => u.LockoutEnd.HasValue && u.LockoutEnd > DateTime.Now);
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1 class="h3 mb-0">👥 User Accounts</h1>
+    @if (lockedUsers > 0)
+    {
+        <span class="badge bg-danger">@lockedUsers locked account(s)</span>
+    }
+</div>
+<p class="text-muted">Security: manage failed-login lockouts. (Full user administration arrives with the M4 module.)</p>
+
+<div class="table-responsive bh-form-section">
+    <table class="table table-hover align-middle bh-table mb-0">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Failed Logins</th>
+                <th>Last Login</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                var isLocked = user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.Now;
+                <tr class="@(isLocked ? "table-danger" : "")">
+                    <td>@user.FullName</td>
+                    <td>@user.Email</td>
+                    <td>
+                        <span class="badge @(user.Role == Role.Admin ? "bg-danger" : user.Role == Role.Staff ? "bg-warning text-dark" : "bg-secondary")">@user.Role</span>
+                    </td>
+                    <td>
+                        @if (user.Status == UserStatus.Active)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">@user.Status</span>
+                        }
+                    </td>
+                    <td>@user.FailedLoginAttempts / 5</td>
+                    <td>@(user.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "never")</td>
+                    <td class="text-end">
+                        @if (isLocked)
+                        {
+                            <form asp-action="Unlock" asp-route-id="@user.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-success"
+                                        title="Locked until @user.LockoutEnd?.ToString("dd MMM HH:mm")">
+                                    🔓 Unlock
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
