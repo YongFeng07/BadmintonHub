@@ -91,6 +91,17 @@
                 <input type="date" id="availabilityDate" class="form-control" min="@today.ToString("yyyy-MM-dd")" value="@today.ToString("yyyy-MM-dd")" />
             </div>
             <div id="availabilityResult" class="text-muted small">Select a date to see slot availability.</div>
+
+            <hr />
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="Reservations" asp-action="Create" asp-route-courtId="@Model.Id"
+                   asp-route-date="@today.ToString("yyyy-MM-dd")" class="btn btn-bh w-100">Book This Court</a>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" class="btn btn-bh w-100">Login to Book This Court</a>
+            }
         </div>
     </div>
 </div>

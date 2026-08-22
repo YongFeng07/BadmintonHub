@@ -1,0 +1,61 @@
+@* Reusable reservation list table. Model: (tab, reservations). *@
+@model Tuple<string, List<Reservation>>
+
+@if (!Model.Item2.Any())
+{
+    <div class="bh-empty">
+        <span class="emoji">🏸</span>
+        @switch (Model.Item1)
+        {
+            case "completed":
+                <p class="mb-0">No completed reservations yet.</p>
+                break;
+            case "cancelled":
+                <p class="mb-0">No cancelled reservations.</p>
+                break;
+            default:
+                <p class="mb-0">No upcoming reservations. <a asp-action="Create">Book your first court!</a></p>
+                break;
+        }
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bh-table">
+            <thead>
+                <tr>
+                    <th>Reference</th>
+                    <th>Court</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Hours</th>
+                    <th>Status</th>
+                    <th class="text-end">Amount</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.Item2)
+                {
+                    <tr>
+                        <td class="fw-semibold">@r.ReservationReference</td>
+                        <td>@(r.Court?.CourtNumber ?? "—")</td>
+                        <td>@r.ReservationDate.ToString("dd MMM yyyy")</td>
+                        <td class="text-nowrap">@r.StartTime.ToString("HH:mm") – @r.EndTime.ToString("HH:mm")</td>
+                        <td>@r.DurationHours.ToString("0.#") h</td>
+                        <td>
+                            <span class="badge badge-status badge-@r.Status.ToString().ToLowerInvariant()">@r.Status</span>
+                            @if (r.Payment != null)
+                            {
+                                <span class="badge badge-status badge-@r.Payment.Status.ToString().ToLowerInvariant()">@r.Payment.Status</span>
+                            }
+                        </td>
+                        <td class="text-end">RM @r.TotalAmount.ToString("0.00")</td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-success" asp-action="Details" asp-route-id="@r.Id">View</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

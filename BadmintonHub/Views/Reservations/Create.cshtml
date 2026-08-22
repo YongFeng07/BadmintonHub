@@ -1,0 +1,88 @@
+@model ReservationCreateViewModel
+@{
+    ViewData["Title"] = "Book a Court";
+}
+<link rel="stylesheet" href="~/css/reservations.css" asp-append-version="true" />
+
+<div class="mt-3">
+    <h1 class="h3 mb-1">🏸 Book a Court</h1>
+    <p class="text-muted mb-3">Pick a date and court, choose an open slot, and confirm your booking.</p>
+
+    <form asp-action="Create" method="post" id="bookingForm">
+        <input type="hidden" asp-for="StartTime" id="startTimeField" />
+        <input type="hidden" asp-for="DurationHours" id="durationField" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="bh-form-section mb-3">
+                    <h2 class="h6 text-uppercase text-muted mb-3">1 · Choose date &amp; court</h2>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label asp-for="Date" class="form-label">Date</label>
+                            <input asp-for="Date" type="date" class="form-control" id="bookingDate"
+                                   min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="Date" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-8">
+                            <label asp-for="CourtId" class="form-label">Court</label>
+                            <select asp-for="CourtId" class="form-select" id="bookingCourt">
+                                <option value="">— Select a court —</option>
+                                @foreach (var court in ViewBag.Courts)
+                                {
+                                    <option value="@court.Id" data-rate="@court.HourlyRate"
+                                            selected="@(Model.CourtId == court.Id ? "selected" : null)">
+                                        Court @court.CourtNumber · @court.CourtType · RM @court.HourlyRate.ToString("0.00")/hr
+                                    </option>
+                                }
+                            </select>
+                            <span asp-validation-for="CourtId" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bh-form-section mb-3">
+                    <h2 class="h6 text-uppercase text-muted mb-3">2 · Pick your slot</h2>
+                    <p class="small text-muted mb-2">Green slots are bookable. Choose a duration first — the system verifies the whole window stays open and prevents double bookings.</p>
+                    <div class="mb-3">
+                        <span class="form-label small mb-1 d-block">Duration</span>
+                        @for (var h = 1; h <= 4; h++)
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-success duration-btn @(Model.DurationHours == h ? "active" : "")" data-hours="@h">@h h</button>
+                        }
+                    </div>
+                    <div id="slotGrid" class="d-flex flex-wrap gap-2">
+                        <span class="text-muted small">Select a date and court to load availability.</span>
+                    </div>
+                    <div id="slotError" class="text-danger small mt-2 d-none"></div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="bh-form-section sticky-top" style="top: 80px;">
+                    <h2 class="h6 text-uppercase text-muted mb-3">3 · Booking summary</h2>
+                    <dl class="row small mb-2">
+                        <dt class="col-5">Court</dt><dd class="col-7" id="sumCourt">—</dd>
+                        <dt class="col-5">Date</dt><dd class="col-7" id="sumDate">—</dd>
+                        <dt class="col-5">Time</dt><dd class="col-7" id="sumTime">—</dd>
+                        <dt class="col-5">Duration</dt><dd class="col-7" id="sumHours">—</dd>
+                        <dt class="col-5">Rate</dt><dd class="col-7" id="sumRate">—</dd>
+                        <dt class="col-5 fw-bold">Total</dt><dd class="col-7 fw-bold text-bh-green" id="sumTotal">RM 0.00</dd>
+                    </dl>
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label small">Notes (optional)</label>
+                        <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-bh w-100" id="submitBtn" disabled>Confirm Reservation</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        var slotsUrl = '@Url.Action("GetSlots", "Reservations")';
+    </script>
+    <script src="~/js/reservation-create.js" asp-append-version="true"></script>
+}

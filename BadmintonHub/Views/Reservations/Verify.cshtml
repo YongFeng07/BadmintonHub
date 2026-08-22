@@ -1,0 +1,52 @@
+@model Reservation
+@{
+    ViewData["Title"] = "Verify Reservation";
+    var isPrivileged = ViewBag.IsPrivileged == true;
+}
+<link rel="stylesheet" href="~/css/reservations.css" asp-append-version="true" />
+
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-6">
+        <div class="bh-form-section">
+            <div class="text-center mb-3">
+                <span class="emoji" style="font-size: 2.5rem;">✅</span>
+                <h1 class="h4 mt-2 mb-0">Reservation Verification</h1>
+                <p class="text-muted small mb-0">This page is reached by scanning the booking QR code.</p>
+            </div>
+            <hr />
+            <dl class="row">
+                <dt class="col-5">Reference</dt>
+                <dd class="col-7 fw-semibold">@Model.ReservationReference</dd>
+                <dt class="col-5">Status</dt>
+                <dd class="col-7"><span class="badge badge-status badge-@Model.Status.ToString().ToLowerInvariant()">@Model.Status</span></dd>
+                <dt class="col-5">Court</dt>
+                <dd class="col-7">Court @Model.Court?.CourtNumber</dd>
+                <dt class="col-5">Facility</dt>
+                <dd class="col-7">@(Model.Court?.Facility?.Name ?? "—")</dd>
+                <dt class="col-5">Date</dt>
+                <dd class="col-7">@Model.ReservationDate.ToString("dd MMM yyyy")</dd>
+                <dt class="col-5">Time</dt>
+                <dd class="col-7">@Model.StartTime.ToString("HH:mm") – @Model.EndTime.ToString("HH:mm")</dd>
+
+                @if (isPrivileged)
+                {
+                    <dt class="col-5">Member</dt>
+                    <dd class="col-7">@Model.User?.FullName</dd>
+                    <dt class="col-5">Amount</dt>
+                    <dd class="col-7">RM @Model.TotalAmount.ToString("0.00")</dd>
+                    <dt class="col-5">Payment</dt>
+                    <dd class="col-7">
+                        <span class="badge badge-status badge-@Model.Payment?.Status.ToString().ToLowerInvariant()">@Model.Payment?.Status</span>
+                    </dd>
+                }
+            </dl>
+            @if (!isPrivileged)
+            {
+                <p class="small text-muted mb-0">
+                    🔒 For privacy, member name and payment details are shown only to the booking owner and staff.
+                    <a asp-controller="Account" asp-action="Login">Log in</a> to see full details.
+                </p>
+            }
+        </div>
+    </div>
+</div>

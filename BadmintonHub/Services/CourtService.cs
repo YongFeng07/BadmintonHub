@@ -2,6 +2,7 @@ using BadmintonHub.Data;
 using BadmintonHub.Models;
 using BadmintonHub.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace BadmintonHub.Services;
 
@@ -107,8 +108,9 @@ public class CourtService : ICourtService
         if (start.ToTimeSpan() < facility.OpeningTime || end.ToTimeSpan() > facility.ClosingTime)
             return false;
 
-        // Within operating days? (OperatingDays stores abbreviations like "Mon")
-        var dayAbbreviation = date.ToString("ddd");
+        // Within operating days? (OperatingDays stores abbreviations like "Mon").
+        // InvariantCulture: the seeded abbreviations are English; the server culture may not be.
+        var dayAbbreviation = date.ToString("ddd", CultureInfo.InvariantCulture);
         if (!facility.OperatingDays.Split(',', StringSplitOptions.RemoveEmptyEntries)
                 .Select(d => d.Trim())
                 .Contains(dayAbbreviation, StringComparer.OrdinalIgnoreCase))

@@ -1,0 +1,91 @@
+@model MyReservationsViewModel
+@{
+    ViewData["Title"] = "My Reservations";
+    var monthStart = new DateOnly(Model.Year, Model.Month, 1);
+    var daysInMonth = DateTime.DaysInMonth(Model.Year, Model.Month);
+    var leading = ((int)monthStart.DayOfWeek + 6) % 7; // Monday-first calendar
+    var today = DateOnly.FromDateTime(DateTime.Today);
+    var prevMonth = monthStart.AddMonths(-1);
+    var nextMonth = monthStart.AddMonths(1);
+}
+<link rel="stylesheet" href="~/css/reservations.css" asp-append-version="true" />
+
+<div class="mt-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h1 class="h3 mb-0">📋 My Reservations</h1>
+        <a asp-action="Create" class="btn btn-bh">+ Book a Court</a>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-lg-4">
+            <div class="bh-form-section">
+                <h2 class="h6 text-uppercase text-muted mb-2">Reservation calendar</h2>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <a asp-action="MyReservations" asp-route-date="@prevMonth.ToString("yyyy-MM-01")" asp-route-tab="@Model.Tab" class="btn btn-sm btn-outline-secondary">‹</a>
+                    <span class="fw-bold">@monthStart.ToString("MMMM yyyy")</span>
+                    <a asp-action="MyReservations" asp-route-date="@nextMonth.ToString("yyyy-MM-01")" asp-route-tab="@Model.Tab" class="btn btn-sm btn-outline-secondary">›</a>
+                </div>
+                <div class="bh-calendar mb-2">
+                    @foreach (var dow in new[] { "Mo", "Tu", "We", "Th", "Fr", "Sa", "Su" })
+                    {
+                        <div class="bh-cal-dow">@dow</div>
+                    }
+                    @for (var i = 0; i < leading; i++)
+                    {
+                        <div class="bh-cal-day blank"></div>
+                    }
+                    @for (var day = 1; day <= daysInMonth; day++)
+                    {
+                        var cellDate = new DateOnly(Model.Year, Model.Month, day);
+                        var isFilter = Model.FilterDate == cellDate;
+                        var isToday = cellDate == today;
+                        var hasRes = Model.ReservationsPerDay.TryGetValue(day, out var count) && count > 0;
+                        <a asp-action="MyReservations" asp-route-date="@cellDate.ToString("yyyy-MM-dd")" asp-route-tab="@Model.Tab"
+                           class="bh-cal-day @(isFilter ? "selected" : "") @(isToday ? "today" : "") @(hasRes ? "has-res" : "")">
+                            @day
+                            @if (hasRes)
+                            {
+                                <span class="bh-cal-count">@count</span>
+                            }
+                        </a>
+                    }
+                </div>
+                @if (Model.FilterDate.HasValue)
+                {
+                    <div class="small">
+                        Filtering: <strong>@Model.FilterDate.Value.ToString("dd MMM yyyy")</strong>
+                        <a asp-action="MyReservations" asp-route-tab="@Model.Tab" class="ms-1">Clear filter</a>
+                    </div>
+                }
+                <p class="small text-muted mt-2 mb-0">Days with bookings are highlighted. Click a day to filter the list below.</p>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <ul class="nav nav-pills mb-3">
+                <li class="nav-item">
+                    <a class="nav-link @(Model.Tab == "upcoming" ? "active" : "")" asp-action="MyReservations" asp-route-tab="upcoming">Upcoming (@Model.Upcoming.Count)</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(Model.Tab == "completed" ? "active" : "")" asp-action="MyReservations" asp-route-tab="completed">Completed (@Model.Completed.Count)</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(Model.Tab == "cancelled" ? "active" : "")" asp-action="MyReservations" asp-route-tab="cancelled">Cancelled (@Model.Cancelled.Count)</a>
+                </li>
+            </ul>
+
+            @switch (Model.Tab)
+            {
+                case "completed":
+                    @await Html.PartialAsync("_ReservationTable", new Tuple<string, List<Reservation>>("completed", Model.Completed))
+                    break;
+                case "cancelled":
+                    @await Html.PartialAsync("_ReservationTable", new Tuple<string, List<Reservation>>("cancelled", Model.Cancelled))
+                    break;
+                default:
+                    @await Html.PartialAsync("_ReservationTable", new Tuple<string, List<Reservation>>("upcoming", Model.Upcoming))
+                    break;
+            }
+        </div>
+    </div>
+</div>

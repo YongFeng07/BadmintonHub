@@ -29,6 +29,10 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICourtService, CourtService>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
+
+// M2 additional feature: automatic reservation status updates.
+builder.Services.AddHostedService<ReservationStatusUpdaterService>();
 
 var app = builder.Build();
 
