@@ -12,7 +12,9 @@ QuestPDF.Settings.License = LicenseType.Community;
 var builder = WebApplication.CreateBuilder(args);
 
 // ASP.NET Core MVC (assignment architecture).
-builder.Services.AddControllersWithViews();
+// View localization (P6): IViewLocalizer reads Resources/Views/<view>.resx per culture.
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.AddControllersWithViews().AddViewLocalization();
 
 // EF Core Code First against SQL Server Express LocalDB (file-based).
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -57,14 +59,23 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// The UI and all seeded data are English. The dev machines may run a non-English
-// server culture, which otherwise leaks into views ("8月" instead of "Aug") and can
-// break string parsing (see CourtService's invariant day abbreviation).
+// Multi-language (P6): English is the default — this also stops a non-English server
+// culture from leaking into views ("8月" instead of "Aug", see CourtService's invariant
+// day abbreviation). Users can switch to 中文 or Bahasa Melayu; views without
+// translations fall back to English (honest partial coverage).
+var supportedCultures = new[] { "en-US", "zh-CN", "ms-MY" }
+    .Select(c => new CultureInfo(c)).ToArray();
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
     DefaultRequestCulture = new RequestCulture("en-US"),
-    SupportedCultures = new[] { new CultureInfo("en-US") },
-    SupportedUICultures = new[] { new CultureInfo("en-US") }
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures,
+    RequestCultureProviders = new IRequestCultureProvider[]
+    {
+        new QueryStringRequestCultureProvider(),  // ?culture=zh-CN — handy for demos
+        new CookieRequestCultureProvider(),       // the navbar switcher stores the choice
+        new AcceptLanguageHeaderRequestCultureProvider() // browser language as the fallback
+    }
 });
 
 app.UseHttpsRedirection();

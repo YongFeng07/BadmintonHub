@@ -1,4 +1,5 @@
 @model BadmintonHub.ViewModels.LoginViewModel
+@inject IViewLocalizer Localizer
 @{
     ViewData["Title"] = "Login";
 }
@@ -8,7 +9,7 @@
         <div class="card shadow-sm mt-5">
             <div class="card-body p-4">
                 <h2 class="text-center mb-1">BadmintonHub</h2>
-                <p class="text-center text-muted mb-4">Sign in to book your court</p>
+                <p class="text-center text-muted mb-4">@Localizer["Subtitle"]</p>
 
                 @if (ViewData["ErrorMessage"] != null)
                 {
@@ -18,29 +19,29 @@
                 <form asp-action="Login" method="post" asp-route-returnUrl="@ViewData["ReturnUrl"]">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <div class="mb-3">
-                        <label asp-for="Email" class="form-label"></label>
+                        <label for="Email" class="form-label">@Localizer["EmailLbl"]</label>
                         <input asp-for="Email" class="form-control" autocomplete="username" />
                         <span asp-validation-for="Email" class="text-danger"></span>
                     </div>
                     <div class="mb-3">
-                        <label asp-for="Password" class="form-label"></label>
+                        <label for="Password" class="form-label">@Localizer["PasswordLbl"]</label>
                         <input asp-for="Password" class="form-control" autocomplete="current-password" />
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
                     <div class="mb-3 form-check">
                         <input asp-for="RememberMe" class="form-check-input" />
-                        <label asp-for="RememberMe" class="form-check-label"></label>
+                        <label for="RememberMe" class="form-check-label">@Localizer["RememberLbl"]</label>
                     </div>
-                    <button type="submit" class="btn btn-success w-100">Login</button>
+                    <button type="submit" class="btn btn-success w-100">@Localizer["LoginBtn"]</button>
                 </form>
 
                 <p class="text-center small mt-3 mb-2">
-                    <a asp-action="ForgotPassword">Forgot your password?</a>
+                    <a asp-action="ForgotPassword">@Localizer["ForgotLbl"]</a>
                 </p>
 
                 <hr />
                 <p class="text-center mb-0">
-                    New here? <a asp-controller="Account" asp-action="Register">Create an account</a>
+                    @Localizer["NewHere"] <a asp-controller="Account" asp-action="Register">@Localizer["CreateAccount"]</a>
                 </p>
             </div>
         </div>

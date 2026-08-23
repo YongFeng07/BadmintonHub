@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="NavHome" xml:space="preserve"><value>首页</value></data>
+  <data name="NavCourts" xml:space="preserve"><value>球场</value></data>
+  <data name="NavFacility" xml:space="preserve"><value>场馆</value></data>
+  <data name="NavMyReservations" xml:space="preserve"><value>我的预订</value></data>
+  <data name="NavBook" xml:space="preserve"><value>+ 预订球场</value></data>
+  <data name="NavLogin" xml:space="preserve"><value>登录</value></data>
+  <data name="NavRegister" xml:space="preserve"><value>注册</value></data>
+  <data name="DropMyReservations" xml:space="preserve"><value>📋 我的预订</value></data>
+  <data name="DropPayments" xml:space="preserve"><value>💳 我的付款</value></data>
+  <data name="DropNotifications" xml:space="preserve"><value>🔔 通知</value></data>
+  <data name="DropProfile" xml:space="preserve"><value>👤 个人资料与密码</value></data>
+  <data name="DropDashboard" xml:space="preserve"><value>📊 仪表板</value></data>
+  <data name="DropManageReservations" xml:space="preserve"><value>📋 管理预订</value></data>
+  <data name="DropManageCourts" xml:space="preserve"><value>🏸 管理球场</value></data>
+  <data name="DropManageAvailability" xml:space="preserve"><value>🗓️ 管理可用性</value></data>
+  <data name="DropReports" xml:space="preserve"><value>📈 报表</value></data>
+  <data name="DropFacilitySettings" xml:space="preserve"><value>🏛️ 场馆设置</value></data>
+  <data name="DropUserAccounts" xml:space="preserve"><value>👥 用户账户</value></data>
+  <data name="DropLogout" xml:space="preserve"><value>🚪 退出登录</value></data>
+  <data name="FooterTagline" xml:space="preserve"><value>羽毛球球场预订与设施管理系统</value></data>
+  <data name="FooterDemo" xml:space="preserve"><value>AMIT2014 网络与移动系统 — 作业演示系统。</value></data>
+  <data name="FooterQuickLinks" xml:space="preserve"><value>快速链接</value></data>
+  <data name="FooterBrowse" xml:space="preserve"><value>浏览球场</value></data>
+  <data name="FooterAbout" xml:space="preserve"><value>关于场馆</value></data>
+  <data name="FooterContact" xml:space="preserve"><value>联系我们</value></data>
+</root>

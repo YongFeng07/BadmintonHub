@@ -1,3 +1,7 @@
+@inject IViewLocalizer Localizer
+@{
+    var currentCulture = CultureInfo.CurrentUICulture.Name;
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,19 +23,32 @@
                 </button>
                 <div class="collapse navbar-collapse" id="mainNav">
                     <ul class="navbar-nav me-auto">
-                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Courts" asp-action="Index">Courts</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Facility" asp-action="Index">Facility</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">@Localizer["NavHome"]</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Courts" asp-action="Index">@Localizer["NavCourts"]</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Facility" asp-action="Index">@Localizer["NavFacility"]</a></li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item"><a class="nav-link" asp-controller="Reservations" asp-action="MyReservations">My Reservations</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Reservations" asp-action="MyReservations">@Localizer["NavMyReservations"]</a></li>
                         }
                     </ul>
                     <ul class="navbar-nav">
+                        <li class="nav-item me-lg-2 mt-1 mt-lg-0">
+                            <form asp-controller="Culture" asp-action="SetLanguage" method="post" class="d-flex">
+                                <input type="hidden" name="returnUrl" value="@Context.Request.GetEncodedPathAndQuery()" />
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Language">
+                                    <button type="submit" name="culture" value="en-US" title="English"
+                                            class="btn btn-outline-light btn-sm @(currentCulture == "en-US" ? "active" : "")">EN</button>
+                                    <button type="submit" name="culture" value="zh-CN" title="中文"
+                                            class="btn btn-outline-light btn-sm @(currentCulture == "zh-CN" ? "active" : "")">中文</button>
+                                    <button type="submit" name="culture" value="ms-MY" title="Bahasa Melayu"
+                                            class="btn btn-outline-light btn-sm @(currentCulture == "ms-MY" ? "active" : "")">BM</button>
+                                </div>
+                            </form>
+                        </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item me-lg-2 mt-1 mt-lg-0">
-                                <a class="btn btn-bh-amber btn-sm px-3" asp-controller="Reservations" asp-action="Create">+ Book a Court</a>
+                                <a class="btn btn-bh-amber btn-sm px-3" asp-controller="Reservations" asp-action="Create">@Localizer["NavBook"]</a>
                             </li>
                             <li class="nav-item me-lg-2 mt-1 mt-lg-0">
                                 @await Component.InvokeAsync("NotificationBell")
@@ -41,28 +58,28 @@
                                     👤 @User.Identity.Name
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" asp-controller="Reservations" asp-action="MyReservations">📋 My Reservations</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Payments" asp-action="Index">💳 My Payments</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Notifications" asp-action="Index">🔔 Notifications</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">👤 Profile &amp; Password</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Reservations" asp-action="MyReservations">@Localizer["DropMyReservations"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Payments" asp-action="Index">@Localizer["DropPayments"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Notifications" asp-action="Index">@Localizer["DropNotifications"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">@Localizer["DropProfile"]</a></li>
                                     @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
                                     {
                                         <li><hr class="dropdown-divider" /></li>
-                                        <li><a class="dropdown-item" asp-controller="AdminDashboard" asp-action="Index">📊 Dashboard</a></li>
-                                        <li><a class="dropdown-item" asp-controller="AdminReservations" asp-action="Index">📋 Manage Reservations</a></li>
-                                        <li><a class="dropdown-item" asp-controller="AdminCourts" asp-action="Index">🏸 Manage Courts</a></li>
-                                        <li><a class="dropdown-item" asp-controller="AdminAvailability" asp-action="Index">🗓️ Manage Availability</a></li>
-                                        <li><a class="dropdown-item" asp-controller="AdminReports" asp-action="Index">📈 Reports</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminDashboard" asp-action="Index">@Localizer["DropDashboard"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminReservations" asp-action="Index">@Localizer["DropManageReservations"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminCourts" asp-action="Index">@Localizer["DropManageCourts"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminAvailability" asp-action="Index">@Localizer["DropManageAvailability"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminReports" asp-action="Index">@Localizer["DropReports"]</a></li>
                                         @if (User.IsInRole("Admin"))
                                         {
-                                            <li><a class="dropdown-item" asp-controller="AdminFacility" asp-action="Edit">🏛️ Facility Settings</a></li>
-                                            <li><a class="dropdown-item" asp-controller="AdminUsers" asp-action="Index">👥 User Accounts</a></li>
+                                            <li><a class="dropdown-item" asp-controller="AdminFacility" asp-action="Edit">@Localizer["DropFacilitySettings"]</a></li>
+                                            <li><a class="dropdown-item" asp-controller="AdminUsers" asp-action="Index">@Localizer["DropUserAccounts"]</a></li>
                                         }
                                     }
                                     <li><hr class="dropdown-divider" /></li>
                                     <li>
                                         <form asp-controller="Account" asp-action="Logout" method="post">
-                                            <button type="submit" class="dropdown-item">🚪 Logout</button>
+                                            <button type="submit" class="dropdown-item">@Localizer["DropLogout"]</button>
                                         </form>
                                     </li>
                                 </ul>
@@ -70,9 +87,9 @@
                         }
                         else
                         {
-                            <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Login</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">@Localizer["NavLogin"]</a></li>
                             <li class="nav-item ms-lg-2 mt-1 mt-lg-0">
-                                <a class="btn btn-bh-amber btn-sm px-3" asp-controller="Account" asp-action="Register">Register</a>
+                                <a class="btn btn-bh-amber btn-sm px-3" asp-controller="Account" asp-action="Register">@Localizer["NavRegister"]</a>
                             </li>
                         }
                     </ul>
@@ -113,16 +130,16 @@
             <div class="row">
                 <div class="col-md-6">
                     <h6>🏸 BadmintonHub</h6>
-                    <p class="mb-1">Badminton Court Reservation &amp; Facility Management System</p>
-                    <p class="mb-0 small">AMIT2014 Web and Mobile Systems — assignment demo system.</p>
+                    <p class="mb-1">@Localizer["FooterTagline"]</p>
+                    <p class="mb-0 small">@Localizer["FooterDemo"]</p>
                 </div>
                 <div class="col-md-3">
-                    <h6>Quick Links</h6>
-                    <a asp-controller="Courts" asp-action="Index" class="d-block">Browse Courts</a>
-                    <a asp-controller="Facility" asp-action="Index" class="d-block">About the Facility</a>
+                    <h6>@Localizer["FooterQuickLinks"]</h6>
+                    <a asp-controller="Courts" asp-action="Index" class="d-block">@Localizer["FooterBrowse"]</a>
+                    <a asp-controller="Facility" asp-action="Index" class="d-block">@Localizer["FooterAbout"]</a>
                 </div>
                 <div class="col-md-3">
-                    <h6>Contact</h6>
+                    <h6>@Localizer["FooterContact"]</h6>
                     <span class="d-block">03-4142 8899</span>
                     <span class="d-block">info@badmintonhub.my</span>
                 </div>

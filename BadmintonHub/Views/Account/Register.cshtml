@@ -1,4 +1,5 @@
 @model RegisterViewModel
+@inject IViewLocalizer Localizer
 @{
     ViewData["Title"] = "Register";
 }
@@ -6,40 +7,40 @@
 <div class="row justify-content-center mt-4">
     <div class="col-md-6 col-lg-5">
         <div class="bh-card p-4">
-            <h1 class="h4 mb-1">Create your member account</h1>
-            <p class="text-muted small mb-3">Book courts, track reservations and receive receipts.</p>
+            <h1 class="h4 mb-1">@Localizer["Title"]</h1>
+            <p class="text-muted small mb-3">@Localizer["Subtitle"]</p>
             <form asp-action="Register" method="post">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
                 <div class="mb-3">
-                    <label asp-for="FullName" class="form-label"></label>
+                    <label for="FullName" class="form-label">@Localizer["FullNameLbl"]</label>
                     <input asp-for="FullName" class="form-control" />
                     <span asp-validation-for="FullName" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="Email" class="form-label"></label>
+                    <label for="Email" class="form-label">@Localizer["EmailLbl"]</label>
                     <input asp-for="Email" class="form-control" autocomplete="username" />
                     <span asp-validation-for="Email" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="Phone" class="form-label"></label>
+                    <label for="Phone" class="form-label">@Localizer["PhoneLbl"]</label>
                     <input asp-for="Phone" class="form-control" />
                     <span asp-validation-for="Phone" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="Password" class="form-label"></label>
+                    <label for="Password" class="form-label">@Localizer["PasswordLbl"]</label>
                     <input asp-for="Password" class="form-control" autocomplete="new-password" />
                     <span asp-validation-for="Password" class="text-danger small"></span>
-                    <div class="form-text">At least 8 characters, with letters and digits.</div>
+                    <div class="form-text">@Localizer["PasswordHint"]</div>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="ConfirmPassword" class="form-label"></label>
+                    <label for="ConfirmPassword" class="form-label">@Localizer["ConfirmLbl"]</label>
                     <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
                     <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                 </div>
-                <button type="submit" class="btn btn-bh w-100">Register</button>
+                <button type="submit" class="btn btn-bh w-100">@Localizer["RegisterBtn"]</button>
             </form>
             <p class="small mt-3 mb-0 text-center">
-                Already have an account? <a asp-action="Login">Log in</a>
+                @Localizer["HaveAccount"] <a asp-action="Login">@Localizer["LoginLink"]</a>
             </p>
         </div>
     </div>

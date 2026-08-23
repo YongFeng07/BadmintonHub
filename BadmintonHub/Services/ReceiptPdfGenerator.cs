@@ -2,6 +2,7 @@ using BadmintonHub.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using System.Globalization;
 
 namespace BadmintonHub.Services;
 
@@ -36,7 +37,9 @@ public static class ReceiptPdfGenerator
                         row.RelativeItem().AlignRight().Column(c =>
                         {
                             c.Item().Text(r.ReservationReference).FontSize(12).SemiBold();
-                            c.Item().Text($"Issued: {DateTime.Now:dd MMM yyyy HH:mm}").FontSize(9).FontColor(Colors.Grey.Darken1);
+                            // Receipts are official records and always render in English (invariant culture):
+                            // the default QuestPDF font cannot render localized month names (e.g. 中文 "8月").
+                            c.Item().Text($"Issued: {DateTime.Now.ToString("dd MMM yyyy HH:mm", CultureInfo.InvariantCulture)}").FontSize(9).FontColor(Colors.Grey.Darken1);
                             c.Item().PaddingTop(4).Text("Receipt No: " + r.Payment?.PaymentReference).FontSize(9).FontColor(Colors.Grey.Darken1);
                         });
                     });
@@ -50,7 +53,7 @@ public static class ReceiptPdfGenerator
                     {
                         row.RelativeItem().Column(Item("Court", $"Court {r.Court?.CourtNumber} ({r.Court?.CourtType})"));
                         row.RelativeItem().Column(Item("Facility", r.Court?.Facility?.Name ?? "—"));
-                        row.RelativeItem().Column(Item("Date", r.ReservationDate.ToString("dd MMM yyyy")));
+                        row.RelativeItem().Column(Item("Date", r.ReservationDate.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)));
                         row.RelativeItem().Column(Item("Time", $"{r.StartTime:HH:mm} – {r.EndTime:HH:mm}"));
                     });
                     col.Item().Row(row =>
@@ -66,7 +69,7 @@ public static class ReceiptPdfGenerator
                         row.RelativeItem().Column(c =>
                         {
                             c.Item().Text("Paid At").FontSize(9).FontColor(Colors.Grey.Darken1);
-                            c.Item().Text(r.Payment?.PaidAt?.ToString("dd MMM yyyy HH:mm") ?? "—").FontSize(11);
+                            c.Item().Text(r.Payment?.PaidAt?.ToString("dd MMM yyyy HH:mm", CultureInfo.InvariantCulture) ?? "—").FontSize(11);
                         });
                         row.RelativeItem().AlignRight().Column(c =>
                         {

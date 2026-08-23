@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Title" xml:space="preserve"><value>Create your member account</value></data>
+  <data name="Subtitle" xml:space="preserve"><value>Book courts, track reservations and receive receipts.</value></data>
+  <data name="FullNameLbl" xml:space="preserve"><value>Full Name</value></data>
+  <data name="EmailLbl" xml:space="preserve"><value>Email</value></data>
+  <data name="PhoneLbl" xml:space="preserve"><value>Phone</value></data>
+  <data name="PasswordLbl" xml:space="preserve"><value>Password</value></data>
+  <data name="PasswordHint" xml:space="preserve"><value>At least 8 characters, with letters and digits.</value></data>
+  <data name="ConfirmLbl" xml:space="preserve"><value>Confirm Password</value></data>
+  <data name="RegisterBtn" xml:space="preserve"><value>Register</value></data>
+  <data name="HaveAccount" xml:space="preserve"><value>Already have an account?</value></data>
+  <data name="LoginLink" xml:space="preserve"><value>Log in</value></data>
+</root>

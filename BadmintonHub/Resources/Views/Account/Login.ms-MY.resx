@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Subtitle" xml:space="preserve"><value>Log masuk untuk menempah gelanggang</value></data>
+  <data name="EmailLbl" xml:space="preserve"><value>E-mel</value></data>
+  <data name="PasswordLbl" xml:space="preserve"><value>Kata Laluan</value></data>
+  <data name="RememberLbl" xml:space="preserve"><value>Ingat saya</value></data>
+  <data name="LoginBtn" xml:space="preserve"><value>Log Masuk</value></data>
+  <data name="ForgotLbl" xml:space="preserve"><value>Lupa kata laluan?</value></data>
+  <data name="NewHere" xml:space="preserve"><value>Baru di sini?</value></data>
+  <data name="CreateAccount" xml:space="preserve"><value>Cipta akaun</value></data>
+</root>

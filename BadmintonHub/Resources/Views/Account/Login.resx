@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Subtitle" xml:space="preserve"><value>Sign in to book your court</value></data>
+  <data name="EmailLbl" xml:space="preserve"><value>Email</value></data>
+  <data name="PasswordLbl" xml:space="preserve"><value>Password</value></data>
+  <data name="RememberLbl" xml:space="preserve"><value>Remember me</value></data>
+  <data name="LoginBtn" xml:space="preserve"><value>Login</value></data>
+  <data name="ForgotLbl" xml:space="preserve"><value>Forgot your password?</value></data>
+  <data name="NewHere" xml:space="preserve"><value>New here?</value></data>
+  <data name="CreateAccount" xml:space="preserve"><value>Create an account</value></data>
+</root>

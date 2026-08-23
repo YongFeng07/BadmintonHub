@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="HeroTitle1" xml:space="preserve"><value>Tempah Gelanggang Anda.</value></data>
+  <data name="HeroTitle2" xml:space="preserve"><value>Mainkan Permainan Anda.</value></data>
+  <data name="HeroLead" xml:space="preserve"><value>{0} — enam gelanggang tertutup profesional dengan tempahan dalam talian yang mudah. Pilih tarikh, pilih masa anda, dan turun ke gelanggang.</value></data>
+  <data name="HeroBrowse" xml:space="preserve"><value>Lihat Gelanggang</value></data>
+  <data name="HeroCheck" xml:space="preserve"><value>Semak Ketersediaan</value></data>
+  <data name="HeroLogin" xml:space="preserve"><value>Log Masuk untuk Tempah</value></data>
+  <data name="StatCourts" xml:space="preserve"><value>Gelanggang Tertutup</value></data>
+  <data name="StatMembers" xml:space="preserve"><value>Ahli</value></data>
+  <data name="StatToday" xml:space="preserve"><value>Tempahan Hari Ini</value></data>
+  <data name="StatHours" xml:space="preserve"><value>Buka Setiap Hari (Jam)</value></data>
+  <data name="OurCourts" xml:space="preserve"><value>Gelanggang Kami</value></data>
+  <data name="ViewAll" xml:space="preserve"><value>Lihat Semua →</value></data>
+  <data name="PerHour" xml:space="preserve"><value>/ jam</value></data>
+  <data name="ViewCourt" xml:space="preserve"><value>Lihat Gelanggang</value></data>
+  <data name="AboutFacility" xml:space="preserve"><value>Tentang Kemudahan</value></data>
+  <data name="CourtDefault" xml:space="preserve"><value>Gelanggang badminton tertutup.</value></data>
+  <data name="OpenDaily" xml:space="preserve"><value>Buka setiap hari</value></data>
+</root>

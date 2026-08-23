@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="PageTitle" xml:space="preserve"><value>📋 我的预订</value></data>
+  <data name="BookBtn" xml:space="preserve"><value>+ 预订球场</value></data>
+  <data name="CalendarTitle" xml:space="preserve"><value>预订日历</value></data>
+  <data name="TodayBtn" xml:space="preserve"><value>今天</value></data>
+  <data name="Filtering" xml:space="preserve"><value>筛选：</value></data>
+  <data name="ClearFilter" xml:space="preserve"><value>清除筛选</value></data>
+  <data name="CalendarHint" xml:space="preserve"><value>有预订的日期已高亮。点击日期可筛选下方列表。</value></data>
+  <data name="TabUpcoming" xml:space="preserve"><value>即将到来</value></data>
+  <data name="TabCompleted" xml:space="preserve"><value>已完成</value></data>
+  <data name="TabCancelled" xml:space="preserve"><value>已取消</value></data>
+</root>
