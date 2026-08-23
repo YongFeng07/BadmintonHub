@@ -1,0 +1,130 @@
+@* AJAX-reloaded reservation grid (search/filter/sort/pagination). *@
+@model AdminReservationsIndexViewModel
+@{
+    var returnUrl = Context.Request.GetEncodedPathAndQuery();
+    var baseQuery = new Dictionary<string, object?> { ["search"] = Model.Search, ["status"] = Model.Status, ["courtId"] = Model.CourtId, ["date"] = Model.Date?.ToString("yyyy-MM-dd"), ["sort"] = Model.Sort };
+}
+
+@if (!Model.Reservations.Any())
+{
+    <div class="bh-empty"><span class="emoji">🔍</span><p class="mb-0">No reservations match the current filters.</p></div>
+}
+else
+{
+    <div class="table-responsive bh-form-section">
+        <table class="table table-hover align-middle bh-table mb-0">
+            <thead>
+                <tr>
+                    <th>Reference</th>
+                    <th>Member</th>
+                    <th>Court</th>
+                    <th>Date / Time</th>
+                    <th>Status</th>
+                    <th class="text-end">Amount</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.Reservations)
+                {
+                    var canConfirm = r.Status == ReservationStatus.Pending;
+                    var canReject = r.Status == ReservationStatus.Pending;
+                    var canComplete = r.Status == ReservationStatus.Confirmed;
+                    var canCancel = r.Status is ReservationStatus.Pending or ReservationStatus.Confirmed;
+                    var canRecordPayment = r.Status == ReservationStatus.Pending && r.Payment?.Status != PaymentStatus.Paid;
+                    <tr>
+                        <td class="fw-semibold">@r.ReservationReference</td>
+                        <td>
+                            <div>@r.User?.FullName</div>
+                            <div class="small text-muted">@r.User?.Email</div>
+                        </td>
+                        <td>Court @(r.Court?.CourtNumber ?? "—")</td>
+                        <td class="text-nowrap">
+                            @r.ReservationDate.ToString("dd MMM yyyy")<br />
+                            <span class="small text-muted">@r.StartTime.ToString("HH:mm") – @r.EndTime.ToString("HH:mm")</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-status badge-@r.Status.ToString().ToLowerInvariant()">@r.Status</span>
+                            @if (r.Payment != null)
+                            {
+                                <span class="badge badge-status badge-@r.Payment.Status.ToString().ToLowerInvariant()">@r.Payment.Status</span>
+                            }
+                        </td>
+                        <td class="text-end fw-semibold">RM @r.TotalAmount.ToString("0.00")</td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                @if (canConfirm)
+                                {
+                                    <form asp-action="UpdateStatus" method="post">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <input type="hidden" name="status" value="Confirmed" />
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="btn btn-outline-success">Confirm</button>
+                                    </form>
+                                }
+                                @if (canComplete)
+                                {
+                                    <form asp-action="UpdateStatus" method="post">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <input type="hidden" name="status" value="Completed" />
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="btn btn-outline-success">Complete</button>
+                                    </form>
+                                }
+                                @if (canReject)
+                                {
+                                    <form asp-action="UpdateStatus" method="post">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <input type="hidden" name="status" value="Rejected" />
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="btn btn-outline-danger">Reject</button>
+                                    </form>
+                                }
+                                @if (canCancel)
+                                {
+                                    <form asp-action="Cancel" method="post">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <input type="hidden" name="reason" value="Cancelled by staff" />
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="btn btn-outline-secondary">Cancel</button>
+                                    </form>
+                                }
+                                <a class="btn btn-outline-secondary" asp-controller="Reservations" asp-action="Details" asp-route-id="@r.Id" title="View details">View</a>
+                            </div>
+                            @if (canRecordPayment)
+                            {
+                                <form asp-action="MarkPaid" method="post" class="d-flex gap-1 mt-1 justify-content-end">
+                                    <input type="hidden" name="id" value="@r.Id" />
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <select name="method" class="form-select form-select-sm" style="width: 130px;">
+                                        @foreach (var m in Enum.GetValues<PaymentMethod>())
+                                        {
+                                            <option value="@m">@m</option>
+                                        }
+                                    </select>
+                                    <input type="text" name="reference" class="form-control form-control-sm" style="width: 110px;" placeholder="Ref (optional)" />
+                                    <button type="submit" class="btn btn-sm btn-bh-amber" title="Record payment received">💳 Paid</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-2" aria-label="Reservation pages">
+            <ul class="pagination pagination-sm">
+                @for (var p = 1; p <= Model.TotalPages; p++)
+                {
+                    baseQuery["page"] = p;
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link page-link-ajax" href="@Url.Action("Table", new { search = baseQuery["search"], status = baseQuery["status"], courtId = baseQuery["courtId"], date = baseQuery["date"], sort = baseQuery["sort"], page = p })">@p</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}

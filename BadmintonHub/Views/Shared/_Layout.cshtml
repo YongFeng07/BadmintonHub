@@ -48,11 +48,14 @@
                                     @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
                                     {
                                         <li><hr class="dropdown-divider" /></li>
-                                        <li><a class="dropdown-item" asp-controller="AdminFacility" asp-action="Edit">🏛️ Facility Settings</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminDashboard" asp-action="Index">📊 Dashboard</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminReservations" asp-action="Index">📋 Manage Reservations</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminCourts" asp-action="Index">🏸 Manage Courts</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminAvailability" asp-action="Index">🗓️ Manage Availability</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminReports" asp-action="Index">📈 Reports</a></li>
                                         @if (User.IsInRole("Admin"))
                                         {
+                                            <li><a class="dropdown-item" asp-controller="AdminFacility" asp-action="Edit">🏛️ Facility Settings</a></li>
                                             <li><a class="dropdown-item" asp-controller="AdminUsers" asp-action="Index">👥 User Accounts</a></li>
                                         }
                                     }

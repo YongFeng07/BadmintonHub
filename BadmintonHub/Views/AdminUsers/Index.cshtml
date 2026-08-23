@@ -1,19 +1,49 @@
-@model List<User>
+@model AdminUsersIndexViewModel
 @{
     ViewData["Title"] = "User Accounts";
-    var lockedUsers = Model.Count(u => u.LockoutEnd.HasValue && u.LockoutEnd > DateTime.Now);
 }
 
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
     <h1 class="h3 mb-0">👥 User Accounts</h1>
-    @if (lockedUsers > 0)
+    @if (Model.LockedCount > 0)
     {
-        <span class="badge bg-danger">@lockedUsers locked account(s)</span>
+        <span class="badge bg-danger">@Model.LockedCount locked account(s)</span>
     }
 </div>
-<p class="text-muted">Security: manage failed-login lockouts. (Full user administration arrives with the M4 module.)</p>
 
-<div class="table-responsive bh-form-section">
+<div class="bh-form-section mt-3">
+    <form asp-action="Index" method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small mb-1">Search</label>
+            <input type="text" name="search" value="@Model.Search" class="form-control form-control-sm" placeholder="Name or email" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1">Role</label>
+            <select name="role" class="form-select form-select-sm">
+                <option value="">All</option>
+                @foreach (var r in Enum.GetValues<Role>())
+                {
+                    <option value="@r" selected="@(Model.RoleFilter == r.ToString() ? "selected" : null)">@r</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1">Status</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">All</option>
+                @foreach (var s in Enum.GetValues<UserStatus>())
+                {
+                    <option value="@s" selected="@(Model.StatusFilter == s.ToString() ? "selected" : null)">@s</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2 d-grid">
+            <button type="submit" class="btn btn-bh btn-sm">Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="table-responsive bh-form-section mt-3">
     <table class="table table-hover align-middle bh-table mb-0">
         <thead>
             <tr>
@@ -23,15 +53,21 @@
                 <th>Status</th>
                 <th>Failed Logins</th>
                 <th>Last Login</th>
-                <th></th>
+                <th class="text-end">Actions</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var user in Model)
+            @foreach (var user in Model.Users)
             {
                 var isLocked = user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.Now;
                 <tr class="@(isLocked ? "table-danger" : "")">
-                    <td>@user.FullName</td>
+                    <td>
+                        @user.FullName
+                        @if (user.Phone != null)
+                        {
+                            <div class="small text-muted">@user.Phone</div>
+                        }
+                    </td>
                     <td>@user.Email</td>
                     <td>
                         <span class="badge @(user.Role == Role.Admin ? "bg-danger" : user.Role == Role.Staff ? "bg-warning text-dark" : "bg-secondary")">@user.Role</span>
@@ -43,7 +79,7 @@
                         }
                         else
                         {
-                            <span class="badge bg-secondary">@user.Status</span>
+                            <span class="badge bg-dark">@user.Status</span>
                         }
                     </td>
                     <td>@user.FailedLoginAttempts / 5</td>
@@ -53,9 +89,22 @@
                         {
                             <form asp-action="Unlock" asp-route-id="@user.Id" method="post" class="d-inline">
                                 <button type="submit" class="btn btn-sm btn-outline-success"
-                                        title="Locked until @user.LockoutEnd?.ToString("dd MMM HH:mm")">
-                                    🔓 Unlock
-                                </button>
+                                        title="Locked until @user.LockoutEnd?.ToString("dd MMM HH:mm")">🔓 Unlock</button>
+                            </form>
+                        }
+                        @if (user.Role == Role.Member)
+                        {
+                            <form asp-action="SetStatus" asp-route-id="@user.Id" method="post" class="d-inline">
+                                @if (user.Status == UserStatus.Active)
+                                {
+                                    <input type="hidden" name="status" value="Deactivated" />
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Deactivate</button>
+                                }
+                                else
+                                {
+                                    <input type="hidden" name="status" value="Active" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Activate</button>
+                                }
                             </form>
                         }
                     </td>
@@ -64,3 +113,17 @@
         </tbody>
     </table>
 </div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="mt-2" aria-label="User pages">
+        <ul class="pagination pagination-sm">
+            @for (var p = 1; p <= Model.TotalPages; p++)
+            {
+                <li class="page-item @(p == Model.Page ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-search="@Model.Search" asp-route-role="@Model.RoleFilter" asp-route-status="@Model.StatusFilter" asp-route-page="@p">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

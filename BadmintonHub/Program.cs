@@ -1,8 +1,10 @@
 using BadmintonHub.Data;
 using BadmintonHub.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
+using System.Globalization;
 
 // QuestPDF Community licence (free within the vendor's published revenue limits).
 QuestPDF.Settings.License = LicenseType.Community;
@@ -54,6 +56,16 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+// The UI and all seeded data are English. The dev machines may run a non-English
+// server culture, which otherwise leaks into views ("8月" instead of "Aug") and can
+// break string parsing (see CourtService's invariant day abbreviation).
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("en-US"),
+    SupportedCultures = new[] { new CultureInfo("en-US") },
+    SupportedUICultures = new[] { new CultureInfo("en-US") }
+});
 
 app.UseHttpsRedirection();
 app.UseRouting();

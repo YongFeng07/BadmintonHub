@@ -121,6 +121,18 @@ main { flex: 1 0 auto; }
 .bh-stat .number { font-size: 1.8rem; font-weight: 800; color: var(--bh-amber); display: block; }
 .bh-stat .label { color: #d8e8df; font-size: .85rem; text-transform: uppercase; letter-spacing: .5px; }
 
+/* Light-theme KPI cards (admin dashboard & reports) */
+.bh-kpi {
+    background: #fff;
+    border: 1px solid var(--bh-line);
+    border-radius: var(--bh-radius);
+    box-shadow: var(--bh-shadow-sm);
+    padding: 1rem 1.25rem;
+}
+.bh-kpi-label { color: var(--bh-muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+.bh-kpi-value { color: var(--bh-green-900); font-size: 1.55rem; font-weight: 800; line-height: 1.2; margin: .15rem 0; }
+.bh-kpi-sub { color: var(--bh-muted); font-size: .8rem; }
+
 /* ---------- Badges ---------- */
 .badge-status { font-weight: 600; padding: .4em .7em; border-radius: 999px; }
 .badge-open { background: var(--bh-green-100); color: var(--bh-green-800); }
