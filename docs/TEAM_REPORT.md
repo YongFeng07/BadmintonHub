@@ -6,15 +6,84 @@
 
 ---
 
-## 4.1 Module ownership (PIC)
+## 4.1 Module ownership (PIC) — mapped against the official feature list
 
-| Module | Scope | Person-in-charge |
+Legend: ✅ implemented · ⚠️ partially covered · ❌ not implemented (honest gap)
+
+### MEMBER 1 — Court & Facility Management (Student A, *replace name*)
+
+| Official feature | Status | Where |
 |---|---|---|
-| M1 — Facility, Courts & Availability | Facility settings; court CRUD with multi-photo upload; availability management (AJAX slot grid, bulk generation); public browse/detail pages with live availability | **Student A** *(replace)* |
-| M2 — Reservation & Scheduling | Booking flow (AJAX slot picker, server-side double-booking protection); My Reservations (month calendar, cancel with refund rule); payment confirmation; QR confirmation code; automatic status updater | **Student B** *(replace)* |
-| M3 — Member, Security & Payment | Registration with auto sign-in; profile and change password; failed-login lockout + admin unlock; password reset (hashed single-use 30-min tokens); payment history + PDF e-receipt; notification bell; role-based landing | **Student C** *(replace)* |
-| M4 — Reservation Admin, User Admin & Reports | Dashboard KPIs + Chart.js charts; reservation administration (AJAX search/filter/sort/pagination, whitelisted status transitions, counter payment, cancellations); business reports (utilisation, popular courts, peak hours, CSV export); user administration (lockout unlock, member activation) | **Student D** *(replace)* |
-| P6 — Multi-language & calendar (shared) | en-US / zh-CN / ms-MY switching with cookie persistence; Monday-first localized calendars | Team |
+| Add / Edit / Delete / View / Search / Filter Court | ✅ | `AdminCourtsController` (Index search+type+status filters, Create, Edit, Details, Delete); public `CourtsController` (search, type filter, sort) |
+| Court Number / Type / Status / Description / Pricing | ✅ | `Court` model: CourtNumber (2-digit rule), CourtType (Standard/VIP/Premium), CourtStatus, Description, HourlyRate (RM 0.01–1000) |
+| Facility Information / Opening Hours / Operating Days / Status / Rules | ✅ | `AdminFacilityController.Edit` + `Facility` model |
+| Facility Maintenance Status | ✅ | `FacilityStatus` { Open, Closed, Maintenance } |
+| Create / Edit Time Slots | ✅ | `AdminAvailabilityController`: hourly Generate (bulk, 1–14 days) + AJAX UpdateSlot + SetRange |
+| Unavailable Time Slots / Maintenance Period | ✅ | `AvailabilityStatus` { Open, Blocked, Maintenance } per slot; demo: Court 06 maintenance day, Court 03 blocked hour |
+| Date-based & Time-based Availability | ✅ | Slots are (Date, StartTime, EndTime) rows, unique index per court/date/hour |
+| Interactive Availability Calendar | ⚠️ | Date-navigable slot grid (admin) + month calendar on My Reservations — not a month-style availability calendar |
+| AJAX Real-time Availability Checking | ✅ | `CourtsController.CheckAvailability` + `ReservationsController.GetSlots` |
+| Multiple Court Photos | ✅ | `CourtPhoto` gallery, multi-upload, primary photo, display order |
+| Advanced Court Search & Filtering | ✅ | Public search + type + sort; admin search + type + status + paging |
+
+### MEMBER 2 — Reservation Management (Student B, *replace name*)
+
+| Official feature | Status | Where |
+|---|---|---|
+| Create / View / Cancel Reservation | ✅ | `ReservationsController` Create (AJAX slot picker), Details, Cancel |
+| Update Reservation | ❌ | No rescheduling (date/time change) flow — status changes only, via admin. Honest gap. |
+| Reservation Status / Details / History | ✅ | Status lifecycle Pending→Confirmed→Completed/Cancelled/Rejected; My Reservations tabs: Upcoming / Completed / Cancelled |
+| Reservation Confirmation | ✅ | Booking only Confirmed on payment; public verify page; QR code |
+| Reservation Conflict Checking | ✅ | Server-side double-booking protection (`CourtService.HasOverlappingReservationAsync`) — identical AND partial overlaps refused |
+| My Reservations / Upcoming / Completed / Cancelled | ✅ | Tabbed My Reservations page |
+| Select Date / Time / Court | ✅ | Booking wizard |
+| Check Availability | ✅ | AJAX `GetSlots` returns real slot status |
+| Prevent Double Booking | ✅ | See conflict checking; unit-tested |
+| Calculate Reservation Duration | ✅ | 1–4 hours, TotalAmount = rate × duration |
+| Interactive Reservation Calendar | ✅ | Monday-first month calendar, localized |
+| AJAX Reservation Availability | ✅ | Slot picker + calendar reload |
+| QR Code Reservation Confirmation | ✅ | QR carries only the public reference |
+| Automatic Reservation Status Update | ✅ | `ReservationStatusUpdaterService` background service |
+
+### MEMBER 3 — Member, Authentication & Payment (Student C, *replace name*)
+
+| Official feature | Status | Where |
+|---|---|---|
+| Member Registration / Profile / Edit / View | ✅ | Register with auto sign-in; Profile view + edit; change password |
+| Member Status | ✅ | Active/Blocked/Deactivated; deactivated users cannot log in |
+| Booking History | ✅ | My Reservations + Payment history |
+| Account Management | ✅ | Profile, change password, reset password |
+| Registration / Login / Logout | ✅ | `AccountController` |
+| Cookie-based Authentication (NO ASP.NET Core Identity) | ✅ | Manual cookie auth + PBKDF2 password hashing — assignment requirement |
+| Role-based Authorization / Access Control | ✅ | `[Authorize(Roles=...)]` on controllers/actions + resource-level ownership checks |
+| Session Management | ✅ | HttpOnly, SameSite=Lax, 8 h sliding-expiry auth cookie |
+| Roles: ADMIN / MEMBER / STAFF | ✅ | `Role` enum |
+| Payment Record / Method / Amount / Status / Date / Reference | ✅ | `Payment` entity, 1:1 with reservation |
+| Reservation Payment | ✅ | Pending payment created with booking; paid ⇔ confirmed |
+| Failed Login Attempt Blocking | ✅ | 5 attempts → 15-minute lockout; admin unlock |
+| Password Reset | ✅ | Hashed single-use 30-min tokens; anti-enumeration messaging |
+| PDF E-Receipt | ✅ | QuestPDF receipt, owner/staff only, paid bookings only |
+| Member Notification | ✅ | Bell + AJAX mark-read centre |
+
+### MEMBER 4 — Admin & Reservation Operations (Student D, *replace name*)
+
+| Official feature | Status | Where |
+|---|---|---|
+| View All / Search / Filter Reservations | ✅ | AJAX search (reference/name/email), status/court/date filters, sort, paging |
+| Update Reservation Status | ✅ | Whitelisted transitions only (Pending→Confirmed/Rejected, Confirmed→Completed) |
+| Approve / Reject Reservation | ✅ | Pending → Confirmed / Rejected; rejection fails the pending payment |
+| Cancel Reservation | ✅ | Staff cancellation; paid booking → refund |
+| Reservation Management / History | ✅ | All statuses visible incl. cancelled with reasons |
+| View / Search / Filter Members | ✅ | Role + status filters, search |
+| Edit Member | ❌ | No admin edit-member form — only Unlock and Activate/Deactivate. Honest gap. |
+| Activate / Deactivate Member | ✅ | `SetStatus` |
+| Reservation Summary / Daily / Weekly / Monthly | ⚠️ | Dashboard KPIs (today) + 7-day trend + 30-day window; reports use a date range (default 14 days) with daily breakdown — no explicit weekly/monthly buckets |
+| Revenue Summary | ✅ | Dashboard + reports + CSV export |
+| Court Utilization / Popular Courts / Peak Reservation Times | ✅ | Reports charts |
+| Interactive Dashboard Charts | ✅ | Chart.js (revenue, per-court, peak hours) |
+| AJAX Search / Filter / Sort / Paging | ✅ | Reservation admin table |
+| Reservation Analytics | ✅ | Reports module |
+| Multi-language Support | ✅ | Shared P6 (en-US / zh-CN / ms-MY) |
 
 Each module's work is preserved as a feature branch at its completion commit:
 `feature/member1-court`, `feature/member2-reservation`,
