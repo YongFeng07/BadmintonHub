@@ -1,8 +1,7 @@
 # BadmintonHub — Team Report (AMIT2014)
 
-> Names marked "Student A–D" are placeholders: **replace them with the real
-> team member names** before submission. Nothing in this report claims work
-> that was not done; see `docs/AUDIT.md` for the pass/fail audit.
+> Team: LIM LI ZHE · YAP SJ · WONG YONG FENG · LEE XH. Nothing in this report
+> claims work that was not done; see `docs/AUDIT.md` for the pass/fail audit.
 
 ---
 
@@ -10,7 +9,7 @@
 
 Legend: ✅ implemented · ⚠️ partially covered · ❌ not implemented (honest gap)
 
-### MEMBER 1 — Court & Facility Management (Student A, *replace name*)
+### MEMBER 1 — Court & Facility Management (YAP SJ)
 
 | Official feature | Status | Where |
 |---|---|---|
@@ -26,7 +25,18 @@ Legend: ✅ implemented · ⚠️ partially covered · ❌ not implemented (hone
 | Multiple Court Photos | ✅ | `CourtPhoto` gallery, multi-upload, primary photo, display order |
 | Advanced Court Search & Filtering | ✅ | Public search + type + sort; admin search + type + status + paging |
 
-### MEMBER 2 — Reservation Management (Student B, *replace name*)
+### MEMBER 1b — Category & Facility Maintenance + Facility Catalog (YAP SJ)
+
+| Official feature | Status | Where |
+|---|---|---|
+| Category Add / Edit / Delete | ✅ | `AdminCategoriesController` — name-unique, status, unit label, icon, display order; delete blocked while the category owns facilities |
+| Facility Add / Edit / Delete / View | ✅ | `AdminFacilityController` — 6 seeded facilities across categories, per-facility hours/days/rules/contact; delete blocked while the facility owns courts |
+| Facility Status / Opening Hours / Operating Days | ✅ | `FacilityStatus` { Open, Closed, Maintenance }; per-facility `OperatingDays` + `OpeningTime/ClosingTime` |
+| Multiple Facility Photos | ✅ | `FacilityPhoto` gallery with drag-drop multi-upload, 800×450 crop-resize (ImageSharp), cover photo |
+| Facility Catalog | ✅ | `CatalogController` + `CatalogService`: category chips, name search, Top-5 popularity (30-day confirmed/completed bookings), same-evening 19:00 low-availability alert, localized detail pages |
+| Availability scoped per facility | ✅ | Courts/availability follow their own facility's hours and days (`CourtService`, `AdminAvailability`) |
+
+### MEMBER 2 — Reservation Management (WONG YONG FENG)
 
 | Official feature | Status | Where |
 |---|---|---|
@@ -45,11 +55,11 @@ Legend: ✅ implemented · ⚠️ partially covered · ❌ not implemented (hone
 | QR Code Reservation Confirmation | ✅ | QR carries only the public reference |
 | Automatic Reservation Status Update | ✅ | `ReservationStatusUpdaterService` background service |
 
-### MEMBER 3 — Member, Authentication & Payment (Student C, *replace name*)
+### MEMBER 3 — Member, Authentication & Payment (LIM LI ZHE)
 
 | Official feature | Status | Where |
 |---|---|---|
-| Member Registration / Profile / Edit / View | ✅ | Register with auto sign-in; Profile view + edit; change password |
+| Member Registration / Profile / Edit / View | ✅ | Register with e-mail verification (no auto sign-in); Profile view + edit; change password |
 | Member Status | ✅ | Active/Blocked/Deactivated; deactivated users cannot log in |
 | Booking History | ✅ | My Reservations + Payment history |
 | Account Management | ✅ | Profile, change password, reset password |
@@ -57,15 +67,15 @@ Legend: ✅ implemented · ⚠️ partially covered · ❌ not implemented (hone
 | Cookie-based Authentication (NO ASP.NET Core Identity) | ✅ | Manual cookie auth + PBKDF2 password hashing — assignment requirement |
 | Role-based Authorization / Access Control | ✅ | `[Authorize(Roles=...)]` on controllers/actions + resource-level ownership checks |
 | Session Management | ✅ | HttpOnly, SameSite=Lax, 8 h sliding-expiry auth cookie |
-| Roles: ADMIN / MEMBER / STAFF | ✅ | `Role` enum |
+| Roles: SuperAdmin / Admin / Member | ✅ | `Role` enum (Staff removed per revised spec; seeded staff migrated to `admin2@`) |
 | Payment Record / Method / Amount / Status / Date / Reference | ✅ | `Payment` entity, 1:1 with reservation |
 | Reservation Payment | ✅ | Pending payment created with booking; paid ⇔ confirmed |
-| Failed Login Attempt Blocking | ✅ | 5 attempts → 15-minute lockout; admin unlock |
+| Failed Login Attempt Blocking | ✅ | 3 attempts → 15-minute lockout; admin unlock |
 | Password Reset | ✅ | Hashed single-use 30-min tokens; anti-enumeration messaging |
 | PDF E-Receipt | ✅ | QuestPDF receipt, owner/staff only, paid bookings only |
 | Member Notification | ✅ | Bell + AJAX mark-read centre |
 
-### MEMBER 4 — Admin & Reservation Operations (Student D, *replace name*)
+### MEMBER 4 — Admin & Reservation Operations (LEE XH)
 
 | Official feature | Status | Where |
 |---|---|---|
@@ -75,7 +85,7 @@ Legend: ✅ implemented · ⚠️ partially covered · ❌ not implemented (hone
 | Cancel Reservation | ✅ | Staff cancellation; paid booking → refund |
 | Reservation Management / History | ✅ | All statuses visible incl. cancelled with reasons |
 | View / Search / Filter Members | ✅ | Role + status filters, search |
-| Edit Member | ❌ | No admin edit-member form — only Unlock and Activate/Deactivate. Honest gap. |
+| Edit Member | ✅ | Admin edit of member profiles with e-mail uniqueness (P2, `AdminUsersController.Edit`) |
 | Activate / Deactivate Member | ✅ | `SetStatus` |
 | Reservation Summary / Daily / Weekly / Monthly | ⚠️ | Dashboard KPIs (today) + 7-day trend + 30-day window; reports use a date range (default 14 days) with daily breakdown — no explicit weekly/monthly buckets |
 | Revenue Summary | ✅ | Dashboard + reports + CSV export |
@@ -96,9 +106,12 @@ enums, generated from the actual model classes).
 
 Key relationships:
 
-- **Facility → Courts → Availability/Photos**: one facility owns 6 courts;
-  each court has hourly availability slots (unique per court/date/hour) and a
-  photo gallery.
+- **Facility → Courts → Availability/Photos**: six seeded facilities across
+  eleven categories own 24 courts/lanes/tables/pitches in total; each court
+  has hourly availability slots (unique per court/date/hour) and a photo
+  gallery, and each facility has its own photo gallery (`FacilityPhoto`).
+- **Category → Facilities**: every facility belongs to a category (restricted
+  FK); categories drive the public catalog.
 - **User → Reservations → Payment**: a member owns reservations; each
   reservation has exactly one payment record. Deletes are *restricted* on both
   sides so booking/payment history can never be destroyed.
@@ -122,7 +135,7 @@ Key relationships:
 
 **Assumptions (ASSUMPTION — seeded demo values, editable by admin):**
 
-- Standard RM 25/hour, VIP RM 35/hour, Premium RM 50/hour. These are demo
+- Badminton RM 25–50/hour; other seeded sports RM 10–120/hour. These are demo
   rates chosen for the seed data; the facility admin can change any rate.
 - 24-hour advance cancellation for full refund — stated in the facility rules
   page.
@@ -145,8 +158,8 @@ script). File names below map to the screenshot files in
 
 | Student | Module | Screenshots to include in the individual report |
 |---|---|---|
-| Student A | M1 | `02-courts.png`, `03-court-detail.png`, `04-facility.png`, `19-admin-facility.png`, `20-admin-courts.png`, `21-admin-court-create.png`, `22-admin-availability.png` |
-| Student B | M2 | `10-member-booking.png`, `11-member-myreservations.png`, `12-member-calendar-zh.png`, `09-verify.png` |
-| Student C | M3 | `05-login.png`, `06-register.png`, `13-member-payments.png`, `14-member-profile.png` |
-| Student D | M4 | `15-staff-reservations-admin.png`, `16-admin-dashboard.png`, `17-admin-reports.png`, `18-admin-users.png` |
+| YAP SJ | M1 + P3 | `02-courts.png`, `03-court-detail.png`, `04-facility.png`, `19-admin-facility.png`, `20-admin-courts.png`, `21-admin-court-create.png`, `22-admin-availability.png`, `29-catalog-details.png`, `30-admin-categories.png`, `31-admin-category-create.png`, `32-admin-facility-create.png`, `33-admin-facility-photos.png` |
+| WONG YONG FENG | M2 | `10-member-booking.png`, `11-member-myreservations.png`, `12-member-calendar-zh.png`, `09-verify.png` |
+| LIM LI ZHE | M3 + P2 + security | `05-login.png`, `06-register.png`, `13-member-payments.png`, `14-member-profile.png`, `23-admin-demo-mail.png`, `24-admin-system-settings.png`, `25-admin-accounts.png`, `26-admin-account-create.png`, `27-admin-user-edit.png`, `28-member-profile-photo.png` |
+| LEE XH | M4 | `15-staff-reservations-admin.png`, `16-admin-dashboard.png`, `17-admin-reports.png`, `18-admin-users.png` |
 | Shared P6 | Team | `07-home-zh.png`, `08-home-ms.png`, `12-member-calendar-zh.png` |

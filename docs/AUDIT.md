@@ -67,6 +67,7 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | M4 Admin / Reports | PASS | Commit `f1457c6`; dashboard, reservation admin, reports + CSV, user admin |
 | Revised spec (P7) | PASS | SuperAdmin/Admin/Member roles, captcha, e-mail verification, Remember Me, system settings, demo mailbox — see §4 and §6 for evidence |
 | Admin & Member Maintenance (P2) | PASS | Profile photos (ImageSharp pipeline, member self-service + admin upload); admin edit of member profiles with e-mail uniqueness; member activity details; SuperAdmin-only admin-account CRUD with guard rails — unit + e2e tested |
+| Category / Facility Maintenance & Catalog (P3) | PASS | `Category` + `FacilityPhoto` entities (migration `P3_CategoryAndFacilityPhotos`); 11 seeded categories; 6 facilities with per-facility hours and photo manager (800×450, cover); category + facility delete guards; public catalog with filters, Top-5 ranking and low-availability alert; `CatalogServiceTests` / `AdminCategoriesControllerTests` / `AdminFacilityControllerTests` + e2e T13 |
 
 ## 6. Additional features — PASS
 
@@ -84,6 +85,9 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | Demo mail inbox (no SMTP) | `AdminEmailsController` + `DemoEmailSender`; screenshot `23`; verification/reset links viewable by admins |
 | Profile photos + avatars | ImageSharp upload pipeline with 256×256 crop; avatars in the navbar dropdown and user tables; screenshots `27`, `28`; e2e T12 |
 | SuperAdmin admin-account CRUD | `AdminAccountsController` (create/edit/reset password/activate/deactivate); screenshots `25`, `26`; e2e T12 |
+| Facility category maintenance | `AdminCategoriesController` (CRUD, name-unique, delete guard); screenshots `30`, `31`; e2e T13 |
+| Multi-facility + photo manager | `AdminFacilityController` (6 seeded facilities, per-facility hours, 800×450 photo gallery); screenshots `32`, `33`; e2e T13 |
+| Public facility catalog | `CatalogController` + `CatalogService` (chips, search, Top-5 badge, 19:00 low-availability alert, localized details); screenshots `04`, `29`; e2e T13 |
 
 ## 7. Report — PARTIAL
 
@@ -117,21 +121,23 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| Test project runs in **Visual Studio Test Explorer** | PASS | `BadmintonHub.Tests` (xUnit) in the solution; 88 tests |
-| Unit coverage of business rules | PASS | [docs/TESTING.md](docs/TESTING.md) §2 — passwords, 3-strike lockout, e-mail verification, booking/double-booking/payment/refund, admin transitions, culture switcher, QR, PDF, calendar, photo pipeline, admin-account guard rails |
-| Latest run | PASS | `Passed! Failed: 0, Passed: 88` (2026-09-05) |
-| End-to-end evidence | PASS | `tests/e2e.sh` (T1–T12) — HTTP-level checks incl. role matrix, register → verify flow, lockout, antiforgery, receipts, admin-account CRUD, photo upload |
+| Test project runs in **Visual Studio Test Explorer** | PASS | `BadmintonHub.Tests` (xUnit) in the solution; 113 tests |
+| Unit coverage of business rules | PASS | [docs/TESTING.md](docs/TESTING.md) §2 — passwords, 3-strike lockout, e-mail verification, booking/double-booking/payment/refund, admin transitions, culture switcher, QR, PDF, calendar, photo pipeline, admin-account guard rails, catalog service (filters/top-5/low-availability), category + facility maintenance CRUD with delete guards |
+| Latest run | PASS | `Passed! Failed: 0, Passed: 113` (2026-09-05) |
+| End-to-end evidence | PASS | `tests/e2e.sh` (T1–T13) — HTTP-level checks incl. role matrix, register → verify flow, lockout, antiforgery, receipts, admin-account CRUD, photo upload, catalog filters + Top-5 badge + low-availability alert, category/facility CRUD + delete guards |
 
 ## 12. Documentation — PASS
 
-README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.md, TEAM_REPORT.md, AUDIT.md, screenshots (28 captures with re-runnable script).
+README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.md, TEAM_REPORT.md, AUDIT.md, screenshots (33 captures with re-runnable script).
 
 ---
 
 ## Remaining issues (honest list — fix before submission)
 
-1. **[Action needed] Team member names** — replace "Student A–D" in
-   `README.md` and `docs/TEAM_REPORT.md` with real names.
+1. ~~**[Action needed] Team member names** — replace "Student A–D" in
+   `README.md` and `docs/TEAM_REPORT.md` with real names.~~ Done 2026-09-05:
+   real names (LIM LI ZHE / YAP SJ / WONG YONG FENG / LEE XH) now in both
+   documents, mapped to the built modules.
 2. **DataAnnotation validation messages are English in all cultures** — the
    per-view resource files localize views; model-level messages (e.g.
    "Password must be at least 8 characters long.") stay English. Acceptable

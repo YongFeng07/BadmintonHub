@@ -20,7 +20,7 @@ exercises the running web app over HTTP and is documented in section 4.
 2. **Build → Build Solution**.
 3. **Test → Test Explorer** — the `BadmintonHub.Tests` project is listed.
 4. Click **Run All** (or right-click the project → **Run Tests**).
-5. All 64 tests run against an in-memory database — no LocalDB, no web server
+5. All 113 tests run against an in-memory database — no LocalDB, no web server
    needed, and they cannot touch the real `App_Data/BadmintonHub.mdf`.
 
 The same suite can be run from the command line (the CLI underneath Test
@@ -48,7 +48,7 @@ and the language switcher.
 
 ---
 
-## 2. Unit test suite (88 tests, all passing)
+## 2. Unit test suite (113 tests, all passing)
 
 Each test class uses a **fresh isolated in-memory database** (`TestDb.Create()`)
 seeded with one facility (open daily 08:00–23:00), one court at RM 25/hour with
@@ -67,14 +67,17 @@ are real PBKDF2 hashes (all seeded users are treated as e-mail-verified).
 | `QrCodeHelperTests` (2) | Output is a valid PNG data URI (magic bytes verified) and content-dependent | QR confirmation code |
 | `ReceiptPdfGeneratorTests` (1) | A paid booking produces a real PDF document (`%PDF` magic bytes) | M3 PDF e-receipt |
 | `CalendarHelperTests` (7) | Monday-first offsets (Sat=5, Sun=6, Mon=0, Tue=1) and culture-aware day headers (en `Mon–Sun`, zh `周一–周日`, ms `Isn–Ahd`) | P6 calendar |
-| `ImageServiceTests` (8) | Null/empty file and >5 MB rejected, unsupported extension rejected, **a renamed non-image is rejected by real-format validation** (decoded format, not the file name), a valid PNG is cropped to **256×256 and re-saved as JPEG** under `/uploads/profiles`, delete removes only managed files (null/foreign/traversal paths are no-ops) | P2 profile-photo pipeline |
+| `ImageServiceTests` (11) | Null/empty file and >5 MB rejected, unsupported extension rejected, **a renamed non-image is rejected by real-format validation** (decoded format, not the file name), a valid PNG is cropped to **256×256 and re-saved as JPEG** under `/uploads/profiles`, a valid facility PNG is cropped to **800×450 JPEG** under `/uploads/facilities`, delete removes only managed files (null/foreign/traversal paths are no-ops) | P2 profile-photo + P3 facility-photo pipeline |
+| `CatalogServiceTests` (7) | Catalog lists open facilities with primary photo, unit count and min rate; category filter and case-insensitive name search; **Top-5 popularity ranking over confirmed+completed bookings of the last 30 days** (older bookings excluded); **the 19:00 low-availability signal subtracts active bookings** and triggers at ≤2 remaining; primary photo preferred over others | P3 facility catalog |
+| `AdminCategoriesControllerTests` (8) | Categories ordered by DisplayOrder; create/edit persist; **duplicate names rejected** on create and edit; **delete blocked while the category owns facilities**, allowed when empty, unknown id → NotFound | P3 category maintenance |
+| `AdminFacilityControllerTests` (7) | Facilities listed with category; create persists category + weekday-ordered operating days; **invalid category rejected**; edit updates settings; **delete blocked while the facility owns courts**; delete removes the facility, its photo rows and deletes the photo files via the image service; first uploaded photo becomes the cover | P3 facility maintenance |
 | `AdminAccountsControllerTests` (11) | Create produces an **active, e-mail-verified** admin with a real PBKDF2 hash; duplicate e-mail and weak password rejected on create/edit; password reset sets a working password and clears lockout; weak reset rejected with hash untouched; **guard rails: self-deactivation refused and the last active SuperAdmin cannot be deactivated**; other-admin deactivation works; invalid status error | P2 admin-account maintenance |
 | `AdminUsersControllerTests` (5) | Admin edit of a member profile persists (email uniqueness enforced, duplicate rejected); member Details aggregates reservation counts and **total paid (Paid payments only)**; only member accounts can be deactivated here; photo upload stores the returned path | P2 member maintenance |
 
 ### Latest run evidence
 
 ```
-Passed!  -  Failed: 0, Passed: 88, Skipped: 0, Total: 88
+Passed!  -  Failed: 0, Passed: 113, Skipped: 0, Total: 113
 ```
 (2026-09-05, Debug build, `dotnet test` — the same VSTest engine Visual Studio
 Test Explorer uses.)
@@ -92,11 +95,11 @@ pipeline.
 
 ## 4. End-to-end script (`tests/e2e.sh`)
 
-12 test groups (T1–T12) against a running app. Highlights:
+13 test groups (T1–T13) against a running app. Highlights:
 
 | # | Scenario | Checks |
 |---|---|---|
-| T1 | Public pages | Home, courts, court detail, login/register pages return 200 |
+| T1 | Public pages | Home, courts, court detail, login/register pages return 200; the facility catalog renders; the legacy `/Facility` URL redirects to it |
 | T2 | Multi-language | `?culture=zh-CN/ms-MY` works, switcher sets a persistent cookie, invalid culture ignored |
 | T3 | Authentication | Wrong password → generic error; member, admin, second admin and superadmin logins all redirect; admin sees dashboard |
 | T4 | Role enforcement | Anon redirected to login; MEMBER blocked from admin pages; ADMIN blocked from SuperAdmin-only System Settings; SUPERADMIN allowed |
@@ -108,6 +111,7 @@ pipeline.
 | T10 | Notifications | Bell counter, mark-read AJAX |
 | T11 | Chinese calendar | zh-CN month/day headers render correctly |
 | T12 | Admin accounts + member edit + photo (P2) | Only SuperAdmin opens Admin Accounts; creating an admin provisions an account that **logs in immediately**; new admin is blocked from Admin Accounts; **SuperAdmin self-deactivation refused**; admin renames a member (visible in search); member uploads a photo (profile shows and serves it), then removes it |
+| T13 | Category/facility maintenance + catalog (P3) | Catalog lists seeded facilities with the **Top-5 badge**; category-chip filter and name search narrow results; facility detail page links its units and photos; booking two table-tennis slots for tonight makes the **low-availability alert appear**; admin creates/edits a category and a facility in it (court 99 included); facility photo upload is listed and served; **delete guards: category blocked while it owns a facility, facility blocked while it owns courts**; cleanup deletes court → facility → category in dependency order |
 
 ---
 
@@ -115,7 +119,10 @@ pipeline.
 
 - Unit tests use `UseInMemoryDatabase` — they **never** touch
   `App_Data/BadmintonHub.mdf`.
-- `e2e.sh` creates only throwaway accounts (`e2e.<timestamp>@example.com`).
+- `e2e.sh` creates only throwaway accounts (`e2e.<timestamp>@example.com`),
+  categories, facilities and courts (deleted again at the end of T13 in
+  dependency order); it also books two table-tennis slots for tonight to make
+  the low-availability alert deterministic.
 - The seeded database contains **demo accounts only** (see README); no real
   credentials exist anywhere in the repository (verified by secret scan in
   `docs/AUDIT.md`).

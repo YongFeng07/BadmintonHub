@@ -71,7 +71,7 @@ echo "== Public pages =="
 shot "$BASE/"                                             01-home
 shot "$BASE/Courts"                                       02-courts
 shot "$BASE/Courts/Details/1"                             03-court-detail
-shot "$BASE/Facility"                                     04-facility
+shot "$BASE/Catalog"                                     04-facility
 shot "$BASE/Account/Login"                                05-login
 shot "$BASE/Account/Register"                             06-register
 shot "$BASE/?culture=zh-CN"                               07-home-zh
@@ -95,7 +95,7 @@ login "$JAR_ADMIN" "admin@badmintonhub.my" "Admin@123"
 auth_shot "$JAR_ADMIN" "$BASE/AdminDashboard/Index"   16-admin-dashboard
 auth_shot "$JAR_ADMIN" "$BASE/AdminReports/Index"     17-admin-reports
 auth_shot "$JAR_ADMIN" "$BASE/AdminUsers/Index"       18-admin-users
-auth_shot "$JAR_ADMIN" "$BASE/AdminFacility/Edit"     19-admin-facility
+auth_shot "$JAR_ADMIN" "$BASE/AdminFacility/Index"    19-admin-facility
 auth_shot "$JAR_ADMIN" "$BASE/AdminCourts/Index"      20-admin-courts
 auth_shot "$JAR_ADMIN" "$BASE/AdminCourts/Create"     21-admin-court-create
 auth_shot "$JAR_ADMIN" "$BASE/AdminAvailability/Index" 22-admin-availability
@@ -125,6 +125,13 @@ if [ "$UP" = "302" ]; then
 else
   echo "  ✗ 28-member-profile-photo (upload -> HTTP $UP)"; FAILED="$FAILED 28-member-profile-photo"
 fi
+
+echo "== P3: category/facility maintenance + public catalog =="
+shot "$BASE/Catalog/Details/1"                            29-catalog-details
+auth_shot "$JAR_ADMIN" "$BASE/AdminCategories/Index"      30-admin-categories
+auth_shot "$JAR_ADMIN" "$BASE/AdminCategories/Create"     31-admin-category-create
+auth_shot "$JAR_ADMIN" "$BASE/AdminFacility/Create"       32-admin-facility-create
+auth_shot "$JAR_ADMIN" "$BASE/AdminFacility/ManagePhotos/1" 33-admin-facility-photos
 
 echo
 if [ -n "$FAILED" ]; then

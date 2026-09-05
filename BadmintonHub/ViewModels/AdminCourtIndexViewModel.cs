@@ -6,9 +6,13 @@ public class AdminCourtIndexViewModel
 {
     public string? Search { get; set; }
 
+    public int? FacilityId { get; set; }
+
     public CourtType? Type { get; set; }
 
     public CourtStatus? Status { get; set; }
+
+    public List<Facility> Facilities { get; set; } = new();
 
     public int Page { get; set; } = 1;
 

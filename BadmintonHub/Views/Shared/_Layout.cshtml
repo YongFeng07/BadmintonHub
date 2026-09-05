@@ -46,7 +46,7 @@
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">@Localizer["NavHome"]</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Courts" asp-action="Index">@Localizer["NavCourts"]</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Facility" asp-action="Index">@Localizer["NavFacility"]</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Catalog" asp-action="Index">@Localizer["NavCatalog"]</a></li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item"><a class="nav-link" asp-controller="Reservations" asp-action="MyReservations">@Localizer["NavMyReservations"]</a></li>
@@ -99,7 +99,7 @@
                                         <li><a class="dropdown-item" asp-controller="AdminCourts" asp-action="Index">@Localizer["DropManageCourts"]</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminAvailability" asp-action="Index">@Localizer["DropManageAvailability"]</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminReports" asp-action="Index">@Localizer["DropReports"]</a></li>
-                                        <li><a class="dropdown-item" asp-controller="AdminFacility" asp-action="Edit">@Localizer["DropFacilitySettings"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminFacility" asp-action="Index">@Localizer["DropFacilitySettings"]</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminUsers" asp-action="Index">@Localizer["DropUserAccounts"]</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminEmails" asp-action="Index">@Localizer["DropDemoMail"]</a></li>
                                         @if (User.IsInRole("SuperAdmin"))
@@ -174,7 +174,7 @@
                 <div class="col-md-3">
                     <h6>@Localizer["FooterQuickLinks"]</h6>
                     <a asp-controller="Courts" asp-action="Index" class="d-block">@Localizer["FooterBrowse"]</a>
-                    <a asp-controller="Facility" asp-action="Index" class="d-block">@Localizer["FooterAbout"]</a>
+                    <a asp-controller="Catalog" asp-action="Index" class="d-block">@Localizer["FooterAbout"]</a>
                 </div>
                 <div class="col-md-3">
                     <h6>@Localizer["FooterContact"]</h6>

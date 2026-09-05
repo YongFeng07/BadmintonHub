@@ -28,6 +28,9 @@ public class AdminUsersControllerTests
         public (string? Error, string? RelativePath) SaveProfilePhoto(IFormFile file, int userId)
             => (null, $"/uploads/profiles/test-{userId}.jpg");
         public void DeleteProfilePhoto(string? relativePath) { }
+        public (string? Error, string? RelativePath) SaveFacilityPhoto(IFormFile file, int facilityId)
+            => (null, $"/uploads/facilities/test-{facilityId}.jpg");
+        public void DeleteFacilityPhoto(string? relativePath) { }
     }
 
     private static (AdminUsersController Controller, ApplicationDbContext Db) CreateController()

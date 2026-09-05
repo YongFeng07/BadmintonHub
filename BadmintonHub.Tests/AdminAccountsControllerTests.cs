@@ -28,6 +28,9 @@ public class AdminAccountsControllerTests
         public (string? Error, string? RelativePath) SaveProfilePhoto(IFormFile file, int userId)
             => (null, $"/uploads/profiles/test-{userId}.jpg");
         public void DeleteProfilePhoto(string? relativePath) { }
+        public (string? Error, string? RelativePath) SaveFacilityPhoto(IFormFile file, int facilityId)
+            => (null, $"/uploads/facilities/test-{facilityId}.jpg");
+        public void DeleteFacilityPhoto(string? relativePath) { }
     }
 
     /// <summary>Creates the controller with the named user as the signed-in claimant.</summary>

@@ -72,6 +72,7 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ICourtService, CourtService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<ICatalogService, CatalogService>();
 
 // Outbound email: real SMTP (MailKit) only when Email:Smtp:Host is configured —
 // otherwise a demo fallback captures the mail in-app so the assignment demo works

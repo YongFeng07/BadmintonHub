@@ -1,0 +1,59 @@
+@model BadmintonHub.ViewModels.CategoryFormViewModel
+@{
+    ViewData["Title"] = "Facility Categories";
+    Layout = "_AdminLayout";
+}
+
+<div class="bh-admin-topbar">
+    <div>
+        <h2 class="bh-page-title mb-0">Facility Categories</h2>
+        <p class="bh-page-sub mb-0">@Model.Categories.Count category(ies) — used by the public facility catalog.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-bh">+ Add Category</a>
+</div>
+
+<div class="table-responsive bh-table">
+    <table class="table table-hover mb-0 align-middle">
+        <thead>
+            <tr>
+                <th style="width: 80px;">Order</th>
+                <th>Category</th>
+                <th>Unit Label</th>
+                <th>Facilities</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var category in Model.Categories)
+            {
+                <tr>
+                    <td class="text-muted">@category.DisplayOrder</td>
+                    <td>
+                        <strong>@category.Icon @category.Name</strong>
+                        @if (!string.IsNullOrEmpty(category.Description))
+                        {
+                            <div class="small text-muted">@category.Description</div>
+                        }
+                    </td>
+                    <td><span class="badge badge-status" style="background:#eef3f8;color:#3c5670;">@category.UnitLabel</span></td>
+                    <td>@category.Facilities.Count</td>
+                    <td>
+                        @if (category.Status == BadmintonHub.Models.CategoryStatus.Active)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@category.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@category.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

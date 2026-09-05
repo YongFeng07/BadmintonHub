@@ -13,7 +13,9 @@ public class ApplicationDbContext : DbContext
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
     public DbSet<User> Users => Set<User>();
+    public DbSet<Category> Categories => Set<Category>();
     public DbSet<Facility> Facilities => Set<Facility>();
+    public DbSet<FacilityPhoto> FacilityPhotos => Set<FacilityPhoto>();
     public DbSet<Court> Courts => Set<Court>();
     public DbSet<CourtPhoto> CourtPhotos => Set<CourtPhoto>();
     public DbSet<CourtAvailability> CourtAvailabilities => Set<CourtAvailability>();
@@ -41,6 +43,27 @@ public class ApplicationDbContext : DbContext
             .WithOne(a => a.Court!)
             .HasForeignKey(a => a.CourtId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // A facility's photos are deleted with the facility; its courts are not
+        // (a facility with courts must not be deleted — audit history lives there).
+        modelBuilder.Entity<Facility>()
+            .HasMany(f => f.Photos)
+            .WithOne(p => p.Facility!)
+            .HasForeignKey(p => p.FacilityId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Facility>()
+            .HasMany(f => f.Courts)
+            .WithOne(c => c.Facility!)
+            .HasForeignKey(c => c.FacilityId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // A category with facilities cannot be deleted (checked in the controller too).
+        modelBuilder.Entity<Category>()
+            .HasMany(c => c.Facilities)
+            .WithOne(f => f.Category!)
+            .HasForeignKey(f => f.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // A court or user with reservations must not be deleted (financial/audit history).
         // Restrict also avoids SQL Server's "multiple cascade paths" error.

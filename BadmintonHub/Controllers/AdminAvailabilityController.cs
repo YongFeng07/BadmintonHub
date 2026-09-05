@@ -24,17 +24,23 @@ public class AdminAvailabilityController : Controller
         _courtService = courtService;
     }
 
-    public async Task<IActionResult> Index(DateOnly? date)
+    public async Task<IActionResult> Index(DateOnly? date, int? facilityId)
     {
         var selectedDate = date ?? DateOnly.FromDateTime(DateTime.Today);
-        var facility = await _db.Facilities.FirstAsync();
-        var courts = await _db.Courts.OrderBy(c => c.CourtNumber).ToListAsync();
-        var slots = await _courtService.GetAvailabilityForDateAsync(selectedDate);
+        var facilities = await _db.Facilities.OrderBy(f => f.Name).ToListAsync();
+        var facility = facilityId.HasValue
+            ? facilities.FirstOrDefault(f => f.Id == facilityId.Value) ?? facilities.First()
+            : facilities.First();
+        var courts = await _db.Courts.Where(c => c.FacilityId == facility.Id)
+            .OrderBy(c => c.CourtNumber).ToListAsync();
+        var slots = await _courtService.GetAvailabilityForDateAsync(selectedDate, facilityId: facility.Id);
 
         var vm = new AvailabilityIndexViewModel
         {
             Date = selectedDate,
+            FacilityId = facility.Id,
             Facility = facility,
+            Facilities = facilities,
             Courts = courts,
             Slots = slots
         };
@@ -50,11 +56,11 @@ public class AdminAvailabilityController : Controller
         if (date < today)
             return Json(new { success = false, message = "Past dates cannot be changed." });
 
-        var court = await _db.Courts.FindAsync(courtId);
+        var court = await _db.Courts.Include(c => c.Facility).FirstOrDefaultAsync(c => c.Id == courtId);
         if (court == null)
             return Json(new { success = false, message = "Court not found." });
 
-        var facility = await _db.Facilities.FirstAsync();
+        var facility = court.Facility!;
         if (startTime.ToTimeSpan() < facility.OpeningTime ||
             startTime.ToTimeSpan() >= facility.ClosingTime)
             return Json(new { success = false, message = "Time is outside facility opening hours." });
@@ -144,7 +150,9 @@ public class AdminAvailabilityController : Controller
     [HttpGet]
     public async Task<IActionResult> Generate()
     {
-        ViewBag.Courts = await _db.Courts.OrderBy(c => c.CourtNumber).ToListAsync();
+        ViewBag.Facilities = await _db.Facilities.OrderBy(f => f.Name).ToListAsync();
+        ViewBag.Courts = await _db.Courts.Include(c => c.Facility).ThenInclude(f => f!.Category)
+            .OrderBy(c => c.FacilityId).ThenBy(c => c.CourtNumber).ToListAsync();
         return View(new AvailabilityGenerateViewModel());
     }
 
@@ -152,17 +160,23 @@ public class AdminAvailabilityController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Generate(AvailabilityGenerateViewModel vm)
     {
-        ViewBag.Courts = await _db.Courts.OrderBy(c => c.CourtNumber).ToListAsync();
+        var allCourts = await _db.Courts.Include(c => c.Facility).ThenInclude(f => f!.Category)
+            .OrderBy(c => c.FacilityId).ThenBy(c => c.CourtNumber).ToListAsync();
+        ViewBag.Facilities = await _db.Facilities.OrderBy(f => f.Name).ToListAsync();
+        ViewBag.Courts = allCourts;
         if (!ModelState.IsValid)
             return View(vm);
-
-        var facility = await _db.Facilities.FirstAsync();
-        var operatingDays = facility.OperatingDays.Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(d => d.Trim()).ToList();
 
         var created = 0;
         foreach (var courtId in vm.CourtIds.Distinct())
         {
+            // Hours and operating days come from the court's own facility.
+            var court = allCourts.FirstOrDefault(c => c.Id == courtId);
+            if (court == null) continue;
+            var facility = court.Facility!;
+            var operatingDays = facility.OperatingDays.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(d => d.Trim()).ToList();
+
             var existing = await _db.CourtAvailabilities
                 .Where(a => a.CourtId == courtId && a.Date >= vm.FromDate && a.Date <= vm.ToDate)
                 .Select(a => new { a.Date, a.StartTime })

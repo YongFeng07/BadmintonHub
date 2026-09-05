@@ -6,7 +6,18 @@
 <div class="bh-form-section">
     <h5 class="mb-3">Court Information</h5>
     <div class="row g-3">
-        <div class="col-md-3">
+        <div class="col-md-4">
+            <label asp-for="FacilityId" class="form-label"></label>
+            <select asp-for="FacilityId" class="form-select">
+                <option value="0">— Select a facility —</option>
+                @foreach (var facility in Model.Facilities)
+                {
+                    <option value="@facility.Id">@facility.Name</option>
+                }
+            </select>
+            <span asp-validation-for="FacilityId" class="text-danger small"></span>
+        </div>
+        <div class="col-md-2">
             <label asp-for="CourtNumber" class="form-label"></label>
             <input asp-for="CourtNumber" class="form-control" placeholder="e.g. 07" />
             <span asp-validation-for="CourtNumber" class="text-danger small"></span>

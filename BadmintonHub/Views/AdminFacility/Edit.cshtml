@@ -1,99 +1,19 @@
 @model BadmintonHub.ViewModels.FacilityEditViewModel
 @{
-    ViewData["Title"] = "Facility Settings";
+    ViewData["Title"] = "Edit Facility";
     Layout = "_AdminLayout";
-    var days = new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 }
 
 <div class="bh-admin-topbar">
     <div>
-        <h2 class="bh-page-title mb-0">Facility Settings</h2>
-        <p class="bh-page-sub mb-0">Opening hours, contact details and house rules.</p>
+        <h2 class="bh-page-title mb-0">Edit Facility</h2>
+        <p class="bh-page-sub mb-0">@Model.Name</p>
     </div>
-    <a asp-controller="Facility" asp-action="Index" class="btn btn-outline-success btn-sm">View public page</a>
+    <a asp-action="ManagePhotos" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-sm">Manage Photos</a>
 </div>
 
 <form asp-action="Edit" method="post">
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
-    <input asp-for="Id" type="hidden" />
-
-    <div class="bh-form-section">
-        <h5 class="mb-3">Basic Information</h5>
-        <div class="row g-3">
-            <div class="col-md-8">
-                <label asp-for="Name" class="form-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger small"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="Status" class="form-label"></label>
-                <select asp-for="Status" asp-items="Html.GetEnumSelectList<BadmintonHub.Models.FacilityStatus>()" class="form-select"></select>
-            </div>
-            <div class="col-12">
-                <label asp-for="Description" class="form-label"></label>
-                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-                <span asp-validation-for="Description" class="text-danger small"></span>
-            </div>
-        </div>
-    </div>
-
-    <div class="bh-form-section">
-        <h5 class="mb-3">Operating Hours</h5>
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label asp-for="OpeningTime" class="form-label"></label>
-                <input asp-for="OpeningTime" type="time" class="form-control" />
-                <span asp-validation-for="OpeningTime" class="text-danger small"></span>
-            </div>
-            <div class="col-md-4">
-                <label asp-for="ClosingTime" class="form-label"></label>
-                <input asp-for="ClosingTime" type="time" class="form-control" />
-                <span asp-validation-for="ClosingTime" class="text-danger small"></span>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Operating Days</label>
-                <div class="d-flex flex-wrap gap-3 pt-2">
-                    @foreach (var day in days)
-                    {
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="OperatingDays" value="@day" id="day-@day" checked="@Model.OperatingDays.Contains(day)" />
-                            <label class="form-check-label" for="day-@day">@day</label>
-                        </div>
-                    }
-                </div>
-                <span asp-validation-for="OperatingDays" class="text-danger small"></span>
-            </div>
-        </div>
-    </div>
-
-    <div class="bh-form-section">
-        <h5 class="mb-3">Contact &amp; Rules</h5>
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label asp-for="Address" class="form-label"></label>
-                <input asp-for="Address" class="form-control" />
-                <span asp-validation-for="Address" class="text-danger small"></span>
-            </div>
-            <div class="col-md-3">
-                <label asp-for="Phone" class="form-label"></label>
-                <input asp-for="Phone" class="form-control" />
-                <span asp-validation-for="Phone" class="text-danger small"></span>
-            </div>
-            <div class="col-md-3">
-                <label asp-for="Email" class="form-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger small"></span>
-            </div>
-            <div class="col-12">
-                <label asp-for="Rules" class="form-label"></label>
-                <textarea asp-for="Rules" class="form-control" rows="5" placeholder="One rule per line"></textarea>
-                <span asp-validation-for="Rules" class="text-danger small"></span>
-            </div>
-        </div>
-    </div>
-
-    <button type="submit" class="btn btn-bh px-4">Save Changes</button>
-    <a asp-action="Edit" class="btn btn-outline-secondary">Reset</a>
+    <partial name="_Form" model="Model" />
 </form>
 
 @section Scripts {

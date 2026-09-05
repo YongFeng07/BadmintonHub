@@ -6,7 +6,8 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="HeroTitle1" xml:space="preserve"><value>预订您的球场。</value></data>
   <data name="HeroTitle2" xml:space="preserve"><value>尽情挥拍。</value></data>
-  <data name="HeroLead" xml:space="preserve"><value>{0} — 六片专业室内球场，轻松在线预订。选择日期与时间，即刻上场。</value></data>
+  <data name="HeroLead" xml:space="preserve"><value>{0} — 综合运动中心，轻松在线预订。选择场馆与时间，尽情运动。</value></data>
+  <data name="HeroFacilities" xml:space="preserve"><value>浏览场馆</value></data>
   <data name="HeroBrowse" xml:space="preserve"><value>浏览球场</value></data>
   <data name="HeroCheck" xml:space="preserve"><value>查看空档</value></data>
   <data name="HeroLogin" xml:space="preserve"><value>登录预订</value></data>

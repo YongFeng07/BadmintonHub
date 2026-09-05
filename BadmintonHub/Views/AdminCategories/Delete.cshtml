@@ -1,0 +1,31 @@
+@model BadmintonHub.Models.Category
+@{
+    ViewData["Title"] = "Delete Category";
+    Layout = "_AdminLayout";
+    var facilityCount = (int)(ViewBag.FacilityCount ?? 0);
+}
+
+<div class="bh-form-section" style="max-width: 640px;">
+    <h2 class="bh-page-title mb-3">Delete @Model.Name?</h2>
+
+    @if (facilityCount > 0)
+    {
+        <div class="alert alert-danger">
+            <strong>Deletion is blocked.</strong> This category has @facilityCount facility(ies).
+            Move the facilities to another category (or delete them first) before removing this category.
+        </div>
+        <a asp-action="Index" class="btn btn-bh">Back to Categories</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit Category</a>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            This will permanently remove the category "@Model.Name". This action cannot be undone.
+        </div>
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger">Yes, delete this category</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    }
+</div>

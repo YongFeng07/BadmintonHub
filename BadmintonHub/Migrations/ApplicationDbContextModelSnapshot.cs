@@ -22,6 +22,46 @@ namespace BadmintonHub.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("BadmintonHub.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UnitLabel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Categories");
+                });
+
             modelBuilder.Entity("BadmintonHub.Models.Court", b =>
                 {
                     b.Property<int>("Id")
@@ -183,6 +223,9 @@ namespace BadmintonHub.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
                     b.Property<TimeSpan>("ClosingTime")
                         .HasColumnType("time");
 
@@ -220,7 +263,41 @@ namespace BadmintonHub.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
                     b.ToTable("Facilities");
+                });
+
+            modelBuilder.Entity("BadmintonHub.Models.FacilityPhoto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Caption")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FacilityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FacilityId");
+
+                    b.ToTable("FacilityPhotos");
                 });
 
             modelBuilder.Entity("BadmintonHub.Models.LoginAttempt", b =>
@@ -539,7 +616,7 @@ namespace BadmintonHub.Migrations
                     b.HasOne("BadmintonHub.Models.Facility", "Facility")
                         .WithMany("Courts")
                         .HasForeignKey("FacilityId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Facility");
@@ -565,6 +642,28 @@ namespace BadmintonHub.Migrations
                         .IsRequired();
 
                     b.Navigation("Court");
+                });
+
+            modelBuilder.Entity("BadmintonHub.Models.Facility", b =>
+                {
+                    b.HasOne("BadmintonHub.Models.Category", "Category")
+                        .WithMany("Facilities")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("BadmintonHub.Models.FacilityPhoto", b =>
+                {
+                    b.HasOne("BadmintonHub.Models.Facility", "Facility")
+                        .WithMany("Photos")
+                        .HasForeignKey("FacilityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Facility");
                 });
 
             modelBuilder.Entity("BadmintonHub.Models.LoginAttempt", b =>
@@ -636,6 +735,11 @@ namespace BadmintonHub.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BadmintonHub.Models.Category", b =>
+                {
+                    b.Navigation("Facilities");
+                });
+
             modelBuilder.Entity("BadmintonHub.Models.Court", b =>
                 {
                     b.Navigation("Availabilities");
@@ -648,6 +752,8 @@ namespace BadmintonHub.Migrations
             modelBuilder.Entity("BadmintonHub.Models.Facility", b =>
                 {
                     b.Navigation("Courts");
+
+                    b.Navigation("Photos");
                 });
 
             modelBuilder.Entity("BadmintonHub.Models.Reservation", b =>

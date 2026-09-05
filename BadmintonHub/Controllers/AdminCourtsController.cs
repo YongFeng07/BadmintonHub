@@ -26,7 +26,7 @@ public class AdminCourtsController : Controller
 
     // ---------- List with search / filter / pagination ----------
 
-    public async Task<IActionResult> Index(string? search, CourtType? type, CourtStatus? status, int page = 1)
+    public async Task<IActionResult> Index(string? search, int? facilityId, CourtType? type, CourtStatus? status, int page = 1)
     {
         if (page < 1) page = 1;
 
@@ -37,19 +37,22 @@ public class AdminCourtsController : Controller
             var term = search.Trim();
             query = query.Where(c => c.CourtNumber.Contains(term));
         }
+        if (facilityId.HasValue) query = query.Where(c => c.FacilityId == facilityId);
         if (type.HasValue) query = query.Where(c => c.CourtType == type);
         if (status.HasValue) query = query.Where(c => c.Status == status);
 
         var vm = new AdminCourtIndexViewModel
         {
             Search = search,
+            FacilityId = facilityId,
             Type = type,
             Status = status,
             Page = page,
             PageSize = PageSize,
+            Facilities = await _db.Facilities.OrderBy(f => f.Name).ToListAsync(),
             TotalCount = await query.CountAsync(),
             Courts = await query
-                .OrderBy(c => c.CourtNumber)
+                .OrderBy(c => c.FacilityId).ThenBy(c => c.CourtNumber)
                 .Skip((page - 1) * PageSize)
                 .Take(PageSize)
                 .ToListAsync()
@@ -60,22 +63,34 @@ public class AdminCourtsController : Controller
     // ---------- Create ----------
 
     [HttpGet]
-    public IActionResult Create() => View(new CourtFormViewModel { HourlyRate = 25.00m });
+    public async Task<IActionResult> Create()
+    {
+        var vm = new CourtFormViewModel
+        {
+            HourlyRate = 25.00m,
+            Facilities = await _db.Facilities.OrderBy(f => f.Name).ToListAsync()
+        };
+        return View(vm);
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CourtFormViewModel vm)
     {
-        if (await _db.Courts.AnyAsync(c => c.CourtNumber == vm.CourtNumber))
-            ModelState.AddModelError(nameof(vm.CourtNumber), "A court with this number already exists.");
+        if (await _db.Facilities.AnyAsync(f => f.Id == vm.FacilityId) == false)
+            ModelState.AddModelError(nameof(vm.FacilityId), "Please select a facility.");
+        else if (await _db.Courts.AnyAsync(c => c.CourtNumber == vm.CourtNumber && c.FacilityId == vm.FacilityId))
+            ModelState.AddModelError(nameof(vm.CourtNumber), "This facility already has a court with this number.");
 
         if (!ModelState.IsValid)
+        {
+            vm.Facilities = await _db.Facilities.OrderBy(f => f.Name).ToListAsync();
             return View(vm);
+        }
 
-        var facility = await _db.Facilities.FirstAsync();
         _db.Courts.Add(new Court
         {
-            FacilityId = facility.Id,
+            FacilityId = vm.FacilityId,
             CourtNumber = vm.CourtNumber.Trim(),
             CourtType = vm.CourtType,
             Status = vm.Status,
@@ -99,11 +114,13 @@ public class AdminCourtsController : Controller
         var vm = new CourtFormViewModel
         {
             Id = court.Id,
+            FacilityId = court.FacilityId,
             CourtNumber = court.CourtNumber,
             CourtType = court.CourtType,
             Status = court.Status,
             HourlyRate = court.HourlyRate,
-            Description = court.Description
+            Description = court.Description,
+            Facilities = await _db.Facilities.OrderBy(f => f.Name).ToListAsync()
         };
         return View(vm);
     }
@@ -112,15 +129,21 @@ public class AdminCourtsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(CourtFormViewModel vm)
     {
-        if (await _db.Courts.AnyAsync(c => c.CourtNumber == vm.CourtNumber && c.Id != vm.Id))
-            ModelState.AddModelError(nameof(vm.CourtNumber), "A court with this number already exists.");
+        if (await _db.Facilities.AnyAsync(f => f.Id == vm.FacilityId) == false)
+            ModelState.AddModelError(nameof(vm.FacilityId), "Please select a facility.");
+        else if (await _db.Courts.AnyAsync(c => c.CourtNumber == vm.CourtNumber && c.Id != vm.Id && c.FacilityId == vm.FacilityId))
+            ModelState.AddModelError(nameof(vm.CourtNumber), "This facility already has a court with this number.");
 
         if (!ModelState.IsValid)
+        {
+            vm.Facilities = await _db.Facilities.OrderBy(f => f.Name).ToListAsync();
             return View(vm);
+        }
 
         var court = await _db.Courts.FindAsync(vm.Id);
         if (court == null) return NotFound();
 
+        court.FacilityId = vm.FacilityId;
         court.CourtNumber = vm.CourtNumber.Trim();
         court.CourtType = vm.CourtType;
         court.Status = vm.Status;

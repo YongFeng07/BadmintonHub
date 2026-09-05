@@ -2,10 +2,17 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BadmintonHub.Models;
 
-/// <summary>A badminton facility (venue). One facility owns many courts.</summary>
+/// <summary>
+/// A sports facility (venue) inside one category. One facility owns many
+/// bookable units (courts / lanes / tables — the Court entity).
+/// </summary>
 public class Facility
 {
     public int Id { get; set; }
+
+    public int CategoryId { get; set; }
+
+    public Category? Category { get; set; }
 
     [Required, StringLength(100)]
     public string Name { get; set; } = string.Empty;
@@ -37,4 +44,6 @@ public class Facility
     public FacilityStatus Status { get; set; } = FacilityStatus.Open;
 
     public ICollection<Court> Courts { get; set; } = new List<Court>();
+
+    public ICollection<FacilityPhoto> Photos { get; set; } = new List<FacilityPhoto>();
 }

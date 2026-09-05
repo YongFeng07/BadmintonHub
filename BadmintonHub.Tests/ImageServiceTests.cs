@@ -145,4 +145,51 @@ public class ImageServiceTests : IDisposable
         service.DeleteProfilePhoto("..\\..\\Windows\\System32\\config\\SAM");
         service.DeleteProfilePhoto("/uploads/other/thing.jpg");
     }
+
+    // ---------- P3 facility photos (800×450 catalog covers) ----------
+
+    [Fact]
+    public void SaveFacilityPhoto_ValidPng_ResizesTo800x450AndSavesJpeg()
+    {
+        var service = CreateService();
+
+        var (error, path) = service.SaveFacilityPhoto(FileFromBytes(TinyPng, "venue.png"), 3);
+
+        Assert.Null(error);
+        Assert.NotNull(path);
+        Assert.StartsWith("/uploads/facilities/", path);
+
+        var fullPath = Path.Combine(_tempDir, path!.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+        Assert.True(File.Exists(fullPath));
+
+        using var saved = Image.Load(fullPath);
+        Assert.Equal(800, saved.Width);
+        Assert.Equal(450, saved.Height);
+        Assert.Equal("JPEG", saved.Metadata.DecodedImageFormat?.Name);
+    }
+
+    [Fact]
+    public void SaveFacilityPhoto_UnsupportedExtension_ReturnsError()
+    {
+        var service = CreateService();
+
+        var (error, path) = service.SaveFacilityPhoto(FileFromBytes(TinyPng, "venue.gif"), 3);
+
+        Assert.Equal("Only JPG, PNG or WebP images are allowed.", error);
+        Assert.Null(path);
+    }
+
+    [Fact]
+    public void DeleteFacilityPhoto_RemovesManagedFileAndIgnoresForeignPaths()
+    {
+        var service = CreateService();
+        var (_, path) = service.SaveFacilityPhoto(FileFromBytes(TinyPng, "venue.png"), 9);
+        var fullPath = Path.Combine(_tempDir, path!.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+        Assert.True(File.Exists(fullPath));
+
+        service.DeleteFacilityPhoto(path);
+        service.DeleteFacilityPhoto("/uploads/profiles/other.jpg"); // profile photo is not ours to delete
+
+        Assert.False(File.Exists(fullPath));
+    }
 }

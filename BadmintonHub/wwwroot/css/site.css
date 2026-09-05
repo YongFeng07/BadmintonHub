@@ -99,6 +99,27 @@ main { flex: 1 0 auto; }
 }
 .bh-court-card:hover { transform: translateY(-3px); }
 
+/* ---------- Catalog chips & badges ---------- */
+.bh-chip {
+    display: inline-block;
+    padding: .35rem .9rem;
+    border: 1px solid var(--bh-green-700);
+    border-radius: 999px;
+    color: var(--bh-green-900);
+    background: #fff;
+    text-decoration: none;
+    font-size: .9rem;
+    transition: background .15s ease, color .15s ease;
+}
+.bh-chip:hover { background: var(--bh-green-50); color: var(--bh-green-900); }
+.bh-chip-active, .bh-chip-active:hover { background: var(--bh-green-700); color: #fff; }
+.bh-popular-badge {
+    background: linear-gradient(135deg, #f7b733, #f5803e);
+    color: #fff;
+    font-size: .75rem;
+    white-space: nowrap;
+}
+
 /* ---------- Hero ---------- */
 .bh-hero {
     background: linear-gradient(135deg, var(--bh-green-900) 0%, var(--bh-green-700) 60%, #1d8a5c 100%);

@@ -17,6 +17,15 @@
         <input type="text" name="search" class="form-control" placeholder="Search court number…" value="@Model.Search" />
     </div>
     <div>
+        <select name="facilityId" class="form-select">
+            <option value="">All Facilities</option>
+            @foreach (var facility in Model.Facilities)
+            {
+                <option value="@facility.Id" selected="@(Model.FacilityId == facility.Id)">@facility.Name</option>
+            }
+        </select>
+    </div>
+    <div>
         <select name="type" class="form-select">
             <option value="">All Types</option>
             @foreach (var t in Enum.GetValues<BadmintonHub.Models.CourtType>())

@@ -9,6 +9,12 @@ public class CourtFormViewModel
     public int Id { get; set; }
 
     [Required]
+    [Display(Name = "Facility")]
+    public int FacilityId { get; set; }
+
+    public List<Facility> Facilities { get; set; } = new();
+
+    [Required]
     [StringLength(20)]
     [RegularExpression(@"^\d{2}$", ErrorMessage = "Court number must be 2 digits, e.g. 01.")]
     [Display(Name = "Court Number")]

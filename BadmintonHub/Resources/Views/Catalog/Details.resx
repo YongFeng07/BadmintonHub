@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="BackToCatalog" xml:space="preserve"><value>Back to Facilities</value></data>
+  <data name="Open" xml:space="preserve"><value>Open</value></data>
+  <data name="Closed" xml:space="preserve"><value>Closed</value></data>
+  <data name="OurUnits" xml:space="preserve"><value>Our {0}</value></data>
+  <data name="NoUnits" xml:space="preserve"><value>No bookable units yet.</value></data>
+  <data name="Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Rate" xml:space="preserve"><value>Rate</value></data>
+  <data name="Hour" xml:space="preserve"><value>hour</value></data>
+  <data name="Action" xml:space="preserve"><value>Action</value></data>
+  <data name="ViewBook" xml:space="preserve"><value>View / Book</value></data>
+  <data name="Rules" xml:space="preserve"><value>Facility Rules</value></data>
+  <data name="NoRules" xml:space="preserve"><value>No rules posted.</value></data>
+  <data name="OpeningInfo" xml:space="preserve"><value>Opening Information</value></data>
+  <data name="Hours" xml:space="preserve"><value>Opening Hours</value></data>
+  <data name="Days" xml:space="preserve"><value>Operating Days</value></data>
+  <data name="Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Contact" xml:space="preserve"><value>Contact</value></data>
+  <data name="Address" xml:space="preserve"><value>Address</value></data>
+  <data name="Phone" xml:space="preserve"><value>Phone</value></data>
+  <data name="Email" xml:space="preserve"><value>Email</value></data>
+</root>

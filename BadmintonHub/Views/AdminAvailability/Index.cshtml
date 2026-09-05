@@ -18,14 +18,23 @@
 
 <div class="bh-form-section">
     <div class="d-flex flex-wrap gap-2 align-items-center">
-        <label for="avDate" class="form-label mb-0 fw-bold">Date:</label>
-        <input type="date" id="avDate" class="form-control" style="width: 180px;" min="@today.ToString("yyyy-MM-dd")" value="@Model.Date.ToString("yyyy-MM-dd")" />
-        <button type="button" class="btn btn-sm btn-outline-success date-quick" data-offset="0">Today</button>
-        <button type="button" class="btn btn-sm btn-outline-success date-quick" data-offset="1">Tomorrow</button>
-        <button type="button" class="btn btn-sm btn-outline-success date-quick" data-offset="3">+3 days</button>
-        <button type="button" class="btn btn-sm btn-outline-success date-quick" data-offset="7">+7 days</button>
-        <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", new { date = Model.Date.AddDays(-1).ToString("yyyy-MM-dd") })">←</a>
-        <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", new { date = Model.Date.AddDays(1).ToString("yyyy-MM-dd") })">→</a>
+        <form method="get" asp-action="Index" class="d-flex flex-wrap gap-2 align-items-center mb-0">
+            <label for="avFacility" class="form-label mb-0 fw-bold">Facility:</label>
+            <select id="avFacility" name="facilityId" class="form-select" style="width: 260px;" onchange="this.form.submit()">
+                @foreach (var facility in Model.Facilities)
+                {
+                    <option value="@facility.Id" selected="@(facility.Id == Model.FacilityId)">@facility.Name</option>
+                }
+            </select>
+            <label for="avDate" class="form-label mb-0 fw-bold">Date:</label>
+            <input type="date" id="avDate" name="date" class="form-control" style="width: 180px;" min="@today.ToString("yyyy-MM-dd")" value="@Model.Date.ToString("yyyy-MM-dd")" onchange="this.form.submit()" />
+        </form>
+        <button type="button" class="btn btn-sm btn-outline-success date-quick" data-offset="0" data-facility="@Model.FacilityId">Today</button>
+        <button type="button" class="btn btn-sm btn-outline-success date-quick" data-offset="1" data-facility="@Model.FacilityId">Tomorrow</button>
+        <button type="button" class="btn btn-sm btn-outline-success date-quick" data-offset="3" data-facility="@Model.FacilityId">+3 days</button>
+        <button type="button" class="btn btn-sm btn-outline-success date-quick" data-offset="7" data-facility="@Model.FacilityId">+7 days</button>
+        <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", new { date = Model.Date.AddDays(-1).ToString("yyyy-MM-dd"), facilityId = Model.FacilityId })">←</a>
+        <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", new { date = Model.Date.AddDays(1).ToString("yyyy-MM-dd"), facilityId = Model.FacilityId })">→</a>
         <span class="ms-auto text-muted small">@Model.Date.ToString("dddd, dd MMM yyyy")</span>
     </div>
 </div>
@@ -37,7 +46,7 @@
         <thead>
             <tr>
                 <th style="min-width: 110px;">Court</th>
-                <th>Hourly Slots (@Model.Facility.OpeningTime.ToString(@"hh\:mm")–@Model.Facility.ClosingTime.ToString(@"hh\:mm"))</th>
+                <th>Hourly Slots (@Model.Facility!.OpeningTime.ToString(@"hh\:mm")–@Model.Facility!.ClosingTime.ToString(@"hh\:mm"))</th>
             </tr>
         </thead>
         <tbody>

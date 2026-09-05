@@ -2,13 +2,13 @@
 $(function () {
     var token = $('#avToken').val();
 
-    // Quick date buttons jump to another day's grid.
+    // Quick date buttons jump to another day's grid (same facility).
     $('.date-quick').on('click', function () {
         var offset = parseInt($(this).data('offset'), 10);
         var d = new Date();
         d.setDate(d.getDate() + offset);
         var iso = d.toISOString().slice(0, 10);
-        window.location.href = '/AdminAvailability/Index?date=' + iso;
+        window.location.href = '/AdminAvailability/Index?date=' + iso + '&facilityId=' + $(this).data('facility');
     });
 
     // Click a slot to cycle Open -> Maintenance -> Blocked -> Open.
