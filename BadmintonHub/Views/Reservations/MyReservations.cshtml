@@ -4,13 +4,12 @@
     ViewData["Title"] = "My Reservations";
     var monthStart = new DateOnly(Model.Year, Model.Month, 1);
     var daysInMonth = DateTime.DaysInMonth(Model.Year, Model.Month);
-    var leading = ((int)monthStart.DayOfWeek + 6) % 7; // Monday-first calendar
+    var leading = CalendarHelper.MondayFirstOffset(monthStart); // Monday-first calendar
     var today = DateOnly.FromDateTime(DateTime.Today);
     var prevMonth = monthStart.AddMonths(-1);
     var nextMonth = monthStart.AddMonths(1);
-    // Monday-first abbreviated day names in the current UI culture (index 0 = Sunday)
-    var dayNames = CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedDayNames;
-    var mondayFirst = new[] { dayNames[1], dayNames[2], dayNames[3], dayNames[4], dayNames[5], dayNames[6], dayNames[0] };
+    // Monday-first abbreviated day names in the current UI culture
+    var mondayFirst = CalendarHelper.MondayFirstDayNames(CultureInfo.CurrentCulture);
 }
 <link rel="stylesheet" href="~/css/reservations.css" asp-append-version="true" />
 
