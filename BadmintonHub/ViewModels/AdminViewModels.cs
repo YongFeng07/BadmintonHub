@@ -1,4 +1,5 @@
 using BadmintonHub.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace BadmintonHub.ViewModels;
 
@@ -119,4 +120,109 @@ public class AdminUsersIndexViewModel
     public int TotalPages => Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
 
     public int LockedCount => Users.Count(u => u.LockoutEnd.HasValue && u.LockoutEnd > DateTime.Now);
+}
+
+/// <summary>Admin-side member maintenance form (P2): basic profile fields only —
+/// passwords are never edited in-place; a reset link flow or SuperAdmin reset applies.</summary>
+public class AdminUserEditViewModel
+{
+    public int Id { get; set; }
+
+    [Required, StringLength(100), Display(Name = "Full Name")]
+    public string FullName { get; set; } = string.Empty;
+
+    [Required, EmailAddress, StringLength(150)]
+    public string Email { get; set; } = string.Empty;
+
+    [Phone, StringLength(20)]
+    public string? Phone { get; set; }
+
+    /// <summary>Read-only context shown next to the form.</summary>
+    public Role Role { get; set; }
+
+    public UserStatus Status { get; set; }
+
+    public string? PhotoUrl { get; set; }
+}
+
+/// <summary>Member details page (P2): the account plus its booking/payment stats.</summary>
+public class AdminUserDetailsViewModel
+{
+    public User User { get; set; } = null!;
+
+    public int ReservationCount { get; set; }
+
+    public int ConfirmedCount { get; set; }
+
+    public int CancelledCount { get; set; }
+
+    public decimal TotalPaid { get; set; }
+}
+
+/// <summary>SuperAdmin-only admin-account listing (P2).</summary>
+public class AdminAccountIndexViewModel
+{
+    public List<User> Accounts { get; set; } = new();
+
+    public string? Search { get; set; }
+}
+
+/// <summary>SuperAdmin-only admin-account creation form (P2).</summary>
+public class AdminAccountCreateViewModel
+{
+    [Required, StringLength(100), Display(Name = "Full Name")]
+    public string FullName { get; set; } = string.Empty;
+
+    [Required, EmailAddress, StringLength(150)]
+    public string Email { get; set; } = string.Empty;
+
+    [Phone, StringLength(20)]
+    public string? Phone { get; set; }
+
+    [Required, DataType(DataType.Password)]
+    [Display(Name = "Password")]
+    public string Password { get; set; } = string.Empty;
+
+    [Required, DataType(DataType.Password)]
+    [Compare(nameof(Password), ErrorMessage = "The passwords do not match.")]
+    [Display(Name = "Confirm Password")]
+    public string ConfirmPassword { get; set; } = string.Empty;
+
+    public Role Role { get; set; } = Role.Admin;
+}
+
+/// <summary>SuperAdmin-only admin-account edit form (P2).</summary>
+public class AdminAccountEditViewModel
+{
+    public int Id { get; set; }
+
+    [Required, StringLength(100), Display(Name = "Full Name")]
+    public string FullName { get; set; } = string.Empty;
+
+    [Required, EmailAddress, StringLength(150)]
+    public string Email { get; set; } = string.Empty;
+
+    [Phone, StringLength(20)]
+    public string? Phone { get; set; }
+
+    public Role Role { get; set; }
+
+    public UserStatus Status { get; set; }
+
+    public string? PhotoUrl { get; set; }
+}
+
+/// <summary>SuperAdmin-only password reset form (P2).</summary>
+public class AdminResetPasswordViewModel
+{
+    public int Id { get; set; }
+
+    [Required, DataType(DataType.Password)]
+    [Display(Name = "New Password")]
+    public string NewPassword { get; set; } = string.Empty;
+
+    [Required, DataType(DataType.Password)]
+    [Compare(nameof(NewPassword), ErrorMessage = "The passwords do not match.")]
+    [Display(Name = "Confirm Password")]
+    public string ConfirmPassword { get; set; } = string.Empty;
 }

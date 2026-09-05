@@ -50,6 +50,10 @@ public class User
     /// <summary>When set and in the future, the pending verification token is still valid.</summary>
     public DateTime? EmailVerificationExpiresUtc { get; set; }
 
+    /// <summary>Site-relative path of the profile photo, e.g. /uploads/profiles/12.jpg (P2 photo pipeline).</summary>
+    [StringLength(300)]
+    public string? PhotoUrl { get; set; }
+
     public DateTime? LastLoginAt { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.Now;

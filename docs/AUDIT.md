@@ -53,6 +53,9 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | Password reset tokens hashed, single-use, 30 min | PASS | `PasswordResetToken.TokenHash` (raw token never stored); e2e T9 |
 | Antiforgery tokens on all POSTs | PASS | `[ValidateAntiForgeryToken]` on state-changing actions; e2e drives real tokens |
 | Open-redirect guard on language switcher | PASS | `Url.IsLocalUrl` in [CultureController.cs](BadmintonHub/Controllers/CultureController.cs); unit-tested |
+| Uploaded images validated by decoded format | PASS | [ImageService.cs](BadmintonHub/Services/ImageService.cs) decodes with ImageSharp and trusts the *decoded* format (a renamed executable is rejected), 5 MB cap, re-encoded as 256×256 JPEG so raw uploads are never served; unit-tested |
+| Profile-photo deletes stay inside `/uploads/profiles` | PASS | `DeleteProfilePhoto` refuses null/foreign/traversal paths; unit-tested |
+| Admin-account guard rails | PASS | Nobody can deactivate their own account; the last active SuperAdmin cannot be deactivated (system stays administrable); unit + e2e tested |
 
 ## 5. Core modules (badminton facility reservation) — PASS
 
@@ -63,6 +66,7 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | M3 Member / Security / Payment | PASS | Commit `fe39018`; registration, lockout, reset, payments, PDF receipt, notifications |
 | M4 Admin / Reports | PASS | Commit `f1457c6`; dashboard, reservation admin, reports + CSV, user admin |
 | Revised spec (P7) | PASS | SuperAdmin/Admin/Member roles, captcha, e-mail verification, Remember Me, system settings, demo mailbox — see §4 and §6 for evidence |
+| Admin & Member Maintenance (P2) | PASS | Profile photos (ImageSharp pipeline, member self-service + admin upload); admin edit of member profiles with e-mail uniqueness; member activity details; SuperAdmin-only admin-account CRUD with guard rails — unit + e2e tested |
 
 ## 6. Additional features — PASS
 
@@ -78,6 +82,8 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | Image captcha (login/register/reset) | Screenshots `05`, `06` show the rendered captcha; `Security:EnableCaptcha` toggles the server check |
 | SuperAdmin system settings + announcement banner | `AdminSettingsController`; screenshot `24`; site name/announcement rendered from `SystemSettings` in the layout |
 | Demo mail inbox (no SMTP) | `AdminEmailsController` + `DemoEmailSender`; screenshot `23`; verification/reset links viewable by admins |
+| Profile photos + avatars | ImageSharp upload pipeline with 256×256 crop; avatars in the navbar dropdown and user tables; screenshots `27`, `28`; e2e T12 |
+| SuperAdmin admin-account CRUD | `AdminAccountsController` (create/edit/reset password/activate/deactivate); screenshots `25`, `26`; e2e T12 |
 
 ## 7. Report — PARTIAL
 
@@ -111,14 +117,14 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| Test project runs in **Visual Studio Test Explorer** | PASS | `BadmintonHub.Tests` (xUnit) in the solution; 64 tests |
-| Unit coverage of business rules | PASS | [docs/TESTING.md](docs/TESTING.md) §2 — passwords, 3-strike lockout, e-mail verification, booking/double-booking/payment/refund, admin transitions, culture switcher, QR, PDF, calendar |
-| Latest run | PASS | `Passed! Failed: 0, Passed: 64` (2026-09-05) |
-| End-to-end evidence | PASS | `tests/e2e.sh` (T1–T11) — HTTP-level checks incl. role matrix, register → verify flow, lockout, antiforgery, receipts |
+| Test project runs in **Visual Studio Test Explorer** | PASS | `BadmintonHub.Tests` (xUnit) in the solution; 88 tests |
+| Unit coverage of business rules | PASS | [docs/TESTING.md](docs/TESTING.md) §2 — passwords, 3-strike lockout, e-mail verification, booking/double-booking/payment/refund, admin transitions, culture switcher, QR, PDF, calendar, photo pipeline, admin-account guard rails |
+| Latest run | PASS | `Passed! Failed: 0, Passed: 88` (2026-09-05) |
+| End-to-end evidence | PASS | `tests/e2e.sh` (T1–T12) — HTTP-level checks incl. role matrix, register → verify flow, lockout, antiforgery, receipts, admin-account CRUD, photo upload |
 
 ## 12. Documentation — PASS
 
-README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.md, TEAM_REPORT.md, AUDIT.md, screenshots (24 captures with re-runnable script).
+README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.md, TEAM_REPORT.md, AUDIT.md, screenshots (28 captures with re-runnable script).
 
 ---
 

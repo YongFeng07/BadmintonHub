@@ -30,5 +30,6 @@
   <data name="FooterAbout" xml:space="preserve"><value>Tentang Kemudahan</value></data>
   <data name="FooterContact" xml:space="preserve"><value>Hubungi</value></data>
   <data name="DropDemoMail" xml:space="preserve"><value>📮 Mel Demo</value></data>
+  <data name="DropAdminAccounts" xml:space="preserve"><value>⚙️ Akaun Admin</value></data>
   <data name="DropSystemSettings" xml:space="preserve"><value>⚙️ Tetapan Sistem</value></data>
 </root>

@@ -48,12 +48,12 @@ and the language switcher.
 
 ---
 
-## 2. Unit test suite (64 tests, all passing)
+## 2. Unit test suite (88 tests, all passing)
 
 Each test class uses a **fresh isolated in-memory database** (`TestDb.Create()`)
 seeded with one facility (open daily 08:00–23:00), one court at RM 25/hour with
-14 days of open availability, and member/admin users whose passwords are real
-PBKDF2 hashes (all seeded users are treated as e-mail-verified).
+14 days of open availability, and member/admin/SuperAdmin users whose passwords
+are real PBKDF2 hashes (all seeded users are treated as e-mail-verified).
 
 | Test class | What it proves | Assignment rubric area |
 |---|---|---|
@@ -67,11 +67,14 @@ PBKDF2 hashes (all seeded users are treated as e-mail-verified).
 | `QrCodeHelperTests` (2) | Output is a valid PNG data URI (magic bytes verified) and content-dependent | QR confirmation code |
 | `ReceiptPdfGeneratorTests` (1) | A paid booking produces a real PDF document (`%PDF` magic bytes) | M3 PDF e-receipt |
 | `CalendarHelperTests` (7) | Monday-first offsets (Sat=5, Sun=6, Mon=0, Tue=1) and culture-aware day headers (en `Mon–Sun`, zh `周一–周日`, ms `Isn–Ahd`) | P6 calendar |
+| `ImageServiceTests` (8) | Null/empty file and >5 MB rejected, unsupported extension rejected, **a renamed non-image is rejected by real-format validation** (decoded format, not the file name), a valid PNG is cropped to **256×256 and re-saved as JPEG** under `/uploads/profiles`, delete removes only managed files (null/foreign/traversal paths are no-ops) | P2 profile-photo pipeline |
+| `AdminAccountsControllerTests` (11) | Create produces an **active, e-mail-verified** admin with a real PBKDF2 hash; duplicate e-mail and weak password rejected on create/edit; password reset sets a working password and clears lockout; weak reset rejected with hash untouched; **guard rails: self-deactivation refused and the last active SuperAdmin cannot be deactivated**; other-admin deactivation works; invalid status error | P2 admin-account maintenance |
+| `AdminUsersControllerTests` (5) | Admin edit of a member profile persists (email uniqueness enforced, duplicate rejected); member Details aggregates reservation counts and **total paid (Paid payments only)**; only member accounts can be deactivated here; photo upload stores the returned path | P2 member maintenance |
 
 ### Latest run evidence
 
 ```
-Passed!  -  Failed: 0, Passed: 64, Skipped: 0, Total: 64
+Passed!  -  Failed: 0, Passed: 88, Skipped: 0, Total: 88
 ```
 (2026-09-05, Debug build, `dotnet test` — the same VSTest engine Visual Studio
 Test Explorer uses.)
@@ -89,7 +92,7 @@ pipeline.
 
 ## 4. End-to-end script (`tests/e2e.sh`)
 
-11 test groups (T1–T11) against a running app. Highlights:
+12 test groups (T1–T12) against a running app. Highlights:
 
 | # | Scenario | Checks |
 |---|---|---|
@@ -104,6 +107,7 @@ pipeline.
 | T9 | Password reset | Forgot-password → token link → reset → new password works |
 | T10 | Notifications | Bell counter, mark-read AJAX |
 | T11 | Chinese calendar | zh-CN month/day headers render correctly |
+| T12 | Admin accounts + member edit + photo (P2) | Only SuperAdmin opens Admin Accounts; creating an admin provisions an account that **logs in immediately**; new admin is blocked from Admin Accounts; **SuperAdmin self-deactivation refused**; admin renames a member (visible in search); member uploads a photo (profile shows and serves it), then removes it |
 
 ---
 

@@ -1,0 +1,66 @@
+@model AdminAccountCreateViewModel
+@{
+    ViewData["Title"] = "New Admin Account";
+    Layout = "_AdminLayout";
+}
+
+<div class="bh-admin-topbar">
+    <h1 class="h3 mb-0">＋ New Admin Account</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Back to admin accounts</a>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="bh-form-section">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+                <div class="mb-3">
+                    <label asp-for="FullName" class="form-label"></label>
+                    <input asp-for="FullName" class="form-control" />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Phone" class="form-label"></label>
+                    <input asp-for="Phone" class="form-control" />
+                    <span asp-validation-for="Phone" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Role" class="form-label"></label>
+                    <select asp-for="Role" class="form-select">
+                        <option value="@Role.Admin">Admin</option>
+                        <option value="@Role.SuperAdmin">SuperAdmin</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ConfirmPassword" class="form-label"></label>
+                        <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-bh">Create Account</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="bh-form-section">
+            <h2 class="h6 mb-3">Notes</h2>
+            <ul class="small text-muted mb-0 ps-3">
+                <li>New admin accounts start <strong>active and email-verified</strong> (provisioned by a SuperAdmin).</li>
+                <li>The password must be at least 8 characters with letters and digits; it is stored only as a PBKDF2 hash.</li>
+                <li>Set a profile photo afterwards on the Edit page.</li>
+                <li>You cannot deactivate your own account, and the last active SuperAdmin is protected.</li>
+            </ul>
+        </div>
+    </div>
+</div>
