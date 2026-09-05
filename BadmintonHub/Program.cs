@@ -17,8 +17,18 @@ builder.Services.AddLocalization(options => options.ResourcesPath = "Resources")
 builder.Services.AddControllersWithViews().AddViewLocalization();
 
 // EF Core Code First against SQL Server Express LocalDB (file-based).
+// The data file is pinned inside the project's App_Data folder: LocalDB's
+// default data location is the user profile and its master registration does
+// not survive every restart — an unpinned database breaks F5 runs with
+// "Cannot create file ... because it already exists". Substituting {DbFile}
+// here means Visual Studio and dotnet run always use the same file.
+var dataDir = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
+Directory.CreateDirectory(dataDir);
+var dbFile = Path.Combine(dataDir, "BadmintonHub.mdf");
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")!
+    .Replace("{DbFile}", dbFile);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(defaultConnection));
 
 // Manual cookie-based authentication (assignment explicitly forbids ASP.NET Core Identity).
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
