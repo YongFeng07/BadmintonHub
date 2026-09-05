@@ -15,7 +15,10 @@ public interface ICheckoutService
     Task<(bool Success, string? Error, List<Reservation> Reservations)> CheckoutAsync(
         int userId, IEnumerable<int> cartItemIds, string? voucherCode);
 
-    /// <summary>Batch payment: pays every selected pending reservation of the member at once.</summary>
+    /// <summary>
+    /// Batch payment: pays every selected pending reservation of the member at once.
+    /// The reference (e.g. a ToyyibPay bill code) is carried onto every payment row.
+    /// </summary>
     Task<(bool Success, string? Error, int PaidCount)> MarkBatchPaidAsync(
-        int userId, IEnumerable<int> reservationIds, PaymentMethod method);
+        int userId, IEnumerable<int> reservationIds, PaymentMethod method, string? reference = null);
 }

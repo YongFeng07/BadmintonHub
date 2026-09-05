@@ -17,17 +17,20 @@ public class CheckoutService : ICheckoutService
     private readonly ICourtService _courts;
     private readonly IVoucherService _vouchers;
     private readonly IReservationService _reservations;
+    private readonly IEmailService _emails;
 
     public CheckoutService(
         ApplicationDbContext db,
         ICourtService courts,
         IVoucherService vouchers,
-        IReservationService reservations)
+        IReservationService reservations,
+        IEmailService emails)
     {
         _db = db;
         _courts = courts;
         _vouchers = vouchers;
         _reservations = reservations;
+        _emails = emails;
     }
 
     public async Task<(bool Success, string? Error, List<CartItem> Items, decimal Subtotal, decimal Discount, decimal NetTotal)> PreviewAsync(
@@ -168,7 +171,7 @@ public class CheckoutService : ICheckoutService
     }
 
     public async Task<(bool Success, string? Error, int PaidCount)> MarkBatchPaidAsync(
-        int userId, IEnumerable<int> reservationIds, PaymentMethod method)
+        int userId, IEnumerable<int> reservationIds, PaymentMethod method, string? reference = null)
     {
         var ids = reservationIds.Distinct().ToList();
         if (ids.Count == 0)
@@ -178,11 +181,12 @@ public class CheckoutService : ICheckoutService
         try
         {
             // Delegates to the single-booking payment rule so both flows stay consistent;
-            // the surrounding transaction makes the batch all-or-nothing.
+            // the surrounding transaction makes the batch all-or-nothing. The reference
+            // (e.g. the ToyyibPay bill code) is carried onto every payment row.
             var paid = 0;
             foreach (var id in ids)
             {
-                var (ok, error) = await _reservations.MarkPaidAsync(id, userId, method, null);
+                var (ok, error) = await _reservations.MarkPaidAsync(id, userId, method, reference);
                 if (!ok)
                 {
                     await transaction.RollbackAsync();
@@ -192,6 +196,16 @@ public class CheckoutService : ICheckoutService
             }
 
             await transaction.CommitAsync();
+
+            // Outbound payment confirmation (demo sender when no SMTP is configured).
+            var user = await _db.Users.FindAsync(userId);
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                await _emails.SendAsync(user.Email,
+                    $"Payment received — {paid} booking(s) confirmed",
+                    EmailTemplates.PaymentConfirmationEmail(user.FullName, paid));
+            }
+
             return (true, null, paid);
         }
         catch

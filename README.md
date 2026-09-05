@@ -72,6 +72,7 @@ screen has data. It further seeds three demo vouchers (`WELCOME10`,
 | Category / Facility Maintenance & Catalog (P3) | YAP SJ | 11-seed facility categories (name-unique, status, unit label, icon, display order); multi-facility CRUD with per-facility opening hours and drag-drop photo manager (800×450, cover photo); courts/availability scoped per facility; public catalog with category/name filters, Top-5 popularity ranking and same-evening low-availability alert; localized facility detail pages |
 | Admin & Member Maintenance (P2) | LIM LI ZHE | Profile photos with real-format validation, 256×256 crop-resize (ImageSharp); member self-service avatar upload/remove; admin edit of member profiles with email uniqueness; member activity details (stats + total paid); SuperAdmin-only admin-account CRUD (create/edit/reset password/activate/deactivate) with guard rails (no self-deactivation, last active SuperAdmin protected) |
 | Booking Cart / Checkout / Wishlist / Vouchers (P4) | WONG YONG FENG | DB-backed booking cart (add, duration update, batch remove, clear) with overlap protection; transactional checkout with voucher discount (percentage/fixed, expiry, redemption limits), server-side re-validation and all-or-nothing batch payment; wishlist for unavailable courts; admin voucher CRUD |
+| ToyyibPay + booking/revenue reports (P5) | Team | ToyyibPay payment gateway as a third checkout method (batch bill → redirect → server-side re-verification before marking paid; simulated mode with a clearly-labelled demo gateway page when no credentials are configured — no secrets committed); payment-confirmation email; member booking insights (monthly bookings, spend by month, category split, cancellation rate) and admin monthly bookings / revenue-by-month / category / cancellation-rate charts |
 | Shared (P6) | Team | Multi-language (en-US / zh-CN / ms-MY) with cookie-based switcher; Monday-first localized calendars |
 | Revised-spec security & roles (P7) | Team | SuperAdmin / Admin / Member roles (Staff removed, demo account migrated); SuperAdmin-only system settings (site name + announcement banner); image captcha on login/register/reset (DNTCaptcha.Core, toggleable via `Security:EnableCaptcha`); email verification flow with 24h hashed tokens, resend and admin manual verify; Remember Me (30-day persistent cookie); demo mail inbox for verification/reset emails when no SMTP is configured |
 
@@ -106,7 +107,11 @@ supplementary end-to-end script (`tests/e2e.sh`).
 - The automated e2e script runs with `Security__EnableCaptcha=false` (the
   captcha is still shown on the UI; only the server-side check is switched
   off so curl can drive the flows — see docs/TESTING.md).
-- Payments are simulated payment-recording flows (no real payment gateway).
+- ToyyibPay runs in **simulated mode** out of the box: the gateway integration
+  (create bill → redirect → verify → mark paid) is real code, but without
+  `ToyyibPay:UserSecretKey`/`CategoryCode` it falls back to a clearly-labelled
+  simulated gateway page. The real-API path needs real credentials and has not
+  been exercised against the live gateway.
 - The seeded placeholder court images are generated SVGs.
 
 ## Documentation

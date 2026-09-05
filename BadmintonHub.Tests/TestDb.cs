@@ -85,3 +85,9 @@ internal static class TestDb
         return user;
     }
 }
+
+/// <summary>Test double for IEmailService: records nothing, sends nothing.</summary>
+internal sealed class NoopEmailSender : IEmailService
+{
+    public Task<bool> SendAsync(string to, string subject, string htmlBody) => Task.FromResult(false);
+}

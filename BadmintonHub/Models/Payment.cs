@@ -31,6 +31,20 @@ public class Payment
     [Display(Name = "Payment Reference")]
     public string? PaymentReference { get; set; }
 
+    /// <summary>
+    /// ToyyibPay bill code (real gateway) or SIM-{guid} for the simulated
+    /// fallback; shared by every payment of one batch bill. Null = not a gateway bill.
+    /// </summary>
+    [StringLength(50)]
+    public string? GatewayBillCode { get; set; }
+
+    /// <summary>
+    /// ToyyibPay status_id echoed from the gateway return ("1" success, "2"
+    /// pending, "3" failed) while the bill is open; null = not a gateway bill.
+    /// </summary>
+    [StringLength(10)]
+    public string? GatewayStatus { get; set; }
+
     [Display(Name = "Paid At")]
     public DateTime? PaidAt { get; set; }
 

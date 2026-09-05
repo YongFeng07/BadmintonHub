@@ -1,5 +1,6 @@
 using BadmintonHub.Data;
 using BadmintonHub.Models;
+using BadmintonHub.Services;
 using BadmintonHub.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -61,7 +62,7 @@ public class AdminReportsController : Controller
             .ToListAsync();
 
         var reservations = await _db.Reservations
-            .Include(r => r.Court)
+            .Include(r => r.Court).ThenInclude(c => c!.Facility).ThenInclude(f => f!.Category)
             .Include(r => r.User)
             .Include(r => r.Payment)
             .Where(r => r.ReservationDate >= fromDate && r.ReservationDate <= toDate)
@@ -76,6 +77,35 @@ public class AdminReportsController : Controller
             AverageBookingValue = reservations.Count > 0 ? Math.Round(reservations.Sum(r => r.TotalAmount) / reservations.Count, 2) : 0m,
             CancellationCount = reservations.Count(r => r.Status == ReservationStatus.Cancelled)
         };
+
+        // Booking/revenue reports (Phase E). The monthly trends are fixed to the
+        // last 12 months (a 14-day range would flatten a monthly chart to one bar);
+        // the category split and cancellation rate follow the selected range.
+        var twelveMonthsAgo = new DateOnly(toDate.Year, toDate.Month, 1).AddMonths(-11);
+        var monthlyReservations = await _db.Reservations
+            .Where(r => r.ReservationDate >= twelveMonthsAgo)
+            .ToListAsync();
+        var (monthLabels, monthlyBookings) = ChartAggregations.MonthlyBookings(monthlyReservations, toDate, 12);
+        model.MonthlyBookingLabels = monthLabels;
+        model.MonthlyBookingData = monthlyBookings;
+
+        var monthlyPayments = await _db.Payments
+            .Where(p => p.Status == PaymentStatus.Paid && p.PaidAt >= twelveMonthsAgo.ToDateTime(TimeOnly.MinValue))
+            .ToListAsync();
+        var (_, monthlyRevenue) = ChartAggregations.MonthlyRevenue(monthlyPayments, toDate, 12);
+        model.MonthlyRevenueLabels = monthLabels;
+        model.MonthlyRevenueData = monthlyRevenue;
+
+        var (categoryLabels, categoryData) = ChartAggregations.ByCategory(reservations);
+        model.CategoryLabels = categoryLabels;
+        model.CategoryData = categoryData;
+
+        var (cancelledTotal, completedTotal, activeTotal, rate) =
+            ChartAggregations.CancellationSummary(reservations);
+        model.CancelledTotal = cancelledTotal;
+        model.CompletedTotal = completedTotal;
+        model.ActiveTotal = activeTotal;
+        model.CancellationRate = rate;
 
         // Daily revenue series.
         var revenueByDay = payments

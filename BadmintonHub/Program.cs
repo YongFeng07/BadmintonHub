@@ -78,6 +78,17 @@ builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 
+// ToyyibPay gateway: config is bound from the "ToyyibPay" section whose key
+// fields are EMPTY PLACEHOLDERS — with no credentials the service runs its
+// simulated fallback so the flow is demonstrable without a real account.
+builder.Services.AddSingleton(sp =>
+{
+    var options = new ToyyibPayOptions();
+    sp.GetRequiredService<IConfiguration>().GetSection("ToyyibPay").Bind(options);
+    return options;
+});
+builder.Services.AddScoped<IToyyibPayService, ToyyibPayService>();
+
 // Outbound email: real SMTP (MailKit) only when Email:Smtp:Host is configured —
 // otherwise a demo fallback captures the mail in-app so the assignment demo works
 // without committing any real credentials (see README).

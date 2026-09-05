@@ -103,14 +103,14 @@ public class ReservationsController : Controller
 
         var view = new MyReservationsViewModel
         {
-            Tab = tab is "completed" or "cancelled" ? tab : "upcoming",
+            Tab = tab is "completed" or "cancelled" or "insights" ? tab : "upcoming",
             FilterDate = date,
             Year = (date ?? today).Year,
             Month = (date ?? today).Month
         };
 
         var query = _db.Reservations
-            .Include(r => r.Court)
+            .Include(r => r.Court).ThenInclude(c => c!.Facility).ThenInclude(f => f!.Category)
             .Include(r => r.Payment)
             .Where(r => r.UserId == userId);
 
@@ -128,6 +128,29 @@ public class ReservationsController : Controller
         view.Cancelled = all
             .Where(r => r.Status is ReservationStatus.Cancelled or ReservationStatus.Rejected)
             .OrderByDescending(r => r.CancelledAt ?? r.UpdatedAt).ToList();
+
+        // Booking insights (Phase E): monthly bookings/spend, category split and
+        // cancellation summary — computed from the member's full history.
+        var (monthLabels, monthlyBookings) = ChartAggregations.MonthlyBookings(all, today, 6);
+        view.InsightMonthLabels = monthLabels;
+        view.InsightMonthlyBookings = monthlyBookings;
+
+        var paidPayments = all
+            .Where(r => r.Payment?.Status == PaymentStatus.Paid && r.Payment.PaidAt.HasValue)
+            .Select(r => r.Payment!)
+            .ToList();
+        var (_, monthlySpend) = ChartAggregations.MonthlyRevenue(paidPayments, today, 6);
+        view.InsightMonthlySpend = monthlySpend;
+
+        var (categoryLabels, categoryCounts) = ChartAggregations.ByCategory(all);
+        view.InsightCategoryLabels = categoryLabels;
+        view.InsightCategoryCounts = categoryCounts;
+
+        var (cancelled, completed, active, rate) = ChartAggregations.CancellationSummary(all);
+        view.InsightCancelled = cancelled;
+        view.InsightCompleted = completed;
+        view.InsightActive = active;
+        view.InsightCancellationRate = rate;
 
         // Interactive calendar: own reservations per day in the displayed month.
         var monthStart = new DateOnly(view.Year, view.Month, 1);

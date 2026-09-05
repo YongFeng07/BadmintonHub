@@ -56,7 +56,8 @@ public enum PaymentMethod
 {
     Cash,
     OnlineTransfer,
-    Card
+    Card,
+    ToyyibPay
 }
 
 public enum PaymentStatus
