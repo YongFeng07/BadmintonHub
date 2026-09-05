@@ -17,6 +17,14 @@
     var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
     if (int.TryParse(idClaim, out var currentUserId))
         currentPhotoUrl = await Db.Users.Where(u => u.Id == currentUserId).Select(u => u.PhotoUrl).FirstOrDefaultAsync();
+    // Cart / wishlist navbar badge counts (revised spec) — read fresh per render.
+    var cartCount = 0;
+    var wishlistCount = 0;
+    if (int.TryParse(idClaim, out var layoutUserId) && User.Identity?.IsAuthenticated == true)
+    {
+        cartCount = await Db.CartItems.CountAsync(i => i.UserId == layoutUserId);
+        wishlistCount = await Db.WishlistItems.CountAsync(w => w.UserId == layoutUserId);
+    }
     var currentInitials = string.Concat((currentUserName ?? "?")
         .Split(' ', StringSplitOptions.RemoveEmptyEntries)
         .Select(w => char.ToUpperInvariant(w[0]))
@@ -72,6 +80,24 @@
                                 <a class="btn btn-bh-amber btn-sm px-3" asp-controller="Reservations" asp-action="Create">@Localizer["NavBook"]</a>
                             </li>
                             <li class="nav-item me-lg-2 mt-1 mt-lg-0">
+                                <a class="nav-link position-relative py-lg-0" asp-controller="Cart" asp-action="Index" title="Cart">
+                                    @Localizer["NavCart"]
+                                    @if (cartCount > 0)
+                                    {
+                                        <span class="badge rounded-pill bg-warning text-dark position-absolute top-0 start-100 translate-middle">@cartCount</span>
+                                    }
+                                </a>
+                            </li>
+                            <li class="nav-item me-lg-2 mt-1 mt-lg-0">
+                                <a class="nav-link position-relative py-lg-0" asp-controller="Wishlist" asp-action="Index" title="Wishlist">
+                                    @Localizer["NavWishlist"]
+                                    @if (wishlistCount > 0)
+                                    {
+                                        <span class="badge rounded-pill bg-warning text-dark position-absolute top-0 start-100 translate-middle">@wishlistCount</span>
+                                    }
+                                </a>
+                            </li>
+                            <li class="nav-item me-lg-2 mt-1 mt-lg-0">
                                 @await Component.InvokeAsync("NotificationBell")
                             </li>
                             <li class="nav-item dropdown">
@@ -88,6 +114,8 @@
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end bh-dropdown">
                                     <li><a class="dropdown-item" asp-controller="Reservations" asp-action="MyReservations">@Localizer["DropMyReservations"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Cart" asp-action="Index">@Localizer["DropCart"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Wishlist" asp-action="Index">@Localizer["DropWishlist"]</a></li>
                                     <li><a class="dropdown-item" asp-controller="Payments" asp-action="Index">@Localizer["DropPayments"]</a></li>
                                     <li><a class="dropdown-item" asp-controller="Notifications" asp-action="Index">@Localizer["DropNotifications"]</a></li>
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">@Localizer["DropProfile"]</a></li>
@@ -99,6 +127,7 @@
                                         <li><a class="dropdown-item" asp-controller="AdminCourts" asp-action="Index">@Localizer["DropManageCourts"]</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminAvailability" asp-action="Index">@Localizer["DropManageAvailability"]</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminReports" asp-action="Index">@Localizer["DropReports"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminVouchers" asp-action="Index">@Localizer["DropVouchers"]</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminFacility" asp-action="Index">@Localizer["DropFacilitySettings"]</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminUsers" asp-action="Index">@Localizer["DropUserAccounts"]</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminEmails" asp-action="Index">@Localizer["DropDemoMail"]</a></li>

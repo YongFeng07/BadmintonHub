@@ -12,7 +12,7 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| ASP.NET Core **MVC** (not Razor Pages / React / other backends) | PASS | `BadmintonHub/` classic MVC layout: Controllers/ Views/ Models/ Services/ Data/; 15 controllers in [Controllers/](BadmintonHub/Controllers/) |
+| ASP.NET Core **MVC** (not Razor Pages / React / other backends) | PASS | `BadmintonHub/` classic MVC layout: Controllers/ Views/ Models/ Services/ Data/; 23 controllers in [Controllers/](BadmintonHub/Controllers/) |
 | .NET 10 | PASS | `BadmintonHub/BadmintonHub.csproj` targets `net10.0` |
 | Layered structure | PASS | Business rules isolated in [Services/](BadmintonHub/Services/) (`ReservationService`, `AuthService`, `CourtService`…), EF in [Data/](BadmintonHub/Data/), presentation in Views + ViewModels |
 | Classic solution, Visual Studio workflow | PASS | [BadmintonHub.sln](BadmintonHub.sln) builds in VS 2022 17.14+/2026; F5 verified (see Build) |
@@ -53,6 +53,8 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | Password reset tokens hashed, single-use, 30 min | PASS | `PasswordResetToken.TokenHash` (raw token never stored); e2e T9 |
 | Antiforgery tokens on all POSTs | PASS | `[ValidateAntiForgeryToken]` on state-changing actions; e2e drives real tokens |
 | Open-redirect guard on language switcher | PASS | `Url.IsLocalUrl` in [CultureController.cs](BadmintonHub/Controllers/CultureController.cs); unit-tested |
+| Open-redirect guard on wishlist return URL | PASS | `WishlistController.Add` honours only `Url.IsLocalUrl(returnUrl)` values and falls back to the wishlist index otherwise; unit + e2e tested |
+| Checkout resource ownership | PASS | `CheckoutComplete` refuses reservation ids owned by another user (Forbid); checkout re-validates every line server-side in a transaction; voucher usage is incremented inside the same transaction |
 | Uploaded images validated by decoded format | PASS | [ImageService.cs](BadmintonHub/Services/ImageService.cs) decodes with ImageSharp and trusts the *decoded* format (a renamed executable is rejected), 5 MB cap, re-encoded as 256×256 JPEG so raw uploads are never served; unit-tested |
 | Profile-photo deletes stay inside `/uploads/profiles` | PASS | `DeleteProfilePhoto` refuses null/foreign/traversal paths; unit-tested |
 | Admin-account guard rails | PASS | Nobody can deactivate their own account; the last active SuperAdmin cannot be deactivated (system stays administrable); unit + e2e tested |
@@ -68,6 +70,7 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | Revised spec (P7) | PASS | SuperAdmin/Admin/Member roles, captcha, e-mail verification, Remember Me, system settings, demo mailbox — see §4 and §6 for evidence |
 | Admin & Member Maintenance (P2) | PASS | Profile photos (ImageSharp pipeline, member self-service + admin upload); admin edit of member profiles with e-mail uniqueness; member activity details; SuperAdmin-only admin-account CRUD with guard rails — unit + e2e tested |
 | Category / Facility Maintenance & Catalog (P3) | PASS | `Category` + `FacilityPhoto` entities (migration `P3_CategoryAndFacilityPhotos`); 11 seeded categories; 6 facilities with per-facility hours and photo manager (800×450, cover); category + facility delete guards; public catalog with filters, Top-5 ranking and low-availability alert; `CatalogServiceTests` / `AdminCategoriesControllerTests` / `AdminFacilityControllerTests` + e2e T13 |
+| Booking Cart + Checkout + Wishlist + Vouchers (P4) | PASS | `CartItem` (unique user/court/date/start), `WishlistItem`, `Voucher` + reservation discount fields (migration `P4_CartWishlistVoucher`); DB-backed cart with duration update, batch remove/clear and owner scoping; checkout creates pending reservations + payments in one transaction with server-side re-validation and rollback; discount split proportionally (last line absorbs rounding remainder); **all-or-nothing batch payment**; single-use redemption limits; wishlist entry point on unavailable courts with local-return-url guard; admin voucher CRUD with duplicate-code rejection; `CartServiceTests` / `CheckoutServiceTests` / `VoucherServiceTests` / `WishlistServiceTests` + controller tests + e2e T14–T17 |
 
 ## 6. Additional features — PASS
 
@@ -88,6 +91,10 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | Facility category maintenance | `AdminCategoriesController` (CRUD, name-unique, delete guard); screenshots `30`, `31`; e2e T13 |
 | Multi-facility + photo manager | `AdminFacilityController` (6 seeded facilities, per-facility hours, 800×450 photo gallery); screenshots `32`, `33`; e2e T13 |
 | Public facility catalog | `CatalogController` + `CatalogService` (chips, search, Top-5 badge, 19:00 low-availability alert, localized details); screenshots `04`, `29`; e2e T13 |
+| Booking cart | `CartController` + `CartService` — add to cart, duration update, batch remove, clear, running subtotal; screenshots `34`; e2e T14 |
+| Checkout with voucher + batch payment | `CheckoutService` — transactional checkout, voucher discount on the payment page, pay all selected reservations at once; screenshot `35`; e2e T15 |
+| Wishlist for unavailable courts | `WishlistController` — "Currently unavailable — Add to Wishlist" on court details, wishlist grid, per-user removal; screenshot `36`; e2e T17 |
+| Voucher administration | `AdminVouchersController` — CRUD with code normalisation, duplicate rejection, expiry/limit/percentage-fixed options, usage counters; screenshots `37`, `38`; e2e T16 |
 
 ## 7. Report — PARTIAL
 
@@ -100,7 +107,7 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| Per-module ownership evidence | PASS | Feature branches at each module completion: `feature/member1-court` (`29cbace`), `feature/member2-reservation` (`ddd4a92`), `feature/member3-member` (`fe39018`), `feature/member4-admin` (`f1457c6`) |
+| Per-module ownership evidence | PASS | Feature branches at each module completion: `feature/member1-court` (`29cbace`), `feature/member2-reservation` (`ddd4a92`), `feature/member3-member` (`fe39018`), `feature/member4-admin` (`f1457c6`), `feature/p4-booking-cart-wishlist-voucher` |
 
 ## 9. Build — PASS
 
@@ -121,14 +128,14 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| Test project runs in **Visual Studio Test Explorer** | PASS | `BadmintonHub.Tests` (xUnit) in the solution; 113 tests |
-| Unit coverage of business rules | PASS | [docs/TESTING.md](docs/TESTING.md) §2 — passwords, 3-strike lockout, e-mail verification, booking/double-booking/payment/refund, admin transitions, culture switcher, QR, PDF, calendar, photo pipeline, admin-account guard rails, catalog service (filters/top-5/low-availability), category + facility maintenance CRUD with delete guards |
-| Latest run | PASS | `Passed! Failed: 0, Passed: 113` (2026-09-05) |
-| End-to-end evidence | PASS | `tests/e2e.sh` (T1–T13) — HTTP-level checks incl. role matrix, register → verify flow, lockout, antiforgery, receipts, admin-account CRUD, photo upload, catalog filters + Top-5 badge + low-availability alert, category/facility CRUD + delete guards |
+| Test project runs in **Visual Studio Test Explorer** | PASS | `BadmintonHub.Tests` (xUnit) in the solution; 193 tests |
+| Unit coverage of business rules | PASS | [docs/TESTING.md](docs/TESTING.md) §2 — passwords, 3-strike lockout, e-mail verification, booking/double-booking/payment/refund, admin transitions, culture switcher, QR, PDF, calendar, photo pipeline, admin-account guard rails, catalog service (filters/top-5/low-availability), category + facility maintenance CRUD with delete guards, cart service (overlap/owner scoping), checkout (transaction, proportional discount split, batch payment, re-validation rollback), voucher validation + limits, wishlist (open-redirect guard, owner scoping) |
+| Latest run | PASS | `Passed! Failed: 0, Passed: 193` (2026-09-06) |
+| End-to-end evidence | PASS | `tests/e2e.sh` (T1–T17) — HTTP-level checks incl. role matrix, register → verify flow, lockout, antiforgery, receipts, admin-account CRUD, photo upload, catalog filters + Top-5 badge + low-availability alert, category/facility CRUD + delete guards, cart arithmetic + batch remove, checkout with WELCOME10 + batch payment, voucher admin CRUD + single-use limits, wishlist round trip |
 
 ## 12. Documentation — PASS
 
-README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.md, TEAM_REPORT.md, AUDIT.md, screenshots (33 captures with re-runnable script).
+README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.md, TEAM_REPORT.md, AUDIT.md, screenshots (38 captures with re-runnable script).
 
 ---
 

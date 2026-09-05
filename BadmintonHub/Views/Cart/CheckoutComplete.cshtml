@@ -1,0 +1,102 @@
+@model CheckoutPaymentViewModel
+@{
+    ViewData["Title"] = "Checkout — Payment";
+}
+<link rel="stylesheet" href="~/css/reservations.css" asp-append-version="true" />
+
+<div class="mt-3">
+    <h1 class="h3 mb-1">💳 Complete Your Checkout</h1>
+    <p class="text-muted">
+        @Model.Reservations.Count booking(s) created from your cart. Pay them all at once to confirm.
+    </p>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="bh-form-section">
+                <h2 class="h6 text-uppercase text-muted mb-3">Booking summary</h2>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Court</th>
+                                <th>Date &amp; Time</th>
+                                <th class="text-end">Gross</th>
+                                <th class="text-end">Discount</th>
+                                <th class="text-end">Net</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model.Reservations)
+                            {
+                                <tr>
+                                    <td class="text-nowrap"><strong>@r.ReservationReference</strong></td>
+                                    <td>Court @r.Court?.CourtNumber</td>
+                                    <td class="small text-nowrap">
+                                        @r.ReservationDate.ToString("dd MMM yyyy")<br />
+                                        @r.StartTime.ToString("HH:mm") – @r.EndTime.ToString("HH:mm")
+                                    </td>
+                                    <td class="text-end">RM @r.TotalAmount.ToString("0.00")</td>
+                                    <td class="text-end @(r.DiscountAmount > 0 ? "text-danger fw-bold" : "text-muted")">
+                                        @(r.DiscountAmount > 0 ? "−RM " + r.DiscountAmount.ToString("0.00") : "—")
+                                    </td>
+                                    <td class="text-end fw-bold text-bh-green">
+                                        RM @(r.Payment?.Amount.ToString("0.00") ?? "0.00")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="text-end fw-bold">Total Due</td>
+                                <td class="text-end fw-bold text-bh-green">RM @Model.TotalDue.ToString("0.00")</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                @if (Model.Reservations.Any(r => r.DiscountAmount > 0))
+                {
+                    var saved = Model.Reservations.Sum(r => r.DiscountAmount);
+                    <div class="alert alert-success py-2 small mt-3 mb-0">
+                        🎉 Voucher <strong>@Model.Reservations.First(r => r.DiscountAmount > 0).VoucherCode</strong>
+                        applied — you saved <strong>RM @saved.ToString("0.00")</strong>!
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="bh-form-section">
+                <form asp-action="CheckoutComplete" method="post">
+                    @foreach (var id in Model.ReservationIds)
+                    {
+                        <input type="hidden" name="ReservationIds" value="@id" />
+                    }
+                    <h2 class="h6 text-uppercase text-muted mb-2">Payment method</h2>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="Method"
+                                   value="@PaymentMethod.OnlineTransfer" id="method_OnlineTransfer"
+                                   checked="@(Model.Method == PaymentMethod.OnlineTransfer ? "checked" : null)" />
+                            <label class="form-check-label" for="method_OnlineTransfer">🏦 Online Transfer</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="Method"
+                                   value="@PaymentMethod.Card" id="method_Card"
+                                   checked="@(Model.Method == PaymentMethod.Card ? "checked" : null)" />
+                            <label class="form-check-label" for="method_Card">💳 Card</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-bh w-100">
+                        Pay All — RM @Model.TotalDue.ToString("0.00")
+                    </button>
+                    <a asp-controller="Reservations" asp-action="MyReservations"
+                       class="btn btn-outline-secondary w-100 mt-2">Pay Later</a>
+                </form>
+                <p class="small text-muted mt-3 mb-0">
+                    ⚠️ Demo payment simulation — no real money changes hands.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

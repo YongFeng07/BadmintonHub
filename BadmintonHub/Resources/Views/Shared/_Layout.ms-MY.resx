@@ -32,4 +32,9 @@
   <data name="DropDemoMail" xml:space="preserve"><value>📮 Mel Demo</value></data>
   <data name="DropAdminAccounts" xml:space="preserve"><value>⚙️ Akaun Admin</value></data>
   <data name="DropSystemSettings" xml:space="preserve"><value>⚙️ Tetapan Sistem</value></data>
+  <data name="NavCart" xml:space="preserve"><value>🛒 Troli</value></data>
+  <data name="NavWishlist" xml:space="preserve"><value>❤️ Senarai Hajat</value></data>
+  <data name="DropCart" xml:space="preserve"><value>🛒 Troli Saya</value></data>
+  <data name="DropWishlist" xml:space="preserve"><value>❤️ Senarai Hajat Saya</value></data>
+  <data name="DropVouchers" xml:space="preserve"><value>🎟️ Baucar</value></data>
 </root>

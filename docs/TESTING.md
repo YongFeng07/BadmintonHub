@@ -48,7 +48,7 @@ and the language switcher.
 
 ---
 
-## 2. Unit test suite (113 tests, all passing)
+## 2. Unit test suite (193 tests, all passing)
 
 Each test class uses a **fresh isolated in-memory database** (`TestDb.Create()`)
 seeded with one facility (open daily 08:00–23:00), one court at RM 25/hour with
@@ -73,13 +73,20 @@ are real PBKDF2 hashes (all seeded users are treated as e-mail-verified).
 | `AdminFacilityControllerTests` (7) | Facilities listed with category; create persists category + weekday-ordered operating days; **invalid category rejected**; edit updates settings; **delete blocked while the facility owns courts**; delete removes the facility, its photo rows and deletes the photo files via the image service; first uploaded photo becomes the cover | P3 facility maintenance |
 | `AdminAccountsControllerTests` (11) | Create produces an **active, e-mail-verified** admin with a real PBKDF2 hash; duplicate e-mail and weak password rejected on create/edit; password reset sets a working password and clears lockout; weak reset rejected with hash untouched; **guard rails: self-deactivation refused and the last active SuperAdmin cannot be deactivated**; other-admin deactivation works; invalid status error | P2 admin-account maintenance |
 | `AdminUsersControllerTests` (5) | Admin edit of a member profile persists (email uniqueness enforced, duplicate rejected); member Details aggregates reservation counts and **total paid (Paid payments only)**; only member accounts can be deactivated here; photo upload stores the returned path | P2 member maintenance |
+| `CartServiceTests` (13) | Add persists with the court's current hourly rate; **duplicate line and overlap against the user's own cart lines rejected** (friendly error, cart untouched); slot outside the open-availability window rejected; invalid duration rejected (parameterised 1–4 rule); update persists or rolls back on overlap; remove / batch-remove / clear are **scoped to the owner**; count is per-user | P4 booking cart |
+| `VoucherServiceTests` (15) | Code normalised to uppercase on create; duplicate code rejected (create and edit); edit changes only editable fields; **validate refuses blank / unknown / inactive / expired / limit-reached / zero-subtotal**; percentage discount computed; **fixed amount capped so the net total stays positive**; list ordered newest-first | P4 vouchers |
+| `CheckoutServiceTests` (14) | Preview computes subtotal and voucher discount; checkout **creates pending reservations + pending payments in one transaction and clears the cart**; discount **split proportionally with the last line absorbing the rounding remainder**; invalid voucher fails and keeps the cart; **server-side re-validation against newly-created bookings (rolls back)**; tampered overlapping cart lines rejected; another user's item ids refused; **voucher usage incremented once and a second use refused**; batch payment confirms all reservations at once, one-already-paid fails the whole batch | P4 checkout + batch payment |
+| `CartControllerTests` (14) | Add → cart redirect with flash, invalid model → booking page, overlap error keeps the cart; update/remove/batch-remove/clear flow with owner-scoped removal; checkout redirects to the payment step and mentions the savings flash; **CheckoutComplete forbids another user's reservation ids**; POST payment marks Confirmed/Paid and lands on the Paid page | P4 cart UI flow |
+| `WishlistServiceTests` (8) | Idempotent adds with friendly duplicate error; unknown court fails; ownership-scoped remove; count per user; items include court + facility for the card grid | P4 wishlist |
+| `WishlistControllerTests` (6) | Add honours a **local** return URL and **ignores an external one (open-redirect guard)**; duplicate/unknown-court flashes; remove scoped to the owner | P4 wishlist + security |
+| `AdminVouchersControllerTests` (9) | Index newest-first; create normalises and redirects; duplicate code shown as a model error; edit updates editable fields; **edit colliding with another voucher's code rejected**; delete removes with flash; unknown ids → NotFound | P4 voucher administration |
 
 ### Latest run evidence
 
 ```
-Passed!  -  Failed: 0, Passed: 113, Skipped: 0, Total: 113
+Passed!  -  Failed: 0, Passed: 193, Skipped: 0, Total: 193
 ```
-(2026-09-05, Debug build, `dotnet test` — the same VSTest engine Visual Studio
+(2026-09-06, Debug build, `dotnet test` — the same VSTest engine Visual Studio
 Test Explorer uses.)
 
 ---
@@ -95,7 +102,7 @@ pipeline.
 
 ## 4. End-to-end script (`tests/e2e.sh`)
 
-13 test groups (T1–T13) against a running app. Highlights:
+17 test groups (T1–T17) against a running app. Highlights:
 
 | # | Scenario | Checks |
 |---|---|---|
@@ -112,6 +119,10 @@ pipeline.
 | T11 | Chinese calendar | zh-CN month/day headers render correctly |
 | T12 | Admin accounts + member edit + photo (P2) | Only SuperAdmin opens Admin Accounts; creating an admin provisions an account that **logs in immediately**; new admin is blocked from Admin Accounts; **SuperAdmin self-deactivation refused**; admin renames a member (visible in search); member uploads a photo (profile shows and serves it), then removes it |
 | T13 | Category/facility maintenance + catalog (P3) | Catalog lists seeded facilities with the **Top-5 badge**; category-chip filter and name search narrow results; facility detail page links its units and photos; booking two table-tennis slots for tonight makes the **low-availability alert appear**; admin creates/edits a category and a facility in it (court 99 included); facility photo upload is listed and served; **delete guards: category blocked while it owns a facility, facility blocked while it owns courts**; cleanup deletes court → facility → category in dependency order |
+| T14 | Booking cart (P4) | Two lines on one court; **subtotal equals the page's own line prices**; duration update re-prices (**line = 2×, subtotal = 3×**); batch-remove both selected lines → "2 item(s) removed" + empty-cart state |
+| T15 | Checkout + batch payment (P4) | Checkout with `WELCOME10` redirects to the payment step; **total due = subtotal − round(10%)**; batch payment (two reservations, one transaction) lands on the paid page with both `BH-` references Confirmed |
+| T16 | Voucher administration (P4) | Role guards on admin vouchers; seeded list; admin creates a **limit-1 voucher**; duplicate code refused; member redeems once (redirect), **second redemption refused with "reached its redemption limit" and the cart line kept**; usage column shows **1 / 1** + limit-reached badge; edit and delete; deleted voucher really gone from the index (edit link asserted, not the flash text) |
+| T17 | Wishlist (P4) | Admin creates an **Unavailable** court; its detail page shows "Currently unavailable" + **Add to Wishlist**; add returns to the detail page (local return URL honoured — the suite fixes Git Bash path-mangling of `returnUrl=` so `Url.IsLocalUrl` sees the real value); detail page flips to the in-wishlist state; wishlist page lists the new court plus the **seeded demo rows**; removing the user's item leaves the seeded rows intact; cleanup deletes the court |
 
 ---
 
@@ -122,7 +133,9 @@ pipeline.
 - `e2e.sh` creates only throwaway accounts (`e2e.<timestamp>@example.com`),
   categories, facilities and courts (deleted again at the end of T13 in
   dependency order); it also books two table-tennis slots for tonight to make
-  the low-availability alert deterministic.
+  the low-availability alert deterministic. T16 creates and deletes a
+  limit-1 voucher (`E2ELIMIT1`), and T17 creates and deletes the unavailable
+  court used for the wishlist round trip.
 - The seeded database contains **demo accounts only** (see README); no real
   credentials exist anywhere in the repository (verified by secret scan in
   `docs/AUDIT.md`).

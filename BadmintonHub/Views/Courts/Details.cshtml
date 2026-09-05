@@ -95,8 +95,30 @@
             <hr />
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <a asp-controller="Reservations" asp-action="Create" asp-route-courtId="@Model.Id"
-                   asp-route-date="@today.ToString("yyyy-MM-dd")" class="btn btn-bh w-100">Book This Court</a>
+                @if (Model.Status == CourtStatus.Available)
+                {
+                    <a asp-controller="Reservations" asp-action="Create" asp-route-courtId="@Model.Id"
+                       asp-route-date="@today.ToString("yyyy-MM-dd")" class="btn btn-bh w-100">Book This Court</a>
+                }
+                else
+                {
+                    <div class="alert alert-warning py-2 small mb-2">
+                        ⚠️ Currently unavailable — add it to your wishlist and book it as soon as it opens up.
+                    </div>
+                }
+
+                <form asp-controller="Wishlist" asp-action="Add" method="post" class="mt-2">
+                    <input type="hidden" name="courtId" value="@Model.Id" />
+                    <input type="hidden" name="returnUrl" value="@Context.Request.GetEncodedPathAndQuery()" />
+                    @if (ViewBag.IsWishlisted == true)
+                    {
+                        <button type="submit" class="btn btn-outline-secondary w-100" disabled>♥ In Your Wishlist</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-outline-danger w-100">♡ Add to Wishlist</button>
+                    }
+                </form>
             }
             else
             {

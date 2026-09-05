@@ -2,6 +2,7 @@ using BadmintonHub.Data;
 using BadmintonHub.Models;
 using BadmintonHub.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace BadmintonHub.Tests;
 
@@ -16,6 +17,9 @@ internal static class TestDb
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase($"test-{Guid.NewGuid()}")
+            // Checkout tests exercise the transactional path; the InMemory store has no
+            // transactions, so silence the provider's "transaction ignored" throw.
+            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
         var db = new ApplicationDbContext(options);
 

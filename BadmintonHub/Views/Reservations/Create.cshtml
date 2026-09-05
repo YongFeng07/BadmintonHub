@@ -74,6 +74,11 @@
                         <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
                     </div>
                     <button type="submit" class="btn btn-bh w-100" id="submitBtn" disabled>Confirm Reservation</button>
+                    <button type="submit" class="btn btn-outline-success w-100 mt-2" id="addToCartBtn" disabled
+                            formaction="@Url.Action("AddItem", "Cart")">🛒 Add to Cart</button>
+                    <div class="small text-muted mt-2 text-center">
+                        Add to Cart keeps the slot while you continue browsing — pay for everything at checkout.
+                    </div>
                 </div>
             </div>
         </div>

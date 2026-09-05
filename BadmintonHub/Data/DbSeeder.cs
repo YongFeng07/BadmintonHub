@@ -19,10 +19,12 @@ public static class DbSeeder
         // Demo accounts and system settings are kept in sync on every start (idempotent by
         // email/key), so databases created before the revised-spec roles pick up the new
         // SuperAdmin account without a reseed. Categories are upserted by name so databases
-        // created before the P3 migration converge to the full 11-category set.
+        // created before the P3 migration converge to the full 11-category set; demo vouchers
+        // are upserted by code for the same reason.
         EnsureDemoUsers(db, now);
         EnsureSystemSettings(db);
         EnsureCategories(db);
+        EnsureVouchers(db);
 
         if (db.Facilities.Any()) return;
 
@@ -423,6 +425,18 @@ public static class DbSeeder
             CreatedAt = now.AddDays(-1)
         });
 
+        // ---------- 9. Wishlist demo (revised spec) ----------
+        // member@ keeps two courts on the wishlist — squash "02" (already booked by this
+        // member for tomorrow) and the gym cardio station. Idempotent by (UserId, CourtId).
+        var wishlistOwner = MemberByEmail("member@badmintonhub.my");
+        foreach (var wishCourt in new[] { CourtOf(squash, "02"), CourtOf(gym, "02") })
+        {
+            if (!db.WishlistItems.Any(w => w.UserId == wishlistOwner.Id && w.CourtId == wishCourt.Id))
+            {
+                db.WishlistItems.Add(new WishlistItem { UserId = wishlistOwner.Id, CourtId = wishCourt.Id });
+            }
+        }
+
         db.SaveChanges();
     }
 
@@ -530,6 +544,39 @@ public static class DbSeeder
 
         AddSetting("SiteName", "BadmintonHub");
         AddSetting("SiteAnnouncement", "New season — book your court today! Open daily 8:00 AM to 11:00 PM.");
+        db.SaveChanges();
+    }
+
+    // ---------- Idempotent demo vouchers (upserted by code) ----------
+
+    /// <summary>
+    /// Checkout discount vouchers for the revised spec. Idempotent by code so pre-P4
+    /// databases converge on every start. EXPIRED exists on purpose: it demonstrates
+    /// the expiry validation in the checkout flow.
+    /// </summary>
+    private static void EnsureVouchers(ApplicationDbContext db)
+    {
+        var specs = new (string Code, string Desc, DiscountType Type, decimal Value, int DaysValid, int? Limit)[]
+        {
+            ("WELCOME10", "10% off your first checkout (demo voucher)", DiscountType.Percentage, 10m, 60, null),
+            ("STUDENT5", "RM 5 off any booking cart (demo voucher, 50 redemptions)", DiscountType.FixedAmount, 5m, 30, 50),
+            ("EXPIRED", "Expired demo voucher — used to demonstrate expiry validation", DiscountType.Percentage, 20m, -1, null)
+        };
+
+        foreach (var (code, desc, type, value, daysValid, limit) in specs)
+        {
+            if (db.Vouchers.Any(v => v.Code == code)) continue;
+            db.Vouchers.Add(new Voucher
+            {
+                Code = code,
+                Description = desc,
+                DiscountType = type,
+                DiscountValue = value,
+                ExpiryDate = DateOnly.FromDateTime(DateTime.Today).AddDays(daysValid),
+                UsageLimit = limit,
+                Status = VoucherStatus.Active
+            });
+        }
         db.SaveChanges();
     }
 

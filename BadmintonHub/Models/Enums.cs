@@ -87,3 +87,16 @@ public enum CategoryStatus
     Active,
     Inactive
 }
+
+/// <summary>How a discount voucher reduces the cart total (revised spec checkout).</summary>
+public enum DiscountType
+{
+    Percentage,
+    FixedAmount
+}
+
+public enum VoucherStatus
+{
+    Active,
+    Inactive
+}

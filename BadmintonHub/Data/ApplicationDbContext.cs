@@ -26,6 +26,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<LoginAttempt> LoginAttempts => Set<LoginAttempt>();
     public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
     public DbSet<DemoEmail> DemoEmails => Set<DemoEmail>();
+    public DbSet<CartItem> CartItems => Set<CartItem>();
+    public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
+    public DbSet<Voucher> Vouchers => Set<Voucher>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -85,5 +88,31 @@ public class ApplicationDbContext : DbContext
             .WithMany(u => u.Payments)
             .HasForeignKey(p => p.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Cart and wishlist lines are ephemeral member data: they die with the court,
+        // and (like every other user row) are restricted from the user side.
+        modelBuilder.Entity<CartItem>()
+            .HasOne(i => i.User)
+            .WithMany(u => u.CartItems)
+            .HasForeignKey(i => i.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CartItem>()
+            .HasOne(i => i.Court)
+            .WithMany()
+            .HasForeignKey(i => i.CourtId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<WishlistItem>()
+            .HasOne(i => i.User)
+            .WithMany(u => u.WishlistItems)
+            .HasForeignKey(i => i.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<WishlistItem>()
+            .HasOne(i => i.Court)
+            .WithMany()
+            .HasForeignKey(i => i.CourtId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

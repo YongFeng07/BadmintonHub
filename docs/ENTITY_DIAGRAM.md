@@ -1,6 +1,6 @@
 # BadmintonHub — Entity Class Diagram
 
-13 entities + 9 enums, EF Core Code First (Data Annotations). Generated from
+16 entities + 11 enums, EF Core Code First (Data Annotations). Generated from
 the actual `BadmintonHub/Models/*.cs` sources, not from a tool — the diagram
 below is the authoritative shape of the schema.
 
@@ -87,10 +87,39 @@ classDiagram
         TimeOnly EndTime
         decimal DurationHours
         decimal TotalAmount
+        decimal DiscountAmount
+        string? VoucherCode
         ReservationStatus Status
         string? Notes
         string? CancellationReason
         DateTime? CancelledAt
+    }
+    class CartItem {
+        int Id
+        int UserId
+        int CourtId
+        DateOnly Date
+        TimeOnly StartTime
+        int DurationHours
+        DateTime AddedAt
+    }
+    class WishlistItem {
+        int Id
+        int UserId
+        int CourtId
+        DateTime AddedAt
+    }
+    class Voucher {
+        int Id
+        string Code  «unique»
+        string Description
+        DiscountType DiscountType
+        decimal DiscountValue
+        DateOnly ExpiryDate
+        int? UsageLimit
+        int UsageCount
+        VoucherStatus Status
+        DateTime CreatedAt
     }
     class Payment {
         int Id
@@ -182,6 +211,16 @@ classDiagram
         OnlineTransfer
         Card
     }
+    class DiscountType {
+        <<enumeration>>
+        Percentage
+        FixedAmount
+    }
+    class VoucherStatus {
+        <<enumeration>>
+        Active
+        Inactive
+    }
 
     Category "1" --> "*" Facility : restrict delete
     Facility "1" --> "*" Court
@@ -194,6 +233,10 @@ classDiagram
     User "1" --> "*" Notification
     User "1" --> "*" PasswordResetToken
     User "0..1" --> "*" LoginAttempt
+    User "1" --> "*" CartItem : restrict delete
+    User "1" --> "*" WishlistItem : restrict delete
+    Court "1" --> "*" CartItem : restrict delete
+    Court "1" --> "*" WishlistItem : restrict delete
     Reservation "1" --> "0..1" Payment
 ```
 
@@ -210,3 +253,6 @@ classDiagram
 | Unique index `(CourtId, Date, StartTime)` on availability | One slot row per court/date/hour |
 | `Category` with unique name + display order | Drives the public catalog (chips, grouping, unit labels) and guards facility deletion |
 | `FacilityPhoto` gallery with `IsPrimary` | Cover photo for catalog cards; photos die with their facility (cascade) |
+| DB-backed cart, not session state | `CartItem` unique per (user, court, date, start) — a line can only exist once, survives sign-out, and is re-validated server-side at checkout |
+| Voucher usage counted in the checkout transaction | `UsageCount++` happens inside the same transaction that creates the reservations, so a limit-1 voucher can never overshoot (verified by e2e T16) |
+| Reservation stores its discount | `DiscountAmount` + `VoucherCode` keep the receipt/payment history self-explanatory after checkout |

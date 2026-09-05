@@ -54,6 +54,10 @@ Legend: ✅ implemented · ⚠️ partially covered · ❌ not implemented (hone
 | AJAX Reservation Availability | ✅ | Slot picker + calendar reload |
 | QR Code Reservation Confirmation | ✅ | QR carries only the public reference |
 | Automatic Reservation Status Update | ✅ | `ReservationStatusUpdaterService` background service |
+| Booking Cart (revised spec) | ✅ | DB-backed cart (`CartItem`): add to cart, duration update with re-pricing, batch remove, clear; overlap and duplicate lines refused; navbar badge |
+| Checkout + Voucher (revised spec) | ✅ | Transactional checkout re-validates every line server-side; percentage/fixed vouchers with expiry + redemption limits; discount split proportionally across lines; payment step for the whole cart |
+| Batch Payment (revised spec) | ✅ | Pay all selected reservations in one all-or-nothing operation (`MarkBatchPaidAsync`) |
+| Wishlist (revised spec) | ✅ | "Currently unavailable — Add to Wishlist" on court details; wishlist grid; per-user removal; open-redirect-guarded return URL |
 
 ### MEMBER 3 — Member, Authentication & Payment (LIM LI ZHE)
 
@@ -97,11 +101,12 @@ Legend: ✅ implemented · ⚠️ partially covered · ❌ not implemented (hone
 
 Each module's work is preserved as a feature branch at its completion commit:
 `feature/member1-court`, `feature/member2-reservation`,
-`feature/member3-member`, `feature/member4-admin`.
+`feature/member3-member`, `feature/member4-admin`,
+`feature/p4-booking-cart-wishlist-voucher` (P4: cart/checkout/wishlist/vouchers).
 
 ## 4.2 Entity Relationship Diagram
 
-Full diagram: [docs/ENTITY_DIAGRAM.md](ENTITY_DIAGRAM.md) (11 entities, 8
+Full diagram: [docs/ENTITY_DIAGRAM.md](ENTITY_DIAGRAM.md) (16 entities, 11
 enums, generated from the actual model classes).
 
 Key relationships:
@@ -115,6 +120,10 @@ Key relationships:
 - **User → Reservations → Payment**: a member owns reservations; each
   reservation has exactly one payment record. Deletes are *restricted* on both
   sides so booking/payment history can never be destroyed.
+- **User → Cart/Wishlist → Court**: the booking cart (`CartItem`, unique per
+  user/court/date/start) and wishlist (`WishlistItem`, unique per user/court)
+  are DB-backed and owner-scoped; `Voucher` (unique code, expiry, usage cap)
+  stands alone and its usage is counted inside the checkout transaction.
 - **Security entities**: `PasswordResetToken` (hashed, single-use, 30-minute
   expiry) and `LoginAttempt` (audit log incl. IP, drives the lockout) hang off
   `User`; `Notification` powers the bell.
@@ -132,6 +141,9 @@ Key relationships:
    staff and admin flows behave identically.
 3. **Tiered court pricing** — court *type* drives the rate (Standard / VIP /
    Premium), which is the mechanism for premium pricing.
+4. **Discount vouchers** — percentage or fixed-amount vouchers applied at
+   checkout (expiry date, optional redemption cap); the discount is recorded
+   per reservation and the savings shown on the payment page.
 
 **Assumptions (ASSUMPTION — seeded demo values, editable by admin):**
 
@@ -159,7 +171,7 @@ script). File names below map to the screenshot files in
 | Student | Module | Screenshots to include in the individual report |
 |---|---|---|
 | YAP SJ | M1 + P3 | `02-courts.png`, `03-court-detail.png`, `04-facility.png`, `19-admin-facility.png`, `20-admin-courts.png`, `21-admin-court-create.png`, `22-admin-availability.png`, `29-catalog-details.png`, `30-admin-categories.png`, `31-admin-category-create.png`, `32-admin-facility-create.png`, `33-admin-facility-photos.png` |
-| WONG YONG FENG | M2 | `10-member-booking.png`, `11-member-myreservations.png`, `12-member-calendar-zh.png`, `09-verify.png` |
+| WONG YONG FENG | M2 + P4 | `10-member-booking.png`, `11-member-myreservations.png`, `12-member-calendar-zh.png`, `09-verify.png`, `34-cart.png`, `35-checkout.png`, `36-wishlist.png`, `37-admin-vouchers.png`, `38-admin-voucher-create.png` |
 | LIM LI ZHE | M3 + P2 + security | `05-login.png`, `06-register.png`, `13-member-payments.png`, `14-member-profile.png`, `23-admin-demo-mail.png`, `24-admin-system-settings.png`, `25-admin-accounts.png`, `26-admin-account-create.png`, `27-admin-user-edit.png`, `28-member-profile-photo.png` |
 | LEE XH | M4 | `15-staff-reservations-admin.png`, `16-admin-dashboard.png`, `17-admin-reports.png`, `18-admin-users.png` |
 | Shared P6 | Team | `07-home-zh.png`, `08-home-ms.png`, `12-member-calendar-zh.png` |

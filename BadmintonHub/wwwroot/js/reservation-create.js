@@ -6,6 +6,7 @@ $(function () {
     var $grid = $('#slotGrid');
     var $error = $('#slotError');
     var $submit = $('#submitBtn');
+    var $cartBtn = $('#addToCartBtn');
     var $durationField = $('#durationField');
     var $startField = $('#startTimeField');
 
@@ -60,12 +61,14 @@ $(function () {
         if (!check.ok) {
             showError('That window is not fully open — slot ' + check.missing + ' is unavailable. Choose a shorter duration or another start time.');
             $submit.prop('disabled', true);
+            $cartBtn.prop('disabled', true);
             setSummary(null, null, null);
             return;
         }
 
         hideError();
         $submit.prop('disabled', false);
+        $cartBtn.prop('disabled', false);
         var rate = $('#bookingCourt option:selected').data('rate');
         setSummary($('#bookingCourt option:selected').text(), start + ' – ' + check.end, rate);
     }
@@ -77,6 +80,7 @@ $(function () {
         clearSummary();
         hideError();
         $submit.prop('disabled', true);
+        $cartBtn.prop('disabled', true);
     }
 
     function loadSlots() {
@@ -130,7 +134,7 @@ $(function () {
         $(this).addClass('active');
         $durationField.val($(this).data('hours'));
         if (selectedStart) selectStart(selectedStart);
-        else { setSummary(null, null, null); $submit.prop('disabled', true); }
+        else { setSummary(null, null, null); $submit.prop('disabled', true); $cartBtn.prop('disabled', true); }
     });
 
     // Initial load when arriving from a court page.
