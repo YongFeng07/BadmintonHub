@@ -42,8 +42,8 @@ internal static class TestDb
         db.SaveChanges();
 
         AddUser(db, "Test Member", "member@test.local", Role.Member, "Member@123");
-        AddUser(db, "Test Staff", "staff@test.local", Role.Staff, "Staff@123");
         AddUser(db, "Test Admin", "admin@test.local", Role.Admin, "Admin@123");
+        AddUser(db, "Test Admin 2", "admin2@test.local", Role.Admin, "Admin@123");
         db.SaveChanges();
 
         // Open availability 08:00-23:00 for the next 14 days (covers the booking tests).
@@ -72,7 +72,8 @@ internal static class TestDb
             Phone = "012-000 0000",
             Role = role,
             PasswordHash = hash,
-            PasswordSalt = salt
+            PasswordSalt = salt,
+            EmailVerified = true // seeded test accounts skip the verification gate
         });
     }
 }

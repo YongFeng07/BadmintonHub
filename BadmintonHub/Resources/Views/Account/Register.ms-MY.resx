@@ -15,4 +15,7 @@
   <data name="RegisterBtn" xml:space="preserve"><value>Daftar</value></data>
   <data name="HaveAccount" xml:space="preserve"><value>Sudah ada akaun?</value></data>
   <data name="LoginLink" xml:space="preserve"><value>Log masuk</value></data>
+  <data name="FeatBook" xml:space="preserve"><value>Tempah gelanggang dalam tiga langkah mudah</value></data>
+  <data name="FeatPay" xml:space="preserve"><value>Bayar dalam talian atau di kaunter</value></data>
+  <data name="FeatQr" xml:space="preserve"><value>Tunjukkan pengesahan QR di pintu masuk</value></data>
 </root>

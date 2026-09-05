@@ -25,7 +25,7 @@ public class ReservationsController : Controller
 
     private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    private bool IsAdminOrStaff => User.IsInRole(nameof(Role.Admin)) || User.IsInRole(nameof(Role.Staff));
+    private bool IsBackOffice => User.IsInRole(nameof(Role.Admin)) || User.IsInRole(nameof(Role.SuperAdmin));
 
     // GET /Reservations/Create?courtId=3&date=2026-08-23
     public async Task<IActionResult> Create(int? courtId, DateOnly? date)
@@ -153,12 +153,12 @@ public class ReservationsController : Controller
         if (reservation == null)
             return NotFound();
 
-        if (reservation.UserId != CurrentUserId && !IsAdminOrStaff)
+        if (reservation.UserId != CurrentUserId && !IsBackOffice)
             return Forbid();
 
-        ViewBag.IsPrivileged = reservation.UserId == CurrentUserId || IsAdminOrStaff;
+        ViewBag.IsPrivileged = reservation.UserId == CurrentUserId || IsBackOffice;
         ViewBag.CanCancel = reservation.Status is ReservationStatus.Pending or ReservationStatus.Confirmed &&
-            (IsAdminOrStaff || reservation.ReservationDate.ToDateTime(reservation.StartTime) > DateTime.Now);
+            (IsBackOffice || reservation.ReservationDate.ToDateTime(reservation.StartTime) > DateTime.Now);
         ViewBag.CanPay = reservation.Status == ReservationStatus.Pending &&
             reservation.Payment != null && reservation.Payment.Status != PaymentStatus.Paid;
 
@@ -177,7 +177,7 @@ public class ReservationsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Cancel(int id, string? reason)
     {
-        var (success, error) = await _reservationService.CancelAsync(id, CurrentUserId, reason, IsAdminOrStaff);
+        var (success, error) = await _reservationService.CancelAsync(id, CurrentUserId, reason, IsBackOffice);
 
         if (!success)
         {
@@ -199,7 +199,7 @@ public class ReservationsController : Controller
         if (reservation == null)
             return NotFound();
 
-        if (reservation.UserId != CurrentUserId && !IsAdminOrStaff)
+        if (reservation.UserId != CurrentUserId && !IsBackOffice)
             return Forbid();
 
         if (reservation.Status != ReservationStatus.Pending)
@@ -219,7 +219,7 @@ public class ReservationsController : Controller
             return View(model);
 
         var (success, error) = await _reservationService.MarkPaidAsync(
-            model.ReservationId, CurrentUserId, model.Method, model.PaymentReference, IsAdminOrStaff);
+            model.ReservationId, CurrentUserId, model.Method, model.PaymentReference, IsBackOffice);
 
         if (!success)
         {
@@ -251,7 +251,7 @@ public class ReservationsController : Controller
         if (reservation == null)
             return NotFound();
 
-        if (reservation.UserId != CurrentUserId && !IsAdminOrStaff)
+        if (reservation.UserId != CurrentUserId && !IsBackOffice)
             return Forbid();
 
         if (reservation.Payment == null || reservation.Payment.Status is not (PaymentStatus.Paid or PaymentStatus.Refunded))
@@ -284,7 +284,7 @@ public class ReservationsController : Controller
             return NotFound();
 
         var isPrivileged = User.Identity?.IsAuthenticated == true &&
-            (reservation.UserId == CurrentUserId || IsAdminOrStaff);
+            (reservation.UserId == CurrentUserId || IsBackOffice);
         ViewBag.IsPrivileged = isPrivileged;
 
         return View(reservation);

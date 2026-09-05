@@ -14,9 +14,9 @@ public interface IReservationService
 
     /// <summary>Marks the reservation's payment as paid and confirms the booking.</summary>
     Task<(bool Success, string? Error)> MarkPaidAsync(
-        int reservationId, int userId, PaymentMethod method, string? reference, bool isAdminOrStaff = false);
+        int reservationId, int userId, PaymentMethod method, string? reference, bool isBackOffice = false);
 
     /// <summary>Cancels an upcoming booking (owner or staff). Paid payments become refunded.</summary>
     Task<(bool Success, string? Error)> CancelAsync(
-        int reservationId, int userId, string? reason, bool isAdminOrStaff = false);
+        int reservationId, int userId, string? reason, bool isBackOffice = false);
 }

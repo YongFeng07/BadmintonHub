@@ -4,13 +4,25 @@
     ViewData["Title"] = "Register";
 }
 
-<div class="row justify-content-center mt-4">
-    <div class="col-md-6 col-lg-5">
-        <div class="bh-card p-4">
-            <h1 class="h4 mb-1">@Localizer["Title"]</h1>
-            <p class="text-muted small mb-3">@Localizer["Subtitle"]</p>
+<div class="auth-wrap">
+    <div class="auth-brand-panel">
+        <div class="auth-brand-inner">
+            <div class="auth-logo">🏸</div>
+            <h1>@Localizer["Title"]</h1>
+            <p class="auth-brand-sub">@Localizer["Subtitle"]</p>
+            <ul class="auth-features">
+                <li>🛡️ @Localizer["FeatBook"]</li>
+                <li>💳 @Localizer["FeatPay"]</li>
+                <li>📱 @Localizer["FeatQr"]</li>
+            </ul>
+        </div>
+    </div>
+    <div class="auth-form-panel">
+        <div class="auth-form-inner">
+            <h2 class="h4 mb-1">@Localizer["Title"]</h2>
+            <p class="text-muted small mb-4">@Localizer["Subtitle"]</p>
             <form asp-action="Register" method="post">
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
                 <div class="mb-3">
                     <label for="FullName" class="form-label">@Localizer["FullNameLbl"]</label>
                     <input asp-for="FullName" class="form-control" />
@@ -37,6 +49,9 @@
                     <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
                     <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                 </div>
+
+                <partial name="_Captcha" />
+
                 <button type="submit" class="btn btn-bh w-100">@Localizer["RegisterBtn"]</button>
             </form>
             <p class="small mt-3 mb-0 text-center">

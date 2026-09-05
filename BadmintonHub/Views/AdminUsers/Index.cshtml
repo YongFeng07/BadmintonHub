@@ -70,7 +70,7 @@
                     </td>
                     <td>@user.Email</td>
                     <td>
-                        <span class="badge @(user.Role == Role.Admin ? "bg-danger" : user.Role == Role.Staff ? "bg-warning text-dark" : "bg-secondary")">@user.Role</span>
+                        <span class="badge @(user.Role == Role.SuperAdmin ? "bg-danger" : user.Role == Role.Admin ? "bg-warning text-dark" : "bg-secondary")">@user.Role</span>
                     </td>
                     <td>
                         @if (user.Status == UserStatus.Active)

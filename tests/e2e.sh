@@ -7,11 +7,17 @@
 #           freshly seeded database (delete BadmintonHub/App_Data/*.mdf to
 #           reset — the seeder recreates everything on startup).
 #
+# IMPORTANT: the revised-spec captcha is enabled by default in the UI. Start
+# the app with Security__EnableCaptcha=false for this suite, e.g.
+#   Security__EnableCaptcha=false dotnet run --project BadmintonHub
+# (see docs/TESTING.md — the captcha UI itself is exercised manually).
+#
 # Covers:  public pages, multi-language, switcher cookie, auth (manual cookie
-#          scheme), role enforcement, booking + double-booking protection,
+#          scheme), role enforcement (SuperAdmin/Admin/Member), register ->
+#          email verification -> login, booking + double-booking protection,
 #          payment + PDF receipt + QR verify, admin modules (dashboard, AJAX
-#          reservation table, CSV report), lockout -> unlock, deactivate ->
-#          reactivate, password reset, notifications.
+#          reservation table, CSV report), 3-strike lockout -> unlock,
+#          deactivate -> reactivate, password reset, notifications.
 # =============================================================================
 set -u
 
@@ -99,15 +105,18 @@ say "T3 authentication (manual cookie scheme)"
 contains "bad login generic error" "Invalid email or password" \
   "$(login_body "$WORK/x.jar" "member@badmintonhub.my" "WrongPass1")"
 check "admin login 302"          302 "$(login "$WORK/admin.jar" "admin@badmintonhub.my" "Admin@123")"
-check "staff login 302"          302 "$(login "$WORK/staff.jar" "staff@badmintonhub.my" "Staff@123")"
+check "admin2 login 302"         302 "$(login "$WORK/admin2.jar" "admin2@badmintonhub.my" "Admin@123")"
+check "superadmin login 302"     302 "$(login "$WORK/sa.jar" "superadmin@badmintonhub.my" "SuperAdmin@123")"
 check "member login 302"         302 "$(login "$WORK/mem.jar" "member@badmintonhub.my" "Member@123")"
 check "admin sees dashboard"     200 "$(code -b "$WORK/admin.jar" "$BASE/AdminDashboard")"
 
 say "T4 role-based authorization (controller level)"
 check "member -> admin 302"      302 "$(code -b "$WORK/mem.jar" "$BASE/AdminDashboard")"
-check "staff -> users 302"       302 "$(code -b "$WORK/staff.jar" "$BASE/AdminUsers")"
-check "member -> staff area 302" 302 "$(code -b "$WORK/mem.jar" "$BASE/AdminReservations")"
+check "member -> reservations 302" 302 "$(code -b "$WORK/mem.jar" "$BASE/AdminReservations")"
+check "member -> users 302"      302 "$(code -b "$WORK/mem.jar" "$BASE/AdminUsers")"
 check "admin -> users 200"       200 "$(code -b "$WORK/admin.jar" "$BASE/AdminUsers")"
+check "admin -> system settings 302" 302 "$(code -b "$WORK/admin.jar" "$BASE/AdminSettings")"
+check "superadmin -> system settings 200" 200 "$(code -b "$WORK/sa.jar" "$BASE/AdminSettings")"
 
 say "T5 booking flow (member)"
 JAR="$WORK/mem.jar"
@@ -169,26 +178,26 @@ contains "csv has revenue header" "Revenue" "$CSV"
 CSVTYPE=$(curl -s -b "$AD" -o /dev/null -w '%{content_type}' "$BASE/AdminReports/ExportCsv?from=$FROM&to=$TODAY")
 check "csv content type" "text/csv" "${CSVTYPE%;*}"
 
-say "T8 security cycle: lockout -> unlock (admin), deactivate -> reactivate"
-# register a disposable member
+say "T8 security cycle: register -> verify email -> lockout -> unlock (admin), deactivate -> reactivate"
+# register a disposable member (revised spec: no auto sign-in, email verification first)
 t=$(curl -s -c "$WORK/tmp.jar" "$BASE/Account/Register" | last_token)
-REG=$(curl -s -b "$WORK/tmp.jar" -c "$WORK/tmp.jar" -o /dev/null -w '%{http_code}' \
+REG=$(curl -s -b "$WORK/tmp.jar" -c "$WORK/tmp.jar" -o "$WORK/verify-sent.html" -w '%{http_code}' \
   -X POST "$BASE/Account/Register" \
   --data-urlencode "__RequestVerificationToken=$t" \
   --data-urlencode "FullName=E2E Test" --data-urlencode "Email=$TEMP_EMAIL" \
   --data-urlencode "Phone=012-000 0000" --data-urlencode "Password=$TEMP_PASS" \
   --data-urlencode "ConfirmPassword=$TEMP_PASS")
-check "register auto sign-in" "302" "$REG"
-# logout the disposable user
-t=$(get_page "$WORK/tmp.jar" "$BASE/" | last_token)
-curl -s -b "$WORK/tmp.jar" -c "$WORK/tmp.jar" -o /dev/null -X POST "$BASE/Account/Logout" \
-  --data-urlencode "__RequestVerificationToken=$t"
-# 5 bad attempts
-for i in 1 2 3 4 5; do
+check "register shows verify-email page" "200" "$REG"
+VLINK=$(grep -oE 'href="[^"]*VerifyEmail[^"]*"' "$WORK/verify-sent.html" | head -1 | sed 's/href="//;s/"//;s/&amp;/\&/g')
+[ -n "$VLINK" ] && ok "demo verification link shown" || bad "demo verification link shown (empty)"
+case "$VLINK" in http://*|https://*) VURL="$VLINK" ;; *) VURL="$BASE$VLINK" ;; esac
+check "verify link redirects to login" "302" "$(curl -s -o /dev/null -w '%{http_code}' "$VURL")"
+# 3 bad attempts lock the account
+for i in 1 2 3; do
   login_body "$WORK/lock.jar" "$TEMP_EMAIL" "BadPass$i" > /dev/null
 done
 LOCKED=$(login_body "$WORK/lock.jar" "$TEMP_EMAIL" "$TEMP_PASS")
-contains "locked message after 5 failures" "Too many failed login attempts" "$LOCKED"
+contains "locked message after 3 failures" "Too many failed login attempts" "$LOCKED"
 # admin finds the disposable user's id from the unlock form and unlocks
 USERS=$(get_page "$AD" "$BASE/AdminUsers?search=$TEMP_EMAIL")
 UID_TMP=$(printf '%s' "$USERS" | grep -oE 'Unlock/[0-9]+' | head -1 | cut -d/ -f2)
@@ -202,7 +211,7 @@ curl -s -b "$AD" -c "$AD" -o /dev/null -X POST "$BASE/AdminUsers/SetStatus/$UID_
   --data-urlencode "__RequestVerificationToken=$t" --data-urlencode "status=Deactivated"
 DEACT=$(login_body "$WORK/lock.jar" "$TEMP_EMAIL" "$TEMP_PASS")
 check "deactivated login refused (no 302)" "200" "$(login_code "$WORK/lock.jar" "$TEMP_EMAIL" "$TEMP_PASS")"
-contains "deactivated generic message" "Invalid email or password" "$DEACT"
+contains "deactivated account message" "not active" "$DEACT"
 # reactivate -> login works again
 t=$(get_page "$AD" "$BASE/AdminUsers?search=$TEMP_EMAIL" | last_token)
 curl -s -b "$AD" -c "$AD" -o /dev/null -X POST "$BASE/AdminUsers/SetStatus/$UID_TMP" \
@@ -215,9 +224,10 @@ RESETPAGE=$(curl -s -c "$WORK/reset.jar" "$BASE/Account/ForgotPassword")
 t=$(printf '%s' "$RESETPAGE" | last_token)
 DONE=$(curl -s -b "$WORK/reset.jar" -c "$WORK/reset.jar" -X POST "$BASE/Account/ForgotPassword" \
   --data-urlencode "__RequestVerificationToken=$t" --data-urlencode "Email=$TEMP_EMAIL")
-LINK=$(printf '%s' "$DONE" | grep -oE 'href="/Account/ResetPassword[^"]*"' | head -1 | sed 's/href="//;s/"//;s/&amp;/\&/g')
+LINK=$(printf '%s' "$DONE" | grep -oE 'href="[^"]*ResetPassword[^"]*"' | head -1 | sed 's/href="//;s/"//;s/&amp;/\&/g')
 [ -n "$LINK" ] && ok "reset link shown ($LINK)" || bad "reset link shown (empty)"
-t=$(curl -s -b "$WORK/reset.jar" -c "$WORK/reset.jar" "$BASE$LINK" | last_token)
+case "$LINK" in http://*|https://*) LURL="$LINK" ;; *) LURL="$BASE$LINK" ;; esac
+t=$(curl -s -b "$WORK/reset.jar" -c "$WORK/reset.jar" "$LURL" | last_token)
 RST=$(curl -s -b "$WORK/reset.jar" -c "$WORK/reset.jar" -o /dev/null -w '%{http_code}' \
   -X POST "$BASE/Account/ResetPassword" \
   --data-urlencode "__RequestVerificationToken=$t" \

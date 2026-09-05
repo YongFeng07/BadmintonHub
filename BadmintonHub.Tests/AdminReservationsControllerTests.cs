@@ -12,7 +12,7 @@ namespace BadmintonHub.Tests;
 
 /// <summary>
 /// M4 reservation administration: whitelisted status transitions and
-/// staff counter-payment/cancellation actions.
+/// admin counter-payment/cancellation actions.
 /// </summary>
 public class AdminReservationsControllerTests
 {
@@ -23,7 +23,7 @@ public class AdminReservationsControllerTests
     }
 
     private static (AdminReservationsController Controller, ApplicationDbContext Db, ReservationService Service)
-        CreateController(bool withStaffClaims)
+        CreateController(bool withAdminClaims)
     {
         var db = TestDb.Create();
         var service = new ReservationService(db, new CourtService(db));
@@ -34,12 +34,12 @@ public class AdminReservationsControllerTests
             TempData = new TempDataDictionary(httpContext, new NoopTempDataProvider())
         };
 
-        if (withStaffClaims)
+        if (withAdminClaims)
         {
-            var staffId = db.Users.Single(u => u.Email == "staff@test.local").Id;
+            var adminId = db.Users.Single(u => u.Email == "admin2@test.local").Id;
             httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, staffId.ToString())
+                new Claim(ClaimTypes.NameIdentifier, adminId.ToString())
             }));
         }
 
@@ -136,7 +136,7 @@ public class AdminReservationsControllerTests
     }
 
     [Fact]
-    public async Task MarkPaid_StaffRecordsCounterPayment_ConfirmsBooking()
+    public async Task MarkPaid_AdminRecordsCounterPayment_ConfirmsBooking()
     {
         var (controller, db, service) = CreateController(true);
         var reservation = await CreateReservationAsync(db, service);
@@ -152,7 +152,7 @@ public class AdminReservationsControllerTests
     }
 
     [Fact]
-    public async Task Cancel_StaffCancelsOnBehalf_IsRecorded()
+    public async Task Cancel_AdminCancelsOnBehalf_IsRecorded()
     {
         var (controller, db, service) = CreateController(true);
         var reservation = await CreateReservationAsync(db, service, ReservationStatus.Confirmed);

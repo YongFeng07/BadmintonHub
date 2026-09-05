@@ -12,10 +12,17 @@ public static class DbSeeder
 {
     public static void Seed(ApplicationDbContext db, string? webRootPath)
     {
+        var now = DateTime.Now;
+
+        // Demo accounts and system settings are kept in sync on every start (idempotent by
+        // email/key), so databases created before the revised-spec roles pick up the new
+        // SuperAdmin account without a reseed.
+        EnsureDemoUsers(db, now);
+        EnsureSystemSettings(db);
+
         if (db.Facilities.Any()) return;
 
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var now = DateTime.Now;
 
         // ---------- 1. Facility ----------
         var facility = new Facility
@@ -115,36 +122,8 @@ public static class DbSeeder
             }
         }
 
-        // ---------- 5. Users (demo accounts) ----------
-        var members = new List<User>();
-        void AddUser(string name, string email, string phone, Role role, string password)
-        {
-            var (hash, salt) = PasswordHelper.HashPassword(password);
-            var user = new User
-            {
-                FullName = name,
-                Email = email,
-                Phone = phone,
-                Role = role,
-                PasswordHash = hash,
-                PasswordSalt = salt,
-                Status = UserStatus.Active,
-                CreatedAt = now.AddDays(-120),
-                LastLoginAt = now.AddDays(-1)
-            };
-            db.Users.Add(user);
-            if (role == Role.Member) members.Add(user);
-        }
-
-        AddUser("Siti Aminah", "admin@badmintonhub.my", "012-345 6701", Role.Admin, "Admin@123");
-        AddUser("Lim Wei Jian", "staff@badmintonhub.my", "012-345 6702", Role.Staff, "Staff@123");
-        AddUser("Tan Mei Ling", "member@badmintonhub.my", "012-345 6703", Role.Member, "Member@123");
-        AddUser("Muhammad Aiman", "aiman@example.com", "012-345 6704", Role.Member, "Member@123");
-        AddUser("Priya Nair", "priya@example.com", "012-345 6705", Role.Member, "Member@123");
-        AddUser("John Wong", "john@example.com", "012-345 6706", Role.Member, "Member@123");
-        AddUser("Nurul Huda", "nurul@example.com", "012-345 6707", Role.Member, "Member@123");
-        AddUser("David Chen", "david@example.com", "012-345 6708", Role.Member, "Member@123");
-        db.SaveChanges();
+        // ---------- 5. Users (demo accounts; EnsureDemoUsers ran above) ----------
+        var members = db.Users.Where(u => u.Role == Role.Member).ToList();
 
         // ---------- 6. Reservations (past completed, upcoming, cancelled) ----------
         var refCounter = 100;
@@ -263,6 +242,62 @@ public static class DbSeeder
             CreatedAt = now.AddDays(-1)
         });
 
+        db.SaveChanges();
+    }
+
+    // ---------- Idempotent security accounts & system settings ----------
+
+    /// <summary>
+    /// Demo accounts for the revised-spec roles (SuperAdmin / Admin / Member).
+    /// Idempotent by email so it also upgrades pre-existing databases.
+    /// </summary>
+    private static List<User> EnsureDemoUsers(ApplicationDbContext db, DateTime now)
+    {
+        var members = new List<User>();
+        void AddUser(string name, string email, string phone, Role role, string password)
+        {
+            if (db.Users.Any(u => u.Email == email)) return;
+            var (hash, salt) = PasswordHelper.HashPassword(password);
+            var user = new User
+            {
+                FullName = name,
+                Email = email,
+                Phone = phone,
+                Role = role,
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                Status = UserStatus.Active,
+                EmailVerified = true, // demo accounts are pre-verified
+                CreatedAt = now.AddDays(-120),
+                LastLoginAt = now.AddDays(-1)
+            };
+            db.Users.Add(user);
+            if (role == Role.Member) members.Add(user);
+        }
+
+        AddUser("Ahmad Faiz", "superadmin@badmintonhub.my", "012-345 6709", Role.SuperAdmin, "SuperAdmin@123");
+        AddUser("Siti Aminah", "admin@badmintonhub.my", "012-345 6701", Role.Admin, "Admin@123");
+        AddUser("Lim Wei Jian", "admin2@badmintonhub.my", "012-345 6702", Role.Admin, "Admin@123");
+        AddUser("Tan Mei Ling", "member@badmintonhub.my", "012-345 6703", Role.Member, "Member@123");
+        AddUser("Muhammad Aiman", "aiman@example.com", "012-345 6704", Role.Member, "Member@123");
+        AddUser("Priya Nair", "priya@example.com", "012-345 6705", Role.Member, "Member@123");
+        AddUser("John Wong", "john@example.com", "012-345 6706", Role.Member, "Member@123");
+        AddUser("Nurul Huda", "nurul@example.com", "012-345 6707", Role.Member, "Member@123");
+        AddUser("David Chen", "david@example.com", "012-345 6708", Role.Member, "Member@123");
+        db.SaveChanges();
+        return members;
+    }
+
+    private static void EnsureSystemSettings(ApplicationDbContext db)
+    {
+        void AddSetting(string key, string? value)
+        {
+            if (db.SystemSettings.Any(s => s.Key == key)) return;
+            db.SystemSettings.Add(new SystemSetting { Key = key, Value = value });
+        }
+
+        AddSetting("SiteName", "BadmintonHub");
+        AddSetting("SiteAnnouncement", "New season — book your court today! Open daily 8:00 AM to 11:00 PM.");
         db.SaveChanges();
     }
 

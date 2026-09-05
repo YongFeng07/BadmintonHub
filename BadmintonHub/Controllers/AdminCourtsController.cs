@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BadmintonHub.Controllers;
 
-/// <summary>Admin/Staff court management: full CRUD plus multiple-photo uploads.</summary>
-[Authorize(Roles = "Admin,Staff")]
+/// <summary>Admin court management: full CRUD plus multiple-photo uploads.</summary>
+[Authorize(Roles = "SuperAdmin,Admin")]
 public class AdminCourtsController : Controller
 {
     private const int PageSize = 8;

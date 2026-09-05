@@ -69,3 +69,20 @@ public class ResetPasswordViewModel
     [Display(Name = "Confirm New Password")]
     public string ConfirmPassword { get; set; } = string.Empty;
 }
+
+/// <summary>Shown after registration / resend: "check your inbox" with a demo fallback link.</summary>
+public class VerifyEmailSentViewModel
+{
+    public string Email { get; set; } = string.Empty;
+
+    /// <summary>Set only as a demo fallback when no real email was delivered.</summary>
+    public string? Link { get; set; }
+
+    public bool AlreadyVerified { get; set; }
+}
+
+public class ResendVerificationViewModel
+{
+    [Required, EmailAddress]
+    public string Email { get; set; } = string.Empty;
+}

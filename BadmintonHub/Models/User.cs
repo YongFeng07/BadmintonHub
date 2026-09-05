@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BadmintonHub.Models;
 
 /// <summary>
-/// Single user table covering all roles (Admin / Staff / Member).
+/// Single user table covering all roles (SuperAdmin / Admin / Member).
 /// The Role enum distinguishes access; a member's profile lives on the same record.
 /// </summary>
 [Index(nameof(Email), IsUnique = true)]
@@ -40,6 +40,15 @@ public class User
 
     /// <summary>When set and in the future, the account is temporarily locked.</summary>
     public DateTime? LockoutEnd { get; set; }
+
+    /// <summary>New registrations start unverified; sign-in is gated until the emailed link is used (or an admin verifies).</summary>
+    public bool EmailVerified { get; set; }
+
+    /// <summary>SHA-256 hash of the pending email-verification token (the raw token is never stored).</summary>
+    public string? EmailVerificationTokenHash { get; set; }
+
+    /// <summary>When set and in the future, the pending verification token is still valid.</summary>
+    public DateTime? EmailVerificationExpiresUtc { get; set; }
 
     public DateTime? LastLoginAt { get; set; }
 

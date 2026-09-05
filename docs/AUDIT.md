@@ -41,11 +41,15 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | **No ASP.NET Core Identity** — manually implemented cookie auth | PASS | `AuthService`, `AccountController`; `AddAuthentication(CookieAuthenticationDefaults…)` in `Program.cs` |
 | Cookie hardening | PASS | HttpOnly, SameSite=Lax, 8 h sliding expiry |
 | **No plain-text passwords** | PASS | PBKDF2-SHA256, 100k iterations, random 16-byte salt, constant-time compare — [PasswordHelper.cs](BadmintonHub/Services/PasswordHelper.cs); covered by unit tests |
-| Authorization at controller/action/resource level | PASS | `[Authorize(Roles = "Admin,Staff")]` etc. on admin controllers; resource-level ownership checks in `ReservationService`; verified by e2e T4 |
+| Authorization at controller/action/resource level | PASS | `[Authorize(Roles = "Admin")]` on admin controllers, `SuperAdmin` on System Settings, `Member` on member areas; resource-level ownership checks in `ReservationService`; verified by e2e T4 |
+| Role model per revised spec | PASS | `SuperAdmin / Admin / Member` (Staff removed); migration converts the seeded staff account to a second admin (`admin2@`); seeded SuperAdmin owns system settings |
+| Image captcha on login/register/reset | PASS | DNTCaptcha.Core rendered on all three forms (partial `_Captcha`); server-side validation via `ValidateCaptchaAttribute`, toggleable with `Security:EnableCaptcha` so the scripted e2e can run |
+| E-mail verification before sign-in | PASS | Registration creates unverified members; sign-in gated until the 24 h hashed-token link is followed; resend flow with anti-enumeration neutral responses; admin manual verify; successful password reset auto-verifies |
+| Remember Me | PASS | Opt-in 30-day persistent cookie via the manual cookie scheme (session cookie otherwise) |
 | **QR code carries only a safe identifier** | PASS | [QrCodeHelper.cs](BadmintonHub/Services/QrCodeHelper.cs) + `ReservationsController` passes only the public `ReservationReference`; e2e T6 asserts the member's e-mail never appears in QR content |
 | **No real credentials / secrets in the repository** | PASS | All credentials are seeded demo accounts; secret scan in §12 found none |
 | Anti-enumeration login | PASS | Generic "Invalid email or password." + attempt logged — [AuthService.cs](BadmintonHub/Services/AuthService.cs); unit-tested |
-| Failed-login lockout + admin unlock | PASS | 5 attempts → 15-minute `LockoutEnd`; `AdminUsersController.Unlock`; unit + e2e tested |
+| Failed-login lockout + admin unlock | PASS | 3 attempts → 15-minute `LockoutEnd`; `AdminUsersController.Unlock`; unit + e2e tested |
 | Password reset tokens hashed, single-use, 30 min | PASS | `PasswordResetToken.TokenHash` (raw token never stored); e2e T9 |
 | Antiforgery tokens on all POSTs | PASS | `[ValidateAntiForgeryToken]` on state-changing actions; e2e drives real tokens |
 | Open-redirect guard on language switcher | PASS | `Url.IsLocalUrl` in [CultureController.cs](BadmintonHub/Controllers/CultureController.cs); unit-tested |
@@ -58,6 +62,7 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | M2 Reservation / Scheduling | PASS | Commit `ddd4a92`; booking with server-side double-booking protection, My Reservations calendar, cancel/refund, QR confirm, status updater |
 | M3 Member / Security / Payment | PASS | Commit `fe39018`; registration, lockout, reset, payments, PDF receipt, notifications |
 | M4 Admin / Reports | PASS | Commit `f1457c6`; dashboard, reservation admin, reports + CSV, user admin |
+| Revised spec (P7) | PASS | SuperAdmin/Admin/Member roles, captcha, e-mail verification, Remember Me, system settings, demo mailbox — see §4 and §6 for evidence |
 
 ## 6. Additional features — PASS
 
@@ -70,6 +75,9 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | Chart.js dashboard + reports | Screenshots `16`, `17` (chart regions pixel-verified rendered) |
 | CSV export | e2e T7 |
 | Notification centre | e2e T10 |
+| Image captcha (login/register/reset) | Screenshots `05`, `06` show the rendered captcha; `Security:EnableCaptcha` toggles the server check |
+| SuperAdmin system settings + announcement banner | `AdminSettingsController`; screenshot `24`; site name/announcement rendered from `SystemSettings` in the layout |
+| Demo mail inbox (no SMTP) | `AdminEmailsController` + `DemoEmailSender`; screenshot `23`; verification/reset links viewable by admins |
 
 ## 7. Report — PARTIAL
 
@@ -103,14 +111,14 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| Test project runs in **Visual Studio Test Explorer** | PASS | `BadmintonHub.Tests` (xUnit) in the solution; 54 tests |
-| Unit coverage of business rules | PASS | [docs/TESTING.md](docs/TESTING.md) §2 — passwords, lockout, booking/double-booking/payment/refund, admin transitions, culture switcher, QR, PDF, calendar |
-| Latest run | PASS | `Passed! Failed: 0, Passed: 54` (2026-09-05) |
-| End-to-end evidence | PASS | `tests/e2e.sh` (T1–T11) — HTTP-level checks incl. role enforcement, antiforgery, receipts |
+| Test project runs in **Visual Studio Test Explorer** | PASS | `BadmintonHub.Tests` (xUnit) in the solution; 64 tests |
+| Unit coverage of business rules | PASS | [docs/TESTING.md](docs/TESTING.md) §2 — passwords, 3-strike lockout, e-mail verification, booking/double-booking/payment/refund, admin transitions, culture switcher, QR, PDF, calendar |
+| Latest run | PASS | `Passed! Failed: 0, Passed: 64` (2026-09-05) |
+| End-to-end evidence | PASS | `tests/e2e.sh` (T1–T11) — HTTP-level checks incl. role matrix, register → verify flow, lockout, antiforgery, receipts |
 
 ## 12. Documentation — PASS
 
-README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.md, TEAM_REPORT.md, AUDIT.md, screenshots (22 captures with re-runnable script).
+README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.md, TEAM_REPORT.md, AUDIT.md, screenshots (24 captures with re-runnable script).
 
 ---
 
@@ -122,9 +130,11 @@ README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.
    per-view resource files localize views; model-level messages (e.g.
    "Password must be at least 8 characters long.") stay English. Acceptable
    if the rubric only requires UI localization, but do not claim otherwise.
-3. **No SMTP e-mail** — password-reset "e-mail" and registration mails are
-   simulated in-app (token shown on a demo page). Assignment permits demo
-   behaviour; do not present it as real e-mail delivery.
+3. **No SMTP e-mail by default** — password-reset and verification e-mails are
+   captured in the in-app demo mailbox (admin → Demo Mail) when no SMTP server
+   is configured; set `Email:Smtp:Host` (MailKit) to send real mail. No SMTP
+   credentials are committed. Assignment permits demo behaviour; do not
+   present the demo mailbox as real e-mail delivery.
 4. **Payments are simulated** — payment recording flows (no payment gateway).
 5. **QR verify page is a demo counter-verification screen** — it looks up the
    public reference and shows status; it is not a cryptographic gatekeeper.

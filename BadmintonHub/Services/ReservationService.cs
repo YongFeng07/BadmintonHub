@@ -84,7 +84,7 @@ public class ReservationService : IReservationService
     }
 
     public async Task<(bool Success, string? Error)> MarkPaidAsync(
-        int reservationId, int userId, PaymentMethod method, string? reference, bool isAdminOrStaff = false)
+        int reservationId, int userId, PaymentMethod method, string? reference, bool isBackOffice = false)
     {
         var reservation = await _db.Reservations
             .Include(r => r.Payment)
@@ -94,7 +94,7 @@ public class ReservationService : IReservationService
         if (reservation == null)
             return (false, "Reservation not found.");
 
-        if (reservation.UserId != userId && !isAdminOrStaff)
+        if (reservation.UserId != userId && !isBackOffice)
             return (false, "You can only pay for your own reservations.");
 
         if (reservation.Status is ReservationStatus.Cancelled or ReservationStatus.Rejected or ReservationStatus.Completed)
@@ -130,7 +130,7 @@ public class ReservationService : IReservationService
     }
 
     public async Task<(bool Success, string? Error)> CancelAsync(
-        int reservationId, int userId, string? reason, bool isAdminOrStaff = false)
+        int reservationId, int userId, string? reason, bool isBackOffice = false)
     {
         var reservation = await _db.Reservations
             .Include(r => r.Payment)
@@ -139,14 +139,14 @@ public class ReservationService : IReservationService
         if (reservation == null)
             return (false, "Reservation not found.");
 
-        if (reservation.UserId != userId && !isAdminOrStaff)
+        if (reservation.UserId != userId && !isBackOffice)
             return (false, "You can only cancel your own reservations.");
 
         if (reservation.Status is not (ReservationStatus.Pending or ReservationStatus.Confirmed))
             return (false, $"A {reservation.Status.ToString().ToLowerInvariant()} reservation cannot be cancelled.");
 
         var startDateTime = reservation.ReservationDate.ToDateTime(reservation.StartTime);
-        if (startDateTime <= DateTime.Now && !isAdminOrStaff)
+        if (startDateTime <= DateTime.Now && !isBackOffice)
             return (false, "This reservation has already started and cannot be cancelled.");
 
         reservation.Status = ReservationStatus.Cancelled;

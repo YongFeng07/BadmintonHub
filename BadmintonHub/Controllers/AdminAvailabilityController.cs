@@ -12,7 +12,7 @@ namespace BadmintonHub.Controllers;
 /// Admin/Staff availability management: interactive slot grid (AJAX), bulk slot
 /// generation for a date range, and maintenance/block ranges with booking protection.
 /// </summary>
-[Authorize(Roles = "Admin,Staff")]
+[Authorize(Roles = "SuperAdmin,Admin")]
 public class AdminAvailabilityController : Controller
 {
     private readonly ApplicationDbContext _db;

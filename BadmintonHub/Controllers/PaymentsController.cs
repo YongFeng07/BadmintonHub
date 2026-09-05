@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace BadmintonHub.Controllers;
 
-/// <summary>Member payment history (M3). Staff payment operations live in the M4 phase.</summary>
+/// <summary>Member payment history. Admin payment operations live in the admin area.</summary>
 [Authorize]
 public class PaymentsController : Controller
 {

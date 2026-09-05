@@ -9,10 +9,12 @@ using Microsoft.EntityFrameworkCore;
 namespace BadmintonHub.Controllers;
 
 /// <summary>
-/// User administration (M4): search, filter by role/status, pagination,
-/// activate/deactivate, and failed-login lockout management (M3 security feature).
+/// User administration (revised spec): search, filter by role/status, pagination,
+/// activate/deactivate, email verification, and failed-login lockout management.
+/// Member management is an Admin duty; the separate admin-account CRUD lives in
+/// AdminAccountsController (SuperAdmin only).
 /// </summary>
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "SuperAdmin,Admin")]
 public class AdminUsersController : Controller
 {
     private readonly ApplicationDbContext _db;
@@ -70,7 +72,29 @@ public class AdminUsersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    /// <summary>Activate or deactivate a member account (admins/staff cannot be deactivated).</summary>
+    /// <summary>Manually verifies a member's email (revised spec: email verification).</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Verify(int id)
+    {
+        var user = await _db.Users.FindAsync(id);
+        if (user == null)
+        {
+            TempData["ErrorMessage"] = "User not found.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        user.EmailVerified = true;
+        user.EmailVerificationTokenHash = null;
+        user.EmailVerificationExpiresUtc = null;
+        user.UpdatedAt = DateTime.Now;
+        await _db.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"{user.FullName}'s email is now verified.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>Activate or deactivate a member account (admin accounts cannot be deactivated).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SetStatus(int id, string status)
