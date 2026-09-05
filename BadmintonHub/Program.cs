@@ -22,11 +22,17 @@ builder.Services.AddControllersWithViews().AddViewLocalization();
 // not survive every restart — an unpinned database breaks F5 runs with
 // "Cannot create file ... because it already exists". Substituting {DbFile}
 // here means Visual Studio and dotnet run always use the same file.
+// The database name is derived from the file path (SHA-256, 8 chars) so that
+// two copies of the solution on the same machine (e.g. a clean clone next to
+// the working copy) never collide in the LocalDB master registration.
 var dataDir = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
 Directory.CreateDirectory(dataDir);
 var dbFile = Path.Combine(dataDir, "BadmintonHub.mdf");
+var dbName = "BadmintonHub_" +
+    Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(dbFile)))[..8].ToLowerInvariant();
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")!
-    .Replace("{DbFile}", dbFile);
+    .Replace("{DbFile}", dbFile)
+    .Replace("{DbName}", dbName);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(defaultConnection));
 
