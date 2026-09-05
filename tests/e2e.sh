@@ -17,7 +17,9 @@
 #          email verification -> login, booking + double-booking protection,
 #          payment + PDF receipt + QR verify, admin modules (dashboard, AJAX
 #          reservation table, CSV report), 3-strike lockout -> unlock,
-#          deactivate -> reactivate, password reset, notifications.
+#          deactivate -> reactivate, password reset, notifications,
+#          SuperAdmin account CRUD + guard rails, member profile edit,
+#          profile photo upload/remove (P2).
 # =============================================================================
 set -u
 
@@ -259,6 +261,70 @@ case "$CAL" in
   *) bad "calendar zh headers monday-first (missing 周一)" ;;
 esac
 contains "today button" "outline-success" "$CAL"
+
+say "T12 SuperAdmin account maintenance + member edit + profile photo (P2)"
+check "member -> admin accounts 302"      302 "$(code -b "$WORK/mem.jar" "$BASE/AdminAccounts")"
+check "admin -> admin accounts 302"       302 "$(code -b "$WORK/admin.jar" "$BASE/AdminAccounts")"
+check "superadmin -> admin accounts 200"  200 "$(code -b "$WORK/sa.jar" "$BASE/AdminAccounts")"
+
+# create a new admin account — provisioned active + verified, usable immediately
+NEWADMIN="e2eadmin.$(date +%s)@example.com"
+NEWADMIN_PASS="E2eAdmin123"
+t=$(get_page "$WORK/sa.jar" "$BASE/AdminAccounts/Create" | last_token)
+CREATED=$(curl -s -b "$WORK/sa.jar" -c "$WORK/sa.jar" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminAccounts/Create" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "FullName=E2E Admin" --data-urlencode "Email=$NEWADMIN" \
+  --data-urlencode "Phone=012-000 1111" --data-urlencode "Role=Admin" \
+  --data-urlencode "Password=$NEWADMIN_PASS" --data-urlencode "ConfirmPassword=$NEWADMIN_PASS")
+check "create admin account -> redirect" "302" "$CREATED"
+check "new admin logs in immediately"     "302" "$(login "$WORK/newadmin.jar" "$NEWADMIN" "$NEWADMIN_PASS")"
+check "new admin sees user admin"         200  "$(code -b "$WORK/newadmin.jar" "$BASE/AdminUsers")"
+check "new admin blocked from admin accounts" 302 "$(code -b "$WORK/newadmin.jar" "$BASE/AdminAccounts")"
+
+# guard rail: a SuperAdmin cannot deactivate their own account
+ACCT_PAGE=$(get_page "$WORK/sa.jar" "$BASE/AdminAccounts?search=superadmin@badmintonhub.my")
+SA_ID=$(printf '%s' "$ACCT_PAGE" | grep -oE 'SetStatus/[0-9]+' | head -1 | cut -d/ -f2)
+t=$(printf '%s' "$ACCT_PAGE" | last_token)
+curl -s -b "$WORK/sa.jar" -c "$WORK/sa.jar" -o /dev/null -X POST "$BASE/AdminAccounts/SetStatus/$SA_ID" \
+  --data-urlencode "__RequestVerificationToken=$t" --data-urlencode "status=Deactivated"
+check "superadmin self-deactivation refused (still logs in)" "302" \
+  "$(login "$WORK/sa2.jar" "superadmin@badmintonhub.my" "SuperAdmin@123")"
+
+# member maintenance: admin renames the disposable member from T8/T9
+t=$(get_page "$AD" "$BASE/AdminUsers/Edit/$UID_TMP" | last_token)
+EDITED=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminUsers/Edit" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "Id=$UID_TMP" \
+  --data-urlencode "FullName=E2E Renamed" --data-urlencode "Email=$TEMP_EMAIL" \
+  --data-urlencode "Phone=012-000 9999")
+check "admin edits member -> redirect" "302" "$EDITED"
+contains "renamed member visible in search" "E2E Renamed" "$(get_page "$AD" "$BASE/AdminUsers?search=$TEMP_EMAIL")"
+
+# profile photo: member uploads, sees it served, then removes it
+t=$(get_page "$WORK/reset.jar" "$BASE/Account/Profile" | last_token)
+UP=$(curl -s -b "$WORK/reset.jar" -c "$WORK/reset.jar" -o /dev/null -w '%{http_code}' \
+  "$BASE/Account/UploadPhoto" \
+  -F "__RequestVerificationToken=$t" \
+  -F "photo=@tests/assets/test-avatar.png;type=image/png")
+check "member uploads photo -> redirect" "302" "$UP"
+AV=$(get_page "$WORK/reset.jar" "$BASE/Account/Profile" | grep -oE '/uploads/profiles/[^"]+\.jpg' | head -1)
+if [ -n "$AV" ]; then
+  ok "profile shows uploaded avatar"
+  check "uploaded avatar served" "200" "$(code -b "$WORK/reset.jar" "$BASE$AV")"
+else
+  bad "profile shows uploaded avatar (no /uploads/profiles image)"
+fi
+t=$(get_page "$WORK/reset.jar" "$BASE/Account/Profile" | last_token)
+RM=$(curl -s -b "$WORK/reset.jar" -c "$WORK/reset.jar" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/Account/RemovePhoto" \
+  --data-urlencode "__RequestVerificationToken=$t")
+check "member removes photo -> redirect" "302" "$RM"
+case "$(get_page "$WORK/reset.jar" "$BASE/Account/Profile")" in
+  *"uploads/profiles"*) bad "removed photo no longer shown" ;;
+  *) ok "removed photo no longer shown" ;;
+esac
 
 rm -rf "$WORK"
 printf '\n========================================\n'

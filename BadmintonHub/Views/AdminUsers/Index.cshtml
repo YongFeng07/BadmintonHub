@@ -1,6 +1,7 @@
 @model AdminUsersIndexViewModel
 @{
     ViewData["Title"] = "User Accounts";
+    Layout = "_AdminLayout";
 }
 
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -47,6 +48,7 @@
     <table class="table table-hover align-middle bh-table mb-0">
         <thead>
             <tr>
+                <th></th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
@@ -61,8 +63,26 @@
             {
                 var isLocked = user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.Now;
                 <tr class="@(isLocked ? "table-danger" : "")">
+                    <td class="pe-1">
+                        @if (user.PhotoUrl != null)
+                        {
+                            <img src="@user.PhotoUrl" alt="" class="bh-avatar-md" />
+                        }
+                        else
+                        {
+                            var initials = string.Concat(user.FullName
+                                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                .Select(w => char.ToUpperInvariant(w[0]))
+                                .Take(2));
+                            <span class="bh-avatar-md bh-avatar-initials">@initials</span>
+                        }
+                    </td>
                     <td>
-                        @user.FullName
+                        <a asp-action="Details" asp-route-id="@user.Id" class="fw-semibold text-decoration-none text-bh-green">@user.FullName</a>
+                        @if (!user.EmailVerified)
+                        {
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">unverified</span>
+                        }
                         @if (user.Phone != null)
                         {
                             <div class="small text-muted">@user.Phone</div>
@@ -82,9 +102,17 @@
                             <span class="badge bg-dark">@user.Status</span>
                         }
                     </td>
-                    <td>@user.FailedLoginAttempts / 5</td>
+                    <td>@user.FailedLoginAttempts / 3</td>
                     <td>@(user.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "never")</td>
-                    <td class="text-end">
+                    <td class="text-end text-nowrap">
+                        <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-sm btn-outline-secondary" title="View details">👁</a>
+                        <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-outline-secondary" title="Edit profile">✏️</a>
+                        @if (!user.EmailVerified)
+                        {
+                            <form asp-action="Verify" asp-route-id="@user.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Verify email">✉️ Verify</button>
+                            </form>
+                        }
                         @if (isLocked)
                         {
                             <form asp-action="Unlock" asp-route-id="@user.Id" method="post" class="d-inline">
@@ -98,7 +126,7 @@
                                 @if (user.Status == UserStatus.Active)
                                 {
                                     <input type="hidden" name="status" value="Deactivated" />
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Deactivate</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Deactivate</button>
                                 }
                                 else
                                 {
@@ -117,7 +145,7 @@
 @if (Model.TotalPages > 1)
 {
     <nav class="mt-2" aria-label="User pages">
-        <ul class="pagination pagination-sm">
+        <ul class="pagination pagination-sm bh-pagination">
             @for (var p = 1; p <= Model.TotalPages; p++)
             {
                 <li class="page-item @(p == Model.Page ? "active" : "")">

@@ -65,19 +65,22 @@ various statuses so every screen has data.
 | M2 Reservation / Scheduling | Student B *(replace with name)* | AJAX slot picker with server-side double-booking protection; My Reservations with month calendar; payment confirmation; cancel with refund rule; QR confirmation (safe verify link only); automatic status updater |
 | M3 Member / Auth / Payment | Student C *(replace with name)* | Registration with email verification (no auto sign-in); profile and change password; 3-strike failed-login lockout with admin unlock; password reset with hashed single-use 30-minute tokens; payment history; PDF e-receipt; notification bell with AJAX mark-read; role-based landing pages |
 | M4 Admin / Reports | Student D *(replace with name)* | Dashboard KPIs with Chart.js; reservation administration (AJAX search/filter/sort/pagination, whitelisted status transitions, counter payment, cancellations); business reports with CSV export; user administration with lockout unlock and member activation control |
+| Admin & Member Maintenance (P2) | LIM LI ZHE | Profile photos with real-format validation, 256×256 crop-resize (ImageSharp); member self-service avatar upload/remove; admin edit of member profiles with email uniqueness; member activity details (stats + total paid); SuperAdmin-only admin-account CRUD (create/edit/reset password/activate/deactivate) with guard rails (no self-deactivation, last active SuperAdmin protected) |
 | Shared (P6) | Team | Multi-language (en-US / zh-CN / ms-MY) with cookie-based switcher; Monday-first localized calendars |
 | Revised-spec security & roles (P7) | Team | SuperAdmin / Admin / Member roles (Staff removed, demo account migrated); SuperAdmin-only system settings (site name + announcement banner); image captcha on login/register/reset (DNTCaptcha.Core, toggleable via `Security:EnableCaptcha`); email verification flow with 24h hashed tokens, resend and admin manual verify; Remember Me (30-day persistent cookie); demo mail inbox for verification/reset emails when no SMTP is configured |
 
 ## Testing
 
 All tests run in **Visual Studio**: open the solution, then **Test → Test
-Explorer → Run All**. The `BadmintonHub.Tests` xUnit project has 64 tests
+Explorer → Run All**. The `BadmintonHub.Tests` xUnit project has 88 tests
 covering password policy, the 3-strike login lockout, email verification
 (register/verify/expiry/anti-enumeration resend), booking/double-booking/
 payment/refund rules, admin status transitions, the culture switcher, QR and
-PDF generation — all against an isolated in-memory database (it never touches
-the real data file). See [docs/TESTING.md](docs/TESTING.md) for the full plan,
-rubric mapping and the supplementary end-to-end script (`tests/e2e.sh`).
+PDF generation, the photo-upload pipeline (size/format validation, 256×256
+resize, safe delete) and the admin-account CRUD guard rails — all against an
+isolated in-memory database (it never touches the real data file). See
+[docs/TESTING.md](docs/TESTING.md) for the full plan, rubric mapping and the
+supplementary end-to-end script (`tests/e2e.sh`).
 
 ## Known limitations (honest list)
 

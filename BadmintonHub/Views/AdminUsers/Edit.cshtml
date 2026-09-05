@@ -1,0 +1,95 @@
+@model AdminUserEditViewModel
+@{
+    ViewData["Title"] = "Edit User";
+    Layout = "_AdminLayout";
+    var initials = string.Concat(Model.FullName
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Select(w => char.ToUpperInvariant(w[0]))
+        .Take(2));
+}
+
+<div class="bh-admin-topbar">
+    <h1 class="h3 mb-0">✏️ Edit User</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Back to user accounts</a>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="bh-form-section">
+            <div class="d-flex align-items-center gap-4 flex-wrap mb-4">
+                @if (Model.PhotoUrl != null)
+                {
+                    <img src="@Model.PhotoUrl" alt="Profile photo" class="bh-avatar-lg" />
+                }
+                else
+                {
+                    <span class="bh-avatar-lg bh-avatar-initials">@initials</span>
+                }
+                <div>
+                    <form asp-action="UploadPhoto" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data"
+                          class="d-flex gap-2 align-items-center flex-wrap">
+                        <input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp"
+                               class="form-control form-control-sm" style="max-width: 260px" />
+                        <button type="submit" class="btn btn-bh btn-sm">Upload Photo</button>
+                    </form>
+                    @if (Model.PhotoUrl != null)
+                    {
+                        <form asp-action="RemovePhoto" asp-route-id="@Model.Id" method="post" class="mt-2">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Remove Photo</button>
+                        </form>
+                    }
+                    <div class="small text-muted mt-1">JPG, PNG or WebP, up to 5 MB — resized to 256 × 256.</div>
+                </div>
+            </div>
+
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Phone" class="form-label"></label>
+                        <input asp-for="Phone" class="form-control" />
+                        <span asp-validation-for="Phone" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+                <button type="submit" class="btn btn-bh">Save Changes</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="bh-form-section">
+            <h2 class="h6 mb-3">Account Info</h2>
+            <table class="table table-sm mb-0">
+                <tr><th class="text-muted fw-normal">Role</th>
+                    <td>
+                        <span class="badge @(Model.Role == Role.SuperAdmin ? "bg-danger" : Model.Role == Role.Admin ? "bg-warning text-dark" : "bg-secondary")">@Model.Role</span>
+                    </td></tr>
+                <tr><th class="text-muted fw-normal">Status</th>
+                    <td>
+                        @if (Model.Status == UserStatus.Active)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-dark">@Model.Status</span>
+                        }
+                    </td></tr>
+            </table>
+            <p class="small text-muted mt-3 mb-0">
+                Passwords are never edited here — use the reset link flow, or create a new
+                admin account with a fresh password in Admin Accounts.
+            </p>
+        </div>
+    </div>
+</div>

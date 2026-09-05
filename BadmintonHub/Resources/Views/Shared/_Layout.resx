@@ -30,5 +30,6 @@
   <data name="FooterAbout" xml:space="preserve"><value>About the Facility</value></data>
   <data name="FooterContact" xml:space="preserve"><value>Contact</value></data>
   <data name="DropDemoMail" xml:space="preserve"><value>📮 Demo Mail</value></data>
+  <data name="DropAdminAccounts" xml:space="preserve"><value>⚙️ Admin Accounts</value></data>
   <data name="DropSystemSettings" xml:space="preserve"><value>⚙️ System Settings</value></data>
 </root>

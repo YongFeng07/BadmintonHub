@@ -105,6 +105,27 @@ echo "== SuperAdmin pages =="
 login "$JAR_SUPER" "superadmin@badmintonhub.my" "SuperAdmin@123"
 auth_shot "$JAR_SUPER" "$BASE/AdminSettings/Index"    24-admin-system-settings
 
+echo "== P2: admin account maintenance + member edit + profile photo =="
+auth_shot "$JAR_SUPER" "$BASE/AdminAccounts/Index"    25-admin-accounts
+auth_shot "$JAR_SUPER" "$BASE/AdminAccounts/Create"   26-admin-account-create
+USER_PAGE=$(curl -s -b "$JAR_ADMIN" "$BASE/AdminUsers?search=member@badmintonhub.my")
+MEMBER_ID=$(printf '%s' "$USER_PAGE" | grep -oE 'Edit/[0-9]+' | head -1 | cut -d/ -f2)
+if [ -n "$MEMBER_ID" ]; then
+  auth_shot "$JAR_ADMIN" "$BASE/AdminUsers/Edit/$MEMBER_ID" 27-admin-user-edit
+else
+  echo "  ✗ 27-admin-user-edit (member id not found)"; FAILED="$FAILED 27-admin-user-edit"
+fi
+t=$(token "$JAR_MEMBER" "$BASE/Account/Profile")
+UP=$(curl -s -b "$JAR_MEMBER" -c "$JAR_MEMBER" -o /dev/null -w "%{http_code}" \
+  "$BASE/Account/UploadPhoto" \
+  -F "photo=@tests/assets/test-avatar.png;type=image/png" \
+  -F "__RequestVerificationToken=$t")
+if [ "$UP" = "302" ]; then
+  auth_shot "$JAR_MEMBER" "$BASE/Account/Profile" 28-member-profile-photo
+else
+  echo "  ✗ 28-member-profile-photo (upload -> HTTP $UP)"; FAILED="$FAILED 28-member-profile-photo"
+fi
+
 echo
 if [ -n "$FAILED" ]; then
   echo "Failed: $FAILED"

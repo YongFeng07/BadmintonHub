@@ -30,5 +30,6 @@
   <data name="FooterAbout" xml:space="preserve"><value>关于场馆</value></data>
   <data name="FooterContact" xml:space="preserve"><value>联系我们</value></data>
   <data name="DropDemoMail" xml:space="preserve"><value>📮 演示邮件</value></data>
+  <data name="DropAdminAccounts" xml:space="preserve"><value>⚙️ 管理员账号</value></data>
   <data name="DropSystemSettings" xml:space="preserve"><value>⚙️ 系统设置</value></data>
 </root>

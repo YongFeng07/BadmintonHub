@@ -44,6 +44,7 @@ internal static class TestDb
         AddUser(db, "Test Member", "member@test.local", Role.Member, "Member@123");
         AddUser(db, "Test Admin", "admin@test.local", Role.Admin, "Admin@123");
         AddUser(db, "Test Admin 2", "admin2@test.local", Role.Admin, "Admin@123");
+        AddUser(db, "Test SuperAdmin", "superadmin@test.local", Role.SuperAdmin, "SuperAdmin@123");
         db.SaveChanges();
 
         // Open availability 08:00-23:00 for the next 14 days (covers the booking tests).
@@ -62,10 +63,11 @@ internal static class TestDb
         return db;
     }
 
-    private static void AddUser(ApplicationDbContext db, string name, string email, Role role, string password)
+    /// <summary>Adds a seeded-style test user; public so individual tests can add extra accounts.</summary>
+    public static User AddUser(ApplicationDbContext db, string name, string email, Role role, string password)
     {
         var (hash, salt) = PasswordHelper.HashPassword(password);
-        db.Users.Add(new User
+        var user = new User
         {
             FullName = name,
             Email = email,
@@ -74,6 +76,8 @@ internal static class TestDb
             PasswordHash = hash,
             PasswordSalt = salt,
             EmailVerified = true // seeded test accounts skip the verification gate
-        });
+        };
+        db.Users.Add(user);
+        return user;
     }
 }

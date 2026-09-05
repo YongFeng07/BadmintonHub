@@ -398,3 +398,27 @@ main { flex: 1 0 auto; }
 .bh-empty .emoji { font-size: 2.4rem; display: block; margin-bottom: .5rem; }
 .text-bh-green { color: var(--bh-green-700); }
 .bg-bh-green { background: var(--bh-green-700); }
+
+/* ---------- Avatars (P2 profile photos) ---------- */
+.bh-avatar-sm {
+    width: 28px; height: 28px; border-radius: 50%;
+    object-fit: cover; border: 2px solid rgba(255, 255, 255, .55);
+    background: var(--bh-amber); flex: 0 0 auto;
+}
+.bh-avatar-md {
+    width: 44px; height: 44px; border-radius: 50%;
+    object-fit: cover; background: var(--bh-amber); flex: 0 0 auto;
+}
+.bh-avatar-lg {
+    width: 112px; height: 112px; border-radius: 50%;
+    object-fit: cover; box-shadow: 0 6px 18px rgba(14, 58, 47, .18);
+    background: var(--bh-amber); flex: 0 0 auto;
+}
+.bh-avatar-initials {
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--bh-green-900); font-weight: 700; letter-spacing: .02em;
+    background: linear-gradient(135deg, var(--bh-amber) 0%, #f7c948 100%);
+}
+.bh-avatar-sm.bh-avatar-initials { font-size: .72rem; }
+.bh-avatar-md.bh-avatar-initials { font-size: .95rem; }
+.bh-avatar-lg.bh-avatar-initials { font-size: 2.1rem; }

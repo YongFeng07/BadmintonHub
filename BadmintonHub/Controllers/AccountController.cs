@@ -17,13 +17,15 @@ public class AccountController : Controller
     private readonly IAuthService _authService;
     private readonly IAccountService _accountService;
     private readonly IEmailService _emailService;
+    private readonly IImageService _imageService;
     private readonly ApplicationDbContext _db;
 
-    public AccountController(IAuthService authService, IAccountService accountService, IEmailService emailService, ApplicationDbContext db)
+    public AccountController(IAuthService authService, IAccountService accountService, IEmailService emailService, IImageService imageService, ApplicationDbContext db)
     {
         _authService = authService;
         _accountService = accountService;
         _emailService = emailService;
+        _imageService = imageService;
         _db = db;
     }
 
@@ -246,6 +248,49 @@ public class AccountController : Controller
         }
 
         TempData["SuccessMessage"] = "Password changed successfully.";
+        return RedirectToAction(nameof(Profile));
+    }
+
+    // ---------- Profile photo (P2 pipeline) ----------
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UploadPhoto(IFormFile photo)
+    {
+        var user = await _db.Users.FindAsync(CurrentUserId);
+        if (user == null) return NotFound();
+
+        var (error, path) = _imageService.SaveProfilePhoto(photo, user.Id);
+        if (error != null)
+        {
+            TempData["ErrorMessage"] = error;
+            return RedirectToAction(nameof(Profile));
+        }
+
+        _imageService.DeleteProfilePhoto(user.PhotoUrl); // remove the previous file
+        user.PhotoUrl = path;
+        user.UpdatedAt = DateTime.Now;
+        await _db.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Profile photo updated.";
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemovePhoto()
+    {
+        var user = await _db.Users.FindAsync(CurrentUserId);
+        if (user == null) return NotFound();
+
+        _imageService.DeleteProfilePhoto(user.PhotoUrl);
+        user.PhotoUrl = null;
+        user.UpdatedAt = DateTime.Now;
+        await _db.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Profile photo removed.";
         return RedirectToAction(nameof(Profile));
     }
 

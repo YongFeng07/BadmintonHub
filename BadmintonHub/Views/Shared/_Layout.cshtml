@@ -9,6 +9,18 @@
         .ToListAsync();
     var siteName = siteSettings.FirstOrDefault(s => s.Key == "SiteName")?.Value ?? "BadmintonHub";
     var announcement = siteSettings.FirstOrDefault(s => s.Key == "SiteAnnouncement")?.Value;
+
+    // Current user's profile photo (P2): read fresh from the database so the
+    // navbar avatar updates immediately after an upload or an admin-side edit.
+    string? currentPhotoUrl = null;
+    var currentUserName = User.Identity?.IsAuthenticated == true ? User.Identity!.Name : null;
+    var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (int.TryParse(idClaim, out var currentUserId))
+        currentPhotoUrl = await Db.Users.Where(u => u.Id == currentUserId).Select(u => u.PhotoUrl).FirstOrDefaultAsync();
+    var currentInitials = string.Concat((currentUserName ?? "?")
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Select(w => char.ToUpperInvariant(w[0]))
+        .Take(2));
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -63,8 +75,16 @@
                                 @await Component.InvokeAsync("NotificationBell")
                             </li>
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    👤 @User.Identity.Name
+                                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    @if (currentPhotoUrl != null)
+                                    {
+                                        <img src="@currentPhotoUrl" alt="" class="bh-avatar-sm" />
+                                    }
+                                    else
+                                    {
+                                        <span class="bh-avatar-sm bh-avatar-initials">@currentInitials</span>
+                                    }
+                                    <span>@currentUserName</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end bh-dropdown">
                                     <li><a class="dropdown-item" asp-controller="Reservations" asp-action="MyReservations">@Localizer["DropMyReservations"]</a></li>
@@ -84,6 +104,7 @@
                                         <li><a class="dropdown-item" asp-controller="AdminEmails" asp-action="Index">@Localizer["DropDemoMail"]</a></li>
                                         @if (User.IsInRole("SuperAdmin"))
                                         {
+                                            <li><a class="dropdown-item" asp-controller="AdminAccounts" asp-action="Index">@Localizer["DropAdminAccounts"]</a></li>
                                             <li><a class="dropdown-item" asp-controller="AdminSettings" asp-action="Index">@Localizer["DropSystemSettings"]</a></li>
                                         }
                                     }
