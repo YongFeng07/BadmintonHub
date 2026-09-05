@@ -10,6 +10,7 @@
             <h1 class="display-5 mb-3">@Localizer["HeroTitle1"]<br /><span class="bh-hero-accent">@Localizer["HeroTitle2"]</span></h1>
             <p class="lead mb-4">@Localizer["HeroLead", Model.Facility?.Name ?? "BadmintonHub"]</p>
             <a asp-controller="Courts" asp-action="Index" class="btn btn-bh-amber btn-lg px-4 me-2">@Localizer["HeroBrowse"]</a>
+            <a asp-controller="Catalog" asp-action="Index" class="btn btn-outline-light btn-lg px-4 me-2">@Localizer["HeroFacilities"]</a>
             @if (User.Identity?.IsAuthenticated == true)
             {
                 <a asp-controller="Courts" asp-action="Index" class="btn btn-outline-light btn-lg px-4">@Localizer["HeroCheck"]</a>

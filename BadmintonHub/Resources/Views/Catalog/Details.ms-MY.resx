@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="BackToCatalog" xml:space="preserve"><value>← Kembali ke Kemudahan</value></data>
+  <data name="Open" xml:space="preserve"><value>Buka</value></data>
+  <data name="Closed" xml:space="preserve"><value>Tutup</value></data>
+  <data name="OurUnits" xml:space="preserve"><value>{0} Kami</value></data>
+  <data name="NoUnits" xml:space="preserve"><value>Tiada unit boleh ditempah buat masa ini.</value></data>
+  <data name="Type" xml:space="preserve"><value>Jenis</value></data>
+  <data name="Rate" xml:space="preserve"><value>Kadar</value></data>
+  <data name="Hour" xml:space="preserve"><value>jam</value></data>
+  <data name="Action" xml:space="preserve"><value>Tindakan</value></data>
+  <data name="ViewBook" xml:space="preserve"><value>Lihat / Tempah</value></data>
+  <data name="Rules" xml:space="preserve"><value>Peraturan Kemudahan</value></data>
+  <data name="NoRules" xml:space="preserve"><value>Tiada peraturan disiarkan.</value></data>
+  <data name="OpeningInfo" xml:space="preserve"><value>Maklumat Waktu Operasi</value></data>
+  <data name="Hours" xml:space="preserve"><value>Waktu Operasi</value></data>
+  <data name="Days" xml:space="preserve"><value>Hari Beroperasi</value></data>
+  <data name="Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Contact" xml:space="preserve"><value>Hubungi</value></data>
+  <data name="Address" xml:space="preserve"><value>Alamat</value></data>
+  <data name="Phone" xml:space="preserve"><value>Telefon</value></data>
+  <data name="Email" xml:space="preserve"><value>E-mel</value></data>
+</root>

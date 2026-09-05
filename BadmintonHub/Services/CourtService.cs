@@ -16,14 +16,14 @@ public class CourtService : ICourtService
 
     public CourtService(ApplicationDbContext db) => _db = db;
 
-    public async Task<List<SlotStatusViewModel>> GetAvailabilityForDateAsync(DateOnly date, int? courtId = null)
+    public async Task<List<SlotStatusViewModel>> GetAvailabilityForDateAsync(
+        DateOnly date, int? courtId = null, int? facilityId = null)
     {
-        var courtsQuery = _db.Courts.AsQueryable();
+        var courtsQuery = _db.Courts.Include(c => c.Facility).AsQueryable();
         if (courtId.HasValue) courtsQuery = courtsQuery.Where(c => c.Id == courtId);
+        if (facilityId.HasValue) courtsQuery = courtsQuery.Where(c => c.FacilityId == facilityId);
         var courts = await courtsQuery.OrderBy(c => c.CourtNumber).ToListAsync();
         if (courts.Count == 0) return new List<SlotStatusViewModel>();
-
-        var facility = await _db.Facilities.FirstAsync();
         var availabilities = await _db.CourtAvailabilities
             .Where(a => a.Date == date && (courtId == null || a.CourtId == courtId))
             .ToListAsync();
@@ -36,11 +36,14 @@ public class CourtService : ICourtService
             .ToListAsync();
 
         var slots = new List<SlotStatusViewModel>();
-        var openingHour = facility.OpeningTime.Hours;
-        var closingHour = facility.ClosingTime.Hours;
 
         foreach (var court in courts)
         {
+            // Opening hours belong to the court's facility, not a global first facility.
+            var facility = court.Facility!;
+            var openingHour = facility.OpeningTime.Hours;
+            var closingHour = facility.ClosingTime.Hours;
+
             for (var hour = openingHour; hour < closingHour; hour++)
             {
                 var start = new TimeOnly(hour, 0);
@@ -102,7 +105,10 @@ public class CourtService : ICourtService
 
     public async Task<bool> IsWindowWithinOpenSlotsAsync(int courtId, DateOnly date, TimeOnly start, TimeOnly end)
     {
-        var facility = await _db.Facilities.FirstAsync();
+        // Facility rules come from the court's own facility (multi-facility).
+        var court = await _db.Courts.Include(c => c.Facility).FirstOrDefaultAsync(c => c.Id == courtId);
+        if (court == null) return false;
+        var facility = court.Facility!;
 
         // Within facility operating hours?
         if (start.ToTimeSpan() < facility.OpeningTime || end.ToTimeSpan() > facility.ClosingTime)

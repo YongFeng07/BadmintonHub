@@ -6,7 +6,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="NavHome" xml:space="preserve"><value>首页</value></data>
   <data name="NavCourts" xml:space="preserve"><value>球场</value></data>
-  <data name="NavFacility" xml:space="preserve"><value>场馆</value></data>
+  <data name="NavCatalog" xml:space="preserve"><value>场馆目录</value></data>
   <data name="NavMyReservations" xml:space="preserve"><value>我的预订</value></data>
   <data name="NavBook" xml:space="preserve"><value>+ 预订球场</value></data>
   <data name="NavLogin" xml:space="preserve"><value>登录</value></data>

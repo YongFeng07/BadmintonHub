@@ -1,6 +1,6 @@
 # BadmintonHub — Entity Class Diagram
 
-11 entities + 8 enums, EF Core Code First (Data Annotations). Generated from
+13 entities + 9 enums, EF Core Code First (Data Annotations). Generated from
 the actual `BadmintonHub/Models/*.cs` sources, not from a tool — the diagram
 below is the authoritative shape of the schema.
 
@@ -20,8 +20,18 @@ classDiagram
         DateTime? LastLoginAt
         DateTime CreatedAt
     }
+    class Category {
+        int Id
+        string Name  «unique»
+        string? Description
+        string UnitLabel
+        string Icon
+        int DisplayOrder
+        CategoryStatus Status
+    }
     class Facility {
         int Id
+        int CategoryId
         string Name
         string? Description
         string Address
@@ -32,6 +42,14 @@ classDiagram
         string OperatingDays
         string? Rules
         FacilityStatus Status
+    }
+    class FacilityPhoto {
+        int Id
+        int FacilityId
+        string FilePath
+        string? Caption
+        int DisplayOrder
+        bool IsPrimary
     }
     class Court {
         int Id
@@ -110,9 +128,14 @@ classDiagram
 
     class Role {
         <<enumeration>>
+        SuperAdmin
         Admin
-        Staff
         Member
+    }
+    class CategoryStatus {
+        <<enumeration>>
+        Active
+        Inactive
     }
     class UserStatus {
         <<enumeration>>
@@ -160,7 +183,9 @@ classDiagram
         Card
     }
 
+    Category "1" --> "*" Facility : restrict delete
     Facility "1" --> "*" Court
+    Facility "1" --> "*" FacilityPhoto : cascade delete
     Court "1" --> "*" CourtPhoto : cascade delete
     Court "1" --> "*" CourtAvailability : cascade delete
     Court "1" --> "*" Reservation : restrict delete
@@ -183,3 +208,5 @@ classDiagram
 | Cascade vs restrict deletes | Photos/availability die with their court; courts and users with reservation history are protected (financial/audit trail) |
 | `PasswordResetToken.TokenHash` single-use, 30-min expiry | Reset links never store the raw token |
 | Unique index `(CourtId, Date, StartTime)` on availability | One slot row per court/date/hour |
+| `Category` with unique name + display order | Drives the public catalog (chips, grouping, unit labels) and guards facility deletion |
+| `FacilityPhoto` gallery with `IsPrimary` | Cover photo for catalog cards; photos die with their facility (cascade) |

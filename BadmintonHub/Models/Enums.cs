@@ -81,3 +81,9 @@ public enum FacilityStatus
     Closed,
     Maintenance
 }
+
+public enum CategoryStatus
+{
+    Active,
+    Inactive
+}

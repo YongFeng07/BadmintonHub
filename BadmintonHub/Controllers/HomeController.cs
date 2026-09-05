@@ -20,7 +20,7 @@ public class HomeController : Controller
             Facility = await _db.Facilities.FirstOrDefaultAsync(),
             FeaturedCourts = await _db.Courts
                 .Include(c => c.Photos.OrderBy(p => p.DisplayOrder))
-                .OrderBy(c => c.CourtNumber)
+                .OrderBy(c => c.FacilityId).ThenBy(c => c.CourtNumber)
                 .Take(6)
                 .ToListAsync(),
             CourtCount = await _db.Courts.CountAsync(),

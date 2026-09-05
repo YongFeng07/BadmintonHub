@@ -1,19 +1,20 @@
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 
 namespace BadmintonHub.Services;
 
 /// <summary>
 /// Image upload pipeline backed by SixLabors.ImageSharp (cross-platform, no
-/// System.Drawing dependency). Uploaded profile photos are decoded, validated
-/// by real format, cropped square and resized to 256×256 JPEGs under
-/// wwwroot/uploads/profiles so raw user files are never served as-is.
+/// System.Drawing dependency). Uploaded images are decoded, validated by real
+/// format, cropped and resized, then re-saved as JPEGs under wwwroot/uploads —
+/// raw user files are never served as-is.
 /// </summary>
 public class ImageService : IImageService
 {
     private const long MaxBytes = 5 * 1024 * 1024; // 5 MB
     private const int AvatarSize = 256;
+    private const int FacilityWidth = 800;
+    private const int FacilityHeight = 450;
 
     private static readonly HashSet<string> AllowedExtensions =
         new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp" };
@@ -22,12 +23,27 @@ public class ImageService : IImageService
 
     public ImageService(IWebHostEnvironment env) => _env = env;
 
-    public (string? Error, string? RelativePath) SaveProfilePhoto(IFormFile file, int userId)
+    public (string? Error, string? RelativePath) SaveProfilePhoto(IFormFile file, int userId) =>
+        SaveImage(file, "profiles", userId, AvatarSize, AvatarSize, "photo");
+
+    public (string? Error, string? RelativePath) SaveFacilityPhoto(IFormFile file, int facilityId) =>
+        SaveImage(file, "facilities", facilityId, FacilityWidth, FacilityHeight, "photo");
+
+    public void DeleteProfilePhoto(string? relativePath) =>
+        DeleteUnder(relativePath, "profiles");
+
+    public void DeleteFacilityPhoto(string? relativePath) =>
+        DeleteUnder(relativePath, "facilities");
+
+    // ---------- shared implementation ----------
+
+    private (string? Error, string? RelativePath) SaveImage(
+        IFormFile file, string subFolder, int ownerId, int width, int height, string errorNoun)
     {
         if (file == null || file.Length == 0)
-            return ("Please choose a photo file to upload.", null);
+            return ($"Please choose a {errorNoun} file to upload.", null);
         if (file.Length > MaxBytes)
-            return ("The photo must be 5 MB or smaller.", null);
+            return ($"The {errorNoun} must be 5 MB or smaller.", null);
 
         var extension = Path.GetExtension(file.FileName);
         if (!AllowedExtensions.Contains(extension))
@@ -43,19 +59,19 @@ public class ImageService : IImageService
             if (decoded is not ("jpeg" or "png" or "webp"))
                 return ("Only JPG, PNG or WebP images are allowed.", null);
 
-            // Square crop + resize, then save as a JPEG (universally supported, small).
+            // Centre crop + resize, then save as a JPEG (universally supported, small).
             image.Mutate(x => x.Resize(new ResizeOptions
             {
-                Size = new Size(AvatarSize, AvatarSize),
+                Size = new Size(width, height),
                 Mode = ResizeMode.Crop
             }));
 
-            var dir = Path.Combine(_env.WebRootPath ?? string.Empty, "uploads", "profiles");
+            var dir = Path.Combine(_env.WebRootPath ?? string.Empty, "uploads", subFolder);
             Directory.CreateDirectory(dir);
 
-            var fileName = $"{userId}-{Guid.NewGuid():N}.jpg";
+            var fileName = $"{ownerId}-{Guid.NewGuid():N}.jpg";
             image.SaveAsJpegAsync(Path.Combine(dir, fileName)).GetAwaiter().GetResult();
-            return (null, $"/uploads/profiles/{fileName}");
+            return (null, $"/uploads/{subFolder}/{fileName}");
         }
         catch (Exception ex) when (ex is InvalidImageContentException or UnknownImageFormatException
                                    or IOException or UnauthorizedAccessException)
@@ -64,11 +80,12 @@ public class ImageService : IImageService
         }
     }
 
-    public void DeleteProfilePhoto(string? relativePath)
+    private void DeleteUnder(string? relativePath, string subFolder)
     {
-        // Only delete files we manage under /uploads/profiles (never a foreign path).
+        var prefix = $"/uploads/{subFolder}/";
+        // Only delete files we manage under /uploads/<subFolder> (never a foreign path).
         if (string.IsNullOrWhiteSpace(relativePath) ||
-            !relativePath.StartsWith("/uploads/profiles/", StringComparison.OrdinalIgnoreCase))
+            !relativePath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             return;
 
         try

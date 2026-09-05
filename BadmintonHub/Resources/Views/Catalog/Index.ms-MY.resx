@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Title" xml:space="preserve"><value>Kemudahan</value></data>
+  <data name="Heading" xml:space="preserve"><value>Kemudahan Kami</value></data>
+  <data name="SubHeading" xml:space="preserve"><value>Badminton, renang, gim dan banyak lagi — layari semua venue dan semak ketersediaan malam ini.</value></data>
+  <data name="AllCategories" xml:space="preserve"><value>Semua Kategori</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Cari nama kemudahan…</value></data>
+  <data name="Search" xml:space="preserve"><value>Cari</value></data>
+  <data name="Reset" xml:space="preserve"><value>Set Semula</value></data>
+  <data name="NoResults" xml:space="preserve"><value>Tiada kemudahan sepadan carian anda.</value></data>
+  <data name="Top5" xml:space="preserve"><value>Popular</value></data>
+  <data name="PopularTitle" xml:space="preserve"><value>5 teratas paling ditempah dalam 30 hari</value></data>
+  <data name="From" xml:space="preserve"><value>Dari</value></data>
+  <data name="AlertLowAvailability" xml:space="preserve"><value>Hanya {0} {2} tersedia untuk {1} — tempah segera!</value></data>
+  <data name="ViewDetails" xml:space="preserve"><value>Lihat Butiran</value></data>
+</root>

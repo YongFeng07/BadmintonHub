@@ -6,7 +6,8 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="HeroTitle1" xml:space="preserve"><value>Tempah Gelanggang Anda.</value></data>
   <data name="HeroTitle2" xml:space="preserve"><value>Mainkan Permainan Anda.</value></data>
-  <data name="HeroLead" xml:space="preserve"><value>{0} — enam gelanggang tertutup profesional dengan tempahan dalam talian yang mudah. Pilih tarikh, pilih masa anda, dan turun ke gelanggang.</value></data>
+  <data name="HeroLead" xml:space="preserve"><value>{0} — pusat pelbagai sukan dengan tempahan dalam talian yang mudah. Pilih kemudahan, pilih masa anda, dan mainkan permainan anda.</value></data>
+  <data name="HeroFacilities" xml:space="preserve"><value>Layari Kemudahan</value></data>
   <data name="HeroBrowse" xml:space="preserve"><value>Lihat Gelanggang</value></data>
   <data name="HeroCheck" xml:space="preserve"><value>Semak Ketersediaan</value></data>
   <data name="HeroLogin" xml:space="preserve"><value>Log Masuk untuk Tempah</value></data>

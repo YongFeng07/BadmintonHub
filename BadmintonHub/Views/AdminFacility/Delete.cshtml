@@ -1,0 +1,31 @@
+@model BadmintonHub.Models.Facility
+@{
+    ViewData["Title"] = "Delete Facility";
+    Layout = "_AdminLayout";
+    var courtCount = (int)(ViewBag.CourtCount ?? 0);
+}
+
+<div class="bh-form-section" style="max-width: 640px;">
+    <h2 class="bh-page-title mb-3">Delete @Model.Name?</h2>
+
+    @if (courtCount > 0)
+    {
+        <div class="alert alert-danger">
+            <strong>Deletion is blocked.</strong> This facility has @courtCount court(s).
+            Delete the courts first (or keep the facility and set it to <em>Closed</em>).
+        </div>
+        <a asp-action="Index" class="btn btn-bh">Back to Facilities</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit Facility</a>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            This will permanently remove "@Model.Name" and its photo gallery. This action cannot be undone.
+        </div>
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger">Yes, delete this facility</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    }
+</div>

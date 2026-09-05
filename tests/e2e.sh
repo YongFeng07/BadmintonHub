@@ -82,7 +82,8 @@ say "T1 public pages & seeded data (anonymous)"
 check "home 200"                200 "$(code "$BASE/")"
 contains "home seeded"          "Court 01" "$(curl -s "$BASE/")"
 check "courts 200"              200 "$(code "$BASE/Courts")"
-check "facility 200"            200 "$(code "$BASE/Facility")"
+check "catalog 200"             200 "$(code "$BASE/Catalog")"
+check "facility legacy -> catalog" 302 "$(code "$BASE/Facility")"
 check "court details 200"       200 "$(code "$BASE/Courts/Details/1")"
 check "anonymous admin -> login" 302 "$(code "$BASE/AdminDashboard")"
 check "anonymous my-res -> login" 302 "$(code "$BASE/Reservations/MyReservations")"
@@ -324,6 +325,166 @@ check "member removes photo -> redirect" "302" "$RM"
 case "$(get_page "$WORK/reset.jar" "$BASE/Account/Profile")" in
   *"uploads/profiles"*) bad "removed photo no longer shown" ;;
   *) ok "removed photo no longer shown" ;;
+esac
+
+say "T13 category/facility maintenance + public catalog (P3)"
+
+# --- public catalog: seeded facilities, category chips, search, details, top-5 ---
+CAT=$(curl -s "$BASE/Catalog")
+contains "catalog lists seeded facility" "BadmintonHub Main Facility" "$CAT"
+contains "catalog lists aquatics"       "Aquatics Centre" "$CAT"
+contains "catalog shows top-5 badge"    "bh-popular-badge" "$CAT"
+CAT1=$(printf '%s' "$CAT" | grep -oE 'categoryId=[0-9]+' | head -1)
+[ -n "$CAT1" ] && ok "category chip link captured ($CAT1)" || bad "category chip link captured"
+if [ -n "$CAT1" ]; then
+  FILTERED=$(curl -s "$BASE/Catalog?$CAT1")
+  contains "category filter keeps match"  "BadmintonHub Main Facility" "$FILTERED"
+  case "$FILTERED" in
+    *"Aquatics Centre"*) bad "category filter hides other categories" ;;
+    *) ok "category filter hides other categories" ;;
+  esac
+fi
+SEARCHED=$(curl -s "$BASE/Catalog?search=Aquatics")
+contains "name search keeps match" "Aquatics Centre" "$SEARCHED"
+case "$SEARCHED" in
+  *"BadmintonHub Main Facility"*) bad "name search hides non-matches" ;;
+  *) ok "name search hides non-matches" ;;
+esac
+FD=$(printf '%s' "$CAT" | grep -oE 'Catalog/Details/[0-9]+' | head -1 | cut -d/ -f3)
+[ -n "$FD" ] && ok "catalog details link captured (facility $FD)" || bad "catalog details link captured"
+if [ -n "$FD" ]; then
+  check "catalog details 200" 200 "$(code "$BASE/Catalog/Details/$FD")"
+  DETAIL=$(curl -s "$BASE/Catalog/Details/$FD")
+  contains "details shows facility" "BadmintonHub Main Facility" "$DETAIL"
+  contains "details links units"    "Courts/Details/" "$DETAIL"
+  contains "details shows photos"   "/images/courts/facility.svg" "$DETAIL"
+fi
+
+# --- low-availability alert: book two table-tennis slots for tonight 19:00 ---
+JAR="$WORK/mem.jar"
+TTSLOT=0
+for TC in 17 18 19 20; do
+  [ "$TTSLOT" -ge 2 ] && break
+  t=$(get_page "$JAR" "$BASE/Reservations/Create" | last_token)
+  LOC=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code} %{redirect_url}' \
+    -X POST "$BASE/Reservations/Create" \
+    --data-urlencode "__RequestVerificationToken=$t" \
+    --data-urlencode "CourtId=$TC" --data-urlencode "Date=$TODAY" \
+    --data-urlencode "StartTime=19:00" --data-urlencode "DurationHours=1")
+  case "${LOC%% *}" in 302) TTSLOT=$((TTSLOT + 1)) ;; esac
+done
+[ "$TTSLOT" -ge 2 ] && ok "booked 2 table-tennis slots tonight ($TTSLOT)" \
+  || bad "booked 2 table-tennis slots tonight (only $TTSLOT)"
+contains "low-availability alert rendered" "⚠️" "$(curl -s "$BASE/Catalog")"
+
+# --- admin: category CRUD ---
+check "member -> admin categories 302" 302 "$(code -b "$WORK/mem.jar" "$BASE/AdminCategories")"
+check "admin -> admin categories 200"  200 "$(code -b "$AD" "$BASE/AdminCategories")"
+check "admin -> admin facility 200"    200 "$(code -b "$AD" "$BASE/AdminFacility")"
+contains "seeded categories listed" "Swimming Pool" "$(get_page "$AD" "$BASE/AdminCategories")"
+contains "seeded facilities listed" "BadmintonHub Main Facility" "$(get_page "$AD" "$BASE/AdminFacility")"
+
+CATNAME="e2eCat$(date +%s)"
+t=$(get_page "$AD" "$BASE/AdminCategories/Create" | last_token)
+C=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminCategories/Create" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "Name=$CATNAME" --data-urlencode "UnitLabel=Ring" \
+  --data-urlencode "Icon=🥊" --data-urlencode "DisplayOrder=77" --data-urlencode "Status=Active")
+check "create category -> redirect" "302" "$C"
+# DisplayOrder 77 sorts after all 11 seeded categories, so the new category is
+# the last table row — its Edit link is the last one on the page.
+NEWCATID=$(get_page "$AD" "$BASE/AdminCategories" | grep -oE 'Edit/[0-9]+' | tail -1 | cut -d/ -f2)
+[ -n "$NEWCATID" ] && ok "category id captured ($NEWCATID)" || bad "category id captured"
+contains "created category listed" "$CATNAME" "$(get_page "$AD" "$BASE/AdminCategories")"
+
+t=$(get_page "$AD" "$BASE/AdminCategories/Edit/$NEWCATID" | last_token)
+E=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminCategories/Edit" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "Id=$NEWCATID" --data-urlencode "Name=${CATNAME}2" \
+  --data-urlencode "UnitLabel=Ring" --data-urlencode "Icon=🥊" \
+  --data-urlencode "DisplayOrder=77" --data-urlencode "Status=Active")
+check "edit category -> redirect" "302" "$E"
+contains "edited category listed" "${CATNAME}2" "$(get_page "$AD" "$BASE/AdminCategories")"
+
+# --- admin: facility CRUD in the new category + photo upload ---
+FACNAME="ZZZ e2eFac$(date +%s)"  # sorts last in the name-ordered facility table
+t=$(get_page "$AD" "$BASE/AdminFacility/Create" | last_token)
+F=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminFacility/Create" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "CategoryId=$NEWCATID" --data-urlencode "Name=$FACNAME" \
+  --data-urlencode "Address=1 E2E Lane" --data-urlencode "Phone=012-000 0000" \
+  --data-urlencode "Email=fac@example.com" \
+  --data-urlencode "OpeningTime=08:00" --data-urlencode "ClosingTime=22:00" \
+  --data-urlencode "OperatingDays=Mon" --data-urlencode "OperatingDays=Tue" \
+  --data-urlencode "OperatingDays=Wed" --data-urlencode "OperatingDays=Thu" \
+  --data-urlencode "OperatingDays=Fri" --data-urlencode "OperatingDays=Sat" \
+  --data-urlencode "OperatingDays=Sun" --data-urlencode "Status=Open")
+check "create facility -> redirect" "302" "$F"
+# "ZZZ …" sorts after every seeded name, so its Edit link is the last on the page.
+NEWFACID=$(get_page "$AD" "$BASE/AdminFacility" | grep -oE 'Edit/[0-9]+' | tail -1 | cut -d/ -f2)
+[ -n "$NEWFACID" ] && ok "facility id captured ($NEWFACID)" || bad "facility id captured"
+
+t=$(get_page "$AD" "$BASE/AdminFacility/ManagePhotos/$NEWFACID" | last_token)
+UP=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  "$BASE/AdminFacility/UploadPhotos?facilityId=$NEWFACID" \
+  -F "__RequestVerificationToken=$t" \
+  -F "photos=@tests/assets/test-avatar.png;type=image/png")
+check "upload facility photo -> redirect" "302" "$UP"
+FP=$(get_page "$AD" "$BASE/AdminFacility/ManagePhotos/$NEWFACID" | grep -oE '/uploads/facilities/[^"]+\.jpg' | head -1)
+if [ -n "$FP" ]; then
+  ok "facility photo listed in manager"
+  check "facility photo served" "200" "$(code -b "$AD" "$BASE$FP")"
+else
+  bad "facility photo listed in manager (no /uploads/facilities image)"
+fi
+
+# --- guards: category delete blocked while it owns a facility ---
+contains "category delete blocked message" "Deletion is blocked" \
+  "$(get_page "$AD" "$BASE/AdminCategories/Delete/$NEWCATID")"
+
+# --- a court in the new facility; facility delete blocked while it owns courts ---
+t=$(get_page "$AD" "$BASE/AdminCourts/Create" | last_token)
+K=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminCourts/Create" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "FacilityId=$NEWFACID" --data-urlencode "CourtNumber=99" \
+  --data-urlencode "CourtType=Standard" --data-urlencode "HourlyRate=12.50" \
+  --data-urlencode "Status=Available")
+check "create court in new facility -> redirect" "302" "$K"
+contains "court listed under facility" "99" "$(get_page "$AD" "$BASE/AdminCourts?facilityId=$NEWFACID")"
+# The facility filter leaves exactly one court (99), so its Edit link is the only one.
+NEWCOURTID=$(get_page "$AD" "$BASE/AdminCourts?facilityId=$NEWFACID" | grep -oE 'Edit/[0-9]+' | head -1 | cut -d/ -f2)
+contains "facility delete blocked message" "courts first" \
+  "$(get_page "$AD" "$BASE/AdminFacility/Delete/$NEWFACID")"
+
+# --- cleanup: court -> facility -> category, in dependency order ---
+t=$(get_page "$AD" "$BASE/AdminCourts/Delete/$NEWCOURTID" | last_token)
+K=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminCourts/Delete/$NEWCOURTID" \
+  --data-urlencode "__RequestVerificationToken=$t")
+check "delete court -> redirect" "302" "$K"
+
+t=$(get_page "$AD" "$BASE/AdminFacility/Delete/$NEWFACID" | last_token)
+D=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminFacility/Delete/$NEWFACID" \
+  --data-urlencode "__RequestVerificationToken=$t")
+check "delete facility -> redirect" "302" "$D"
+case "$(get_page "$AD" "$BASE/AdminFacility")" in
+  *"Edit/$NEWFACID"*) bad "deleted facility gone (still in table)" ;;
+  *) ok "deleted facility gone" ;;
+esac
+
+t=$(get_page "$AD" "$BASE/AdminCategories/Delete/$NEWCATID" | last_token)
+D=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminCategories/Delete/$NEWCATID" \
+  --data-urlencode "__RequestVerificationToken=$t")
+check "delete empty category -> redirect" "302" "$D"
+case "$(get_page "$AD" "$BASE/AdminCategories")" in
+  *"Edit/$NEWCATID"*) bad "deleted category gone (still in table)" ;;
+  *) ok "deleted category gone" ;;
 esac
 
 rm -rf "$WORK"

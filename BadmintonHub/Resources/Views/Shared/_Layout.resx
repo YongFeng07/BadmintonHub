@@ -6,7 +6,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="NavHome" xml:space="preserve"><value>Home</value></data>
   <data name="NavCourts" xml:space="preserve"><value>Courts</value></data>
-  <data name="NavFacility" xml:space="preserve"><value>Facility</value></data>
+  <data name="NavCatalog" xml:space="preserve"><value>Facilities</value></data>
   <data name="NavMyReservations" xml:space="preserve"><value>My Reservations</value></data>
   <data name="NavBook" xml:space="preserve"><value>+ Book a Court</value></data>
   <data name="NavLogin" xml:space="preserve"><value>Login</value></data>

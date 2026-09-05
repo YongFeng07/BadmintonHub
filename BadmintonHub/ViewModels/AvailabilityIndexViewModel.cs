@@ -6,7 +6,11 @@ public class AvailabilityIndexViewModel
 {
     public DateOnly Date { get; set; }
 
-    public Facility Facility { get; set; } = null!;
+    public int FacilityId { get; set; }
+
+    public Facility? Facility { get; set; }
+
+    public List<Facility> Facilities { get; set; } = new();
 
     public List<Court> Courts { get; set; } = new();
 

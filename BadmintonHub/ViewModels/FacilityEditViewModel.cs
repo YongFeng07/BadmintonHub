@@ -7,6 +7,12 @@ public class FacilityEditViewModel : IValidatableObject
 {
     public int Id { get; set; }
 
+    [Required]
+    [Display(Name = "Category")]
+    public int CategoryId { get; set; }
+
+    public List<Category> Categories { get; set; } = new();
+
     [Required, StringLength(100)]
     public string Name { get; set; } = string.Empty;
 

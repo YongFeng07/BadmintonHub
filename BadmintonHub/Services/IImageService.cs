@@ -16,4 +16,13 @@ public interface IImageService
 
     /// <summary>Deletes a previously stored photo file (safe no-op for null/foreign paths).</summary>
     void DeleteProfilePhoto(string? relativePath);
+
+    /// <summary>
+    /// Validates and stores an uploaded facility photo for the given facility id
+    /// (800×450 crop, saved under /uploads/facilities).
+    /// </summary>
+    (string? Error, string? RelativePath) SaveFacilityPhoto(IFormFile file, int facilityId);
+
+    /// <summary>Deletes a previously stored facility photo file (safe no-op for null/foreign paths).</summary>
+    void DeleteFacilityPhoto(string? relativePath);
 }

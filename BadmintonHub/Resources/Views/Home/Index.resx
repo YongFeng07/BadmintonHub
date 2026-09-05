@@ -6,7 +6,8 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="HeroTitle1" xml:space="preserve"><value>Book Your Court.</value></data>
   <data name="HeroTitle2" xml:space="preserve"><value>Play Your Game.</value></data>
-  <data name="HeroLead" xml:space="preserve"><value>{0} — six professional indoor courts with easy online booking. Pick a date, choose your time, and step on court.</value></data>
+  <data name="HeroLead" xml:space="preserve"><value>{0} — a multi-sport centre with easy online booking. Pick a facility, choose your time, and play your game.</value></data>
+  <data name="HeroFacilities" xml:space="preserve"><value>Browse Facilities</value></data>
   <data name="HeroBrowse" xml:space="preserve"><value>Browse Courts</value></data>
   <data name="HeroCheck" xml:space="preserve"><value>Check Availability</value></data>
   <data name="HeroLogin" xml:space="preserve"><value>Login to Book</value></data>
