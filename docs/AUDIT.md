@@ -97,6 +97,7 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 |---|---|---|
 | Auto-migrate + seed at startup | PASS | `Program.cs`: `Database.Migrate()` + `DbSeeder.Seed()`; first F5 creates `App_Data/BadmintonHub.mdf` |
 | VS F5 reliability | PASS | LocalDB file pinned to `App_Data` (commit `0a70a7c`) — fixes the "Cannot create file because it already exists" crash |
+| Multiple copies on one machine | PASS | Catalog name derived from the data-file path (SHA-256 prefix, commit `2d8a796`); verified working copy + clean clone running side by side with distinct registrations (`BadmintonHub_d8927285` / `BadmintonHub_54ba4478`) |
 
 ## 11. Testing — PASS
 
