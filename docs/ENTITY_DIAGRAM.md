@@ -129,6 +129,8 @@ classDiagram
         PaymentMethod Method
         PaymentStatus Status
         string? PaymentReference
+        string? GatewayBillCode
+        string? GatewayStatus
         DateTime? PaidAt
     }
     class Notification {

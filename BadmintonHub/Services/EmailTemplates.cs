@@ -37,6 +37,18 @@ public static class EmailTemplates
             """);
     }
 
+    /// <summary>Payment confirmation sent after a checkout batch (or ToyyibPay bill) is paid.</summary>
+    public static string PaymentConfirmationEmail(string fullName, int bookingCount)
+    {
+        var name = WebUtility.HtmlEncode(fullName);
+        return Shell("Payment received", $"""
+            <p>Hi {name},</p>
+            <p>Thank you — we have received your payment. <strong>{bookingCount} booking(s)</strong> are now confirmed.</p>
+            <p>You can see the details (including your QR entry code) on the <strong>My Reservations</strong> page.</p>
+            <p>See you on court! 🏸</p>
+            """);
+    }
+
     /// <summary>Password reset mail with the single-use, 30-minute reset link.</summary>
     public static string PasswordResetEmail(string fullName, string resetUrl)
     {

@@ -98,6 +98,30 @@ public class AdminReportsViewModel
     public List<int> PeakHourData { get; set; } = new();
 
     public List<Reservation> RevenueRows { get; set; } = new();
+
+    // Booking/revenue reports (Phase E): monthly trends over the last 12 months
+    // (independent of the range filter), the category split and the cancellation
+    // rate within the selected range.
+
+    public List<string> MonthlyBookingLabels { get; set; } = new();
+
+    public List<int> MonthlyBookingData { get; set; } = new();
+
+    public List<string> MonthlyRevenueLabels { get; set; } = new();
+
+    public List<decimal> MonthlyRevenueData { get; set; } = new();
+
+    public List<string> CategoryLabels { get; set; } = new();
+
+    public List<int> CategoryData { get; set; } = new();
+
+    public double CancellationRate { get; set; }
+
+    public int CancelledTotal { get; set; }
+
+    public int ActiveTotal { get; set; }
+
+    public int CompletedTotal { get; set; }
 }
 
 /// <summary>Filter/pagination state for the user administration grid.</summary>

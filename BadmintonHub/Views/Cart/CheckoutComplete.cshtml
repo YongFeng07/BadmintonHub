@@ -86,6 +86,14 @@
                                    checked="@(Model.Method == PaymentMethod.Card ? "checked" : null)" />
                             <label class="form-check-label" for="method_Card">💳 Card</label>
                         </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="Method"
+                                   value="@PaymentMethod.ToyyibPay" id="method_ToyyibPay"
+                                   checked="@(Model.Method == PaymentMethod.ToyyibPay ? "checked" : null)" />
+                            <label class="form-check-label" for="method_ToyyibPay">
+                                🧾 ToyyibPay <span class="text-muted">(online banking gateway)</span>
+                            </label>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-bh w-100">
                         Pay All — RM @Model.TotalDue.ToString("0.00")
@@ -95,6 +103,8 @@
                 </form>
                 <p class="small text-muted mt-3 mb-0">
                     ⚠️ Demo payment simulation — no real money changes hands.
+                    ToyyibPay runs on its built-in simulated page while no gateway
+                    credentials are configured.
                 </p>
             </div>
         </div>

@@ -1,4 +1,5 @@
 using BadmintonHub.Data;
+using BadmintonHub.Models;
 using BadmintonHub.Services;
 using BadmintonHub.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -20,12 +21,18 @@ public class CartController : Controller
     private readonly ApplicationDbContext _db;
     private readonly ICartService _cartService;
     private readonly ICheckoutService _checkoutService;
+    private readonly IToyyibPayService _toyyibPay;
 
-    public CartController(ApplicationDbContext db, ICartService cartService, ICheckoutService checkoutService)
+    public CartController(
+        ApplicationDbContext db,
+        ICartService cartService,
+        ICheckoutService checkoutService,
+        IToyyibPayService toyyibPay)
     {
         _db = db;
         _cartService = cartService;
         _checkoutService = checkoutService;
+        _toyyibPay = toyyibPay;
     }
 
     private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -147,6 +154,39 @@ public class CartController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CheckoutComplete(CheckoutPaymentViewModel model)
     {
+        // ToyyibPay: no payment is taken here. A bill is opened at the gateway
+        // (or the simulated demo page) and the member is redirected to pay there;
+        // the return endpoint marks the batch paid after verification.
+        if (model.Method == PaymentMethod.ToyyibPay)
+        {
+            var pending = await _db.Payments
+                .Where(p => model.ReservationIds.Contains(p.ReservationId)
+                            && p.UserId == CurrentUserId
+                            && p.Status == PaymentStatus.Pending)
+                .OrderBy(p => p.Id)
+                .ToListAsync();
+
+            if (pending.Count == 0)
+            {
+                TempData["ErrorMessage"] = "There is nothing left to pay for these bookings.";
+                return RedirectToAction(nameof(CheckoutComplete), new { reservationIds = model.ReservationIds });
+            }
+
+            var amount = pending.Sum(p => p.Amount);
+            var returnUrl = Url.Action("ToyyibPayReturn", "Payments", new { }, Request.Scheme)!;
+            var (ok, _, paymentUrl, billError) =
+                await _toyyibPay.CreateBillAsync(CurrentUserId, pending, amount, returnUrl);
+
+            if (!ok)
+            {
+                TempData["ErrorMessage"] = billError;
+                return RedirectToAction(nameof(CheckoutComplete), new { reservationIds = model.ReservationIds });
+            }
+
+            // Real mode: hosted ToyyibPay checkout. Simulated mode: the local demo page.
+            return Redirect(paymentUrl!);
+        }
+
         var (success, error, paid) = await _checkoutService.MarkBatchPaidAsync(
             CurrentUserId, model.ReservationIds, model.Method);
 

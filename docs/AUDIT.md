@@ -71,6 +71,7 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | Admin & Member Maintenance (P2) | PASS | Profile photos (ImageSharp pipeline, member self-service + admin upload); admin edit of member profiles with e-mail uniqueness; member activity details; SuperAdmin-only admin-account CRUD with guard rails — unit + e2e tested |
 | Category / Facility Maintenance & Catalog (P3) | PASS | `Category` + `FacilityPhoto` entities (migration `P3_CategoryAndFacilityPhotos`); 11 seeded categories; 6 facilities with per-facility hours and photo manager (800×450, cover); category + facility delete guards; public catalog with filters, Top-5 ranking and low-availability alert; `CatalogServiceTests` / `AdminCategoriesControllerTests` / `AdminFacilityControllerTests` + e2e T13 |
 | Booking Cart + Checkout + Wishlist + Vouchers (P4) | PASS | `CartItem` (unique user/court/date/start), `WishlistItem`, `Voucher` + reservation discount fields (migration `P4_CartWishlistVoucher`); DB-backed cart with duration update, batch remove/clear and owner scoping; checkout creates pending reservations + payments in one transaction with server-side re-validation and rollback; discount split proportionally (last line absorbs rounding remainder); **all-or-nothing batch payment**; single-use redemption limits; wishlist entry point on unavailable courts with local-return-url guard; admin voucher CRUD with duplicate-code rejection; `CartServiceTests` / `CheckoutServiceTests` / `VoucherServiceTests` / `WishlistServiceTests` + controller tests + e2e T14–T17 |
+| ToyyibPay + booking/revenue reports (P5) | PASS | `Payment.GatewayBillCode` / `GatewayStatus` (migration `E_ToyyibPay`); `ToyyibPayService` with **simulated fallback** (empty `ToyyibPay:UserSecretKey/CategoryCode` placeholders — no credentials committed) and real-mode `createBill` / `getBillTransactions` with server-side re-verification before marking paid; simulated gateway page (clearly labelled TEST MODE); batch bill reference carried onto payment rows; payment-confirmation e-mail; member booking insights (monthly bookings, spend by month, category split, cancellation rate) + admin monthly bookings / revenue by month / bookings by category / cancellation rate charts (`ChartAggregations`) |
 
 ## 6. Additional features — PASS
 
@@ -95,6 +96,8 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | Checkout with voucher + batch payment | `CheckoutService` — transactional checkout, voucher discount on the payment page, pay all selected reservations at once; screenshot `35`; e2e T15 |
 | Wishlist for unavailable courts | `WishlistController` — "Currently unavailable — Add to Wishlist" on court details, wishlist grid, per-user removal; screenshot `36`; e2e T17 |
 | Voucher administration | `AdminVouchersController` — CRUD with code normalisation, duplicate rejection, expiry/limit/percentage-fixed options, usage counters; screenshots `37`, `38`; e2e T16 |
+| ToyyibPay payment gateway (3rd-party API) | `ToyyibPayService` + `PaymentsController.ToyyibPayReturn` — simulated fallback runs without credentials (SIM- bills, clearly-labelled demo gateway page); real mode POSTs `createBill` and re-verifies `getBillTransactions` before trusting the return; verified by a live curl smoke round trip (cart → bill → gateway → pay → 7 bookings Confirmed, bill code as payment reference, confirmation e-mail captured) |
+| Member booking insights + extended reports | Member "My Reservations → Insights" tab (monthly bookings, spend by month, bookings by category, booking outcomes + cancellation rate); `AdminReports` gains monthly bookings, revenue by month, bookings by category and cancellation rate; verified by live page checks (canvas + serialized data) |
 
 ## 7. Report — PARTIAL
 
@@ -132,6 +135,7 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | Unit coverage of business rules | PASS | [docs/TESTING.md](docs/TESTING.md) §2 — passwords, 3-strike lockout, e-mail verification, booking/double-booking/payment/refund, admin transitions, culture switcher, QR, PDF, calendar, photo pipeline, admin-account guard rails, catalog service (filters/top-5/low-availability), category + facility maintenance CRUD with delete guards, cart service (overlap/owner scoping), checkout (transaction, proportional discount split, batch payment, re-validation rollback), voucher validation + limits, wishlist (open-redirect guard, owner scoping) |
 | Latest run | PASS | `Passed! Failed: 0, Passed: 193` (2026-09-06) |
 | End-to-end evidence | PASS | `tests/e2e.sh` (T1–T17) — HTTP-level checks incl. role matrix, register → verify flow, lockout, antiforgery, receipts, admin-account CRUD, photo upload, catalog filters + Top-5 badge + low-availability alert, category/facility CRUD + delete guards, cart arithmetic + batch remove, checkout with WELCOME10 + batch payment, voucher admin CRUD + single-use limits, wishlist round trip |
+| Phase E verification | PARTIAL | ToyyibPay simulated round trip and the member/admin charts verified by live HTTP smoke checks; **no dedicated unit tests for `ToyyibPayService`/`ChartAggregations`** — the team decided to skip the Phase E unit-test milestone, and the real-API mode needs real ToyyibPay credentials so it is not automatable (see [TESTING.md](TESTING.md) §3) |
 
 ## 12. Documentation — PASS
 
@@ -154,7 +158,12 @@ README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.
    is configured; set `Email:Smtp:Host` (MailKit) to send real mail. No SMTP
    credentials are committed. Assignment permits demo behaviour; do not
    present the demo mailbox as real e-mail delivery.
-4. **Payments are simulated** — payment recording flows (no payment gateway).
+4. **ToyyibPay runs in simulated mode out of the box** — the gateway
+   integration (create bill → redirect → verify → mark paid) is real code,
+   but without `ToyyibPay:UserSecretKey`/`CategoryCode` it falls back to a
+   clearly-labelled simulated gateway page (no credentials are committed).
+   The real-API path has never been exercised against the live ToyyibPay
+   service and has no automated coverage.
 5. **QR verify page is a demo counter-verification screen** — it looks up the
    public reference and shows status; it is not a cryptographic gatekeeper.
 6. **Demo data only** — the seeded facility/rates/reservations are fictional

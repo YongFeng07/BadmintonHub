@@ -19,7 +19,7 @@ public class CheckoutServiceTests
         var db = TestDb.Create();
         var courts = new CourtService(db);
         var reservations = new ReservationService(db, courts);
-        var checkout = new CheckoutService(db, courts, new VoucherService(db), reservations);
+        var checkout = new CheckoutService(db, courts, new VoucherService(db), reservations, new NoopEmailSender());
         var cart = new CartService(db, courts);
         var memberId = db.Users.Single(u => u.Email == "member@test.local").Id;
         var otherUserId = db.Users.Single(u => u.Email == "admin2@test.local").Id;

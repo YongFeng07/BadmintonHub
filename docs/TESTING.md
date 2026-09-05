@@ -98,6 +98,18 @@ flags, antiforgery, the full login round-trip and the AJAX/PDF/QR endpoints are
 covered by the **end-to-end script** below, because they need a real HTTP
 pipeline.
 
+Phase E (ToyyibPay + booking/revenue reports) added **no new unit tests** —
+the team decided to skip that milestone. In particular:
+
+- `ToyyibPayService` has no automated coverage. Its simulated fallback was
+  exercised end-to-end by a live smoke round trip (cart → bill → simulated
+  gateway → return → payments marked paid → confirmation e-mail), but the
+  **real ToyyibPay API path requires real credentials and has never been
+  exercised against the live gateway**.
+- `ChartAggregations` (monthly buckets, category split, cancellation rate)
+  is pure aggregation logic verified by live page checks with seeded data;
+  it has no unit tests.
+
 ---
 
 ## 4. End-to-end script (`tests/e2e.sh`)
@@ -123,6 +135,17 @@ pipeline.
 | T15 | Checkout + batch payment (P4) | Checkout with `WELCOME10` redirects to the payment step; **total due = subtotal − round(10%)**; batch payment (two reservations, one transaction) lands on the paid page with both `BH-` references Confirmed |
 | T16 | Voucher administration (P4) | Role guards on admin vouchers; seeded list; admin creates a **limit-1 voucher**; duplicate code refused; member redeems once (redirect), **second redemption refused with "reached its redemption limit" and the cart line kept**; usage column shows **1 / 1** + limit-reached badge; edit and delete; deleted voucher really gone from the index (edit link asserted, not the flash text) |
 | T17 | Wishlist (P4) | Admin creates an **Unavailable** court; its detail page shows "Currently unavailable" + **Add to Wishlist**; add returns to the detail page (local return URL honoured — the suite fixes Git Bash path-mangling of `returnUrl=` so `Url.IsLocalUrl` sees the real value); detail page flips to the in-wishlist state; wishlist page lists the new court plus the **seeded demo rows**; removing the user's item leaves the seeded rows intact; cleanup deletes the court |
+
+**Phase E manual verification** (no T18/T19 — see §3): a live smoke round trip
+covered the simulated ToyyibPay flow — checkout with the ToyyibPay method
+creates a `SIM-` bill, the simulated gateway page renders the amount and
+reservation list, "Pay Now" returns to `ToyyibPayReturn` and the batch is
+marked Paid (bill code stored as the payment reference, `GatewayStatus=1`,
+confirmation e-mail captured in the demo mailbox), "Cancel" returns the user
+to the payment step with a clear message. The member **Insights** tab and the
+new admin report charts (monthly bookings, revenue by month, bookings by
+category, cancellation rate) were verified to render with real serialized
+data on a fresh seed.
 
 ---
 

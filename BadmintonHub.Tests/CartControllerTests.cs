@@ -33,8 +33,12 @@ public class CartControllerTests
     {
         db ??= TestDb.Create();
         var courts = new CourtService(db);
-        var checkout = new CheckoutService(db, courts, new VoucherService(db), new ReservationService(db, courts));
-        var controller = new CartController(db, new CartService(db, courts), checkout);
+        var checkout = new CheckoutService(db, courts, new VoucherService(db), new ReservationService(db, courts), new NoopEmailSender());
+        var controller = new CartController(
+            db,
+            new CartService(db, courts),
+            checkout,
+            new ToyyibPayService(db, new ToyyibPayOptions()));
         var httpContext = new DefaultHttpContext();
         httpContext.RequestServices = new ServiceCollection()
             .AddSingleton<IUrlHelperFactory, UrlHelperFactory>()

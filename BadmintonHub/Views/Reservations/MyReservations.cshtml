@@ -78,6 +78,9 @@
                 <li class="nav-item">
                     <a class="nav-link @(Model.Tab == "cancelled" ? "active" : "")" asp-action="MyReservations" asp-route-tab="cancelled">@Localizer["TabCancelled"] (@Model.Cancelled.Count)</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link @(Model.Tab == "insights" ? "active" : "")" asp-action="MyReservations" asp-route-tab="insights">📊 Insights</a>
+                </li>
             </ul>
 
             @switch (Model.Tab)
@@ -88,6 +91,35 @@
                 case "cancelled":
                     @await Html.PartialAsync("_ReservationTable", new Tuple<string, List<Reservation>>("cancelled", Model.Cancelled))
                     break;
+                case "insights":
+                    <div class="bh-form-section mb-3">
+                        <h2 class="h6 text-uppercase text-muted mb-2">Monthly bookings — last 6 months</h2>
+                        <canvas id="insightMonthlyChart" height="70"></canvas>
+                    </div>
+                    <div class="bh-form-section mb-3">
+                        <h2 class="h6 text-uppercase text-muted mb-2">Spend by month — last 6 months</h2>
+                        <canvas id="insightSpendChart" height="70"></canvas>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="bh-form-section h-100">
+                                <h2 class="h6 text-uppercase text-muted mb-2">Bookings by category</h2>
+                                <canvas id="insightCategoryChart" height="110"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bh-form-section h-100">
+                                <h2 class="h6 text-uppercase text-muted mb-2">Booking outcomes</h2>
+                                <canvas id="insightOutcomeChart" height="110"></canvas>
+                                <p class="small text-muted mt-2 mb-0">
+                                    Cancellation rate: <strong>@Model.InsightCancellationRate.ToString("0.0")%</strong>
+                                    (@Model.InsightCancelled cancelled of
+                                    @(Model.InsightCancelled + Model.InsightCompleted + Model.InsightActive) bookings)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    break;
                 default:
                     @await Html.PartialAsync("_ReservationTable", new Tuple<string, List<Reservation>>("upcoming", Model.Upcoming))
                     break;
@@ -95,3 +127,55 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    @if (Model.Tab == "insights")
+    {
+        <script src="~/lib/chartjs/chart.umd.min.js"></script>
+        <script>
+            $(function () {
+                var green = '#0b3d2e', amber = '#f0a500', red = '#a94442', blue = '#2b6cb0';
+                var palette = ['#0b3d2e', '#17714f', '#2b9e74', '#f0a500', '#2b6cb0', '#7b4bb7', '#a94442', '#6b7a72'];
+
+                new Chart($('#insightMonthlyChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: @Html.Raw(Json.Serialize(Model.InsightMonthLabels)),
+                        datasets: [{ label: 'Bookings', data: @Html.Raw(Json.Serialize(Model.InsightMonthlyBookings)), backgroundColor: green }]
+                    },
+                    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+                });
+
+                new Chart($('#insightSpendChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: @Html.Raw(Json.Serialize(Model.InsightMonthLabels)),
+                        datasets: [{ label: 'Spend (RM)', data: @Html.Raw(Json.Serialize(Model.InsightMonthlySpend)), backgroundColor: amber }]
+                    },
+                    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+
+                new Chart($('#insightCategoryChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: @Html.Raw(Json.Serialize(Model.InsightCategoryLabels)),
+                        datasets: [{ data: @Html.Raw(Json.Serialize(Model.InsightCategoryCounts)), backgroundColor: palette }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                });
+
+                new Chart($('#insightOutcomeChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Cancelled', 'Completed', 'Upcoming'],
+                        datasets: [{
+                            data: [@Model.InsightCancelled, @Model.InsightCompleted, @Model.InsightActive],
+                            backgroundColor: [red, blue, green]
+                        }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                });
+            });
+        </script>
+    }
+}

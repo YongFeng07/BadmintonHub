@@ -91,7 +91,7 @@ Legend: ✅ implemented · ⚠️ partially covered · ❌ not implemented (hone
 | View / Search / Filter Members | ✅ | Role + status filters, search |
 | Edit Member | ✅ | Admin edit of member profiles with e-mail uniqueness (P2, `AdminUsersController.Edit`) |
 | Activate / Deactivate Member | ✅ | `SetStatus` |
-| Reservation Summary / Daily / Weekly / Monthly | ⚠️ | Dashboard KPIs (today) + 7-day trend + 30-day window; reports use a date range (default 14 days) with daily breakdown — no explicit weekly/monthly buckets |
+| Reservation Summary / Daily / Weekly / Monthly | ✅ | Dashboard KPIs (today) + 7-day trend + 30-day window; reports add **monthly bookings and revenue by month over the last 12 months** (Phase E, `ChartAggregations`) alongside the daily/utilisation/peak-hour charts |
 | Revenue Summary | ✅ | Dashboard + reports + CSV export |
 | Court Utilization / Popular Courts / Peak Reservation Times | ✅ | Reports charts |
 | Interactive Dashboard Charts | ✅ | Chart.js (revenue, per-court, peak hours) |
@@ -102,7 +102,18 @@ Legend: ✅ implemented · ⚠️ partially covered · ❌ not implemented (hone
 Each module's work is preserved as a feature branch at its completion commit:
 `feature/member1-court`, `feature/member2-reservation`,
 `feature/member3-member`, `feature/member4-admin`,
-`feature/p4-booking-cart-wishlist-voucher` (P4: cart/checkout/wishlist/vouchers).
+`feature/p4-booking-cart-wishlist-voucher` (P4: cart/checkout/wishlist/vouchers),
+`feature/p5-toyyibpay-charts` (P5: ToyyibPay payment gateway + booking/revenue reports).
+
+### Phase E (P5) — ToyyibPay payment gateway + booking/revenue reports (team)
+
+| Official feature | Status | Where |
+|---|---|---|
+| Third-party payment gateway (ToyyibPay) | ✅ | `ToyyibPayService` — creates a batch bill and redirects to ToyyibPay; the return action **re-verifies the bill with `getBillTransactions`** before marking anything paid; bill code kept as the payment reference. Runs in a clearly-labelled **simulated mode** when no credentials are configured (no secrets committed); the real-API path is the same code with real keys |
+| Payment method in checkout | ✅ | ToyyibPay as a third checkout method next to counter/card recording flows |
+| Booking summary / history charts (member) | ✅ | My Reservations → **Insights** tab: monthly bookings, spend by month, bookings by category, booking outcomes + cancellation rate |
+| Booking/revenue reports (admin) | ✅ | Reports gain monthly bookings and revenue by month (last 12 months), bookings by category, cancellation rate |
+| Payment confirmation e-mail | ✅ | Batch-paid bookings trigger a confirmation e-mail (demo mailbox when no SMTP is configured) |
 
 ## 4.2 Entity Relationship Diagram
 
