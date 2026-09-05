@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using BadmintonHub.Data;
+using BadmintonHub.Infrastructure;
 using BadmintonHub.Models;
 using BadmintonHub.Services;
 using BadmintonHub.ViewModels;
@@ -15,16 +16,20 @@ public class AccountController : Controller
 {
     private readonly IAuthService _authService;
     private readonly IAccountService _accountService;
+    private readonly IEmailService _emailService;
     private readonly ApplicationDbContext _db;
 
-    public AccountController(IAuthService authService, IAccountService accountService, ApplicationDbContext db)
+    public AccountController(IAuthService authService, IAccountService accountService, IEmailService emailService, ApplicationDbContext db)
     {
         _authService = authService;
         _accountService = accountService;
+        _emailService = emailService;
         _db = db;
     }
 
     private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    // ---------- Login ----------
 
     [HttpGet]
     public IActionResult Login(string? returnUrl = null)
@@ -38,17 +43,19 @@ public class AccountController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [ValidateCaptcha]
     public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
     {
         if (!ModelState.IsValid)
             return View(model);
 
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
-        var (user, error) = await _authService.AuthenticateAsync(model.Email, model.Password, ip);
+        var (user, error, verificationRequired) = await _authService.AuthenticateAsync(model.Email, model.Password, ip);
 
         if (user == null)
         {
             ViewData["ErrorMessage"] = error ?? "Invalid email or password.";
+            ViewData["ShowResendVerification"] = verificationRequired;
             return View(model);
         }
 
@@ -62,7 +69,13 @@ public class AccountController : Controller
         };
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
+
+        // Remember Me (revised spec): a persistent cookie that survives the browser
+        // being closed, up to a 30-day absolute cap; without it the cookie follows the
+        // normal 8-hour sliding expiry configured in Program.cs.
         var authProperties = new AuthenticationProperties { IsPersistent = model.RememberMe };
+        if (model.RememberMe)
+            authProperties.ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30);
 
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
 
@@ -72,10 +85,12 @@ public class AccountController : Controller
         // Role-based landing page after login.
         return user.Role switch
         {
-            Role.Admin or Role.Staff => RedirectToAction("Index", "AdminAvailability"),
+            Role.Admin or Role.SuperAdmin => RedirectToAction("Index", "AdminDashboard"),
             _ => RedirectToAction("Index", "Home")
         };
     }
+
+    // ---------- Register (email verification, revised spec) ----------
 
     [HttpGet]
     public IActionResult Register()
@@ -87,33 +102,82 @@ public class AccountController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [ValidateCaptcha]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
         if (!ModelState.IsValid)
             return View(model);
 
-        var (success, error) = await _accountService.RegisterAsync(model.FullName, model.Email, model.Phone, model.Password);
+        var (success, error, verificationToken) = await _accountService.RegisterAsync(model.FullName, model.Email, model.Phone, model.Password);
         if (!success)
         {
             ModelState.AddModelError(string.Empty, error ?? "Registration failed.");
             return View(model);
         }
 
-        // Convenience: sign the new member in immediately.
+        // New accounts must confirm their mailbox before signing in — no auto sign-in.
         var user = await _db.Users.FirstAsync(u => u.Email == model.Email.Trim());
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Name, user.FullName),
-            new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Role, user.Role.ToString())
-        };
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+        var verifyUrl = Url.Action(nameof(VerifyEmail), "Account", new { userId = user.Id, token = verificationToken }, Request.Scheme)!;
+        var sent = await _emailService.SendAsync(user.Email, "Verify your BadmintonHub account",
+            EmailTemplates.VerificationEmail(user.FullName, verifyUrl));
 
-        TempData["SuccessMessage"] = "Welcome to BadmintonHub! Your member account has been created.";
-        return RedirectToAction("Index", "Home");
+        return View("VerifyEmailSent", new VerifyEmailSentViewModel
+        {
+            Email = user.Email,
+            Link = sent ? null : verifyUrl // demo fallback: show the link only when nothing was really sent
+        });
     }
+
+    // ---------- Email verification ----------
+
+    [HttpGet]
+    public async Task<IActionResult> VerifyEmail(int userId, string token)
+    {
+        var (success, error) = await _accountService.VerifyEmailAsync(userId, token);
+        TempData[success ? "SuccessMessage" : "ErrorMessage"] =
+            success ? "Your email address is verified. You can now sign in." : (error ?? "Verification failed.");
+        return RedirectToAction(nameof(Login));
+    }
+
+    [HttpGet]
+    public IActionResult ResendVerification(string? email = null)
+    {
+        var model = new ResendVerificationViewModel { Email = email ?? string.Empty };
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [ValidateCaptcha]
+    public async Task<IActionResult> ResendVerification(ResendVerificationViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var (_, _, verificationToken) = await _accountService.RequestVerificationEmailAsync(model.Email);
+
+        // Neutral outcome either way (anti-enumeration): unknown emails get the same page.
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == model.Email.Trim().ToLowerInvariant());
+        if (user != null && verificationToken != null)
+        {
+            var verifyUrl = Url.Action(nameof(VerifyEmail), "Account", new { userId = user.Id, token = verificationToken }, Request.Scheme)!;
+            var sent = await _emailService.SendAsync(user.Email, "Verify your BadmintonHub account",
+                EmailTemplates.VerificationEmail(user.FullName, verifyUrl));
+            return View("VerifyEmailSent", new VerifyEmailSentViewModel
+            {
+                Email = user.Email,
+                Link = sent ? null : verifyUrl
+            });
+        }
+
+        return View("VerifyEmailSent", new VerifyEmailSentViewModel
+        {
+            Email = user?.Email ?? model.Email.Trim(),
+            AlreadyVerified = user?.EmailVerified == true
+        });
+    }
+
+    // ---------- Profile ----------
 
     [HttpGet]
     [Authorize]
@@ -185,11 +249,14 @@ public class AccountController : Controller
         return RedirectToAction(nameof(Profile));
     }
 
+    // ---------- Password reset ----------
+
     [HttpGet]
     public IActionResult ForgotPassword() => View();
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [ValidateCaptcha]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
     {
         if (!ModelState.IsValid)
@@ -199,8 +266,18 @@ public class AccountController : Controller
         var (_, _, resetLink) = await _accountService.RequestPasswordResetAsync(model.Email, resetUrlBase);
 
         // Neutral message shown whether or not the email exists (anti-enumeration).
+        // The link is displayed only as a demo fallback when no real mail was sent.
+        var sent = false;
+        if (resetLink != null)
+        {
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == model.Email.Trim().ToLowerInvariant());
+            if (user != null)
+                sent = await _emailService.SendAsync(user.Email, "Reset your BadmintonHub password",
+                    EmailTemplates.PasswordResetEmail(user.FullName, resetLink));
+        }
+
         ViewBag.ResetLinkSent = true;
-        ViewBag.ResetLink = resetLink;
+        ViewBag.ResetLink = sent ? null : resetLink;
         return View(model);
     }
 
@@ -232,6 +309,8 @@ public class AccountController : Controller
         TempData["SuccessMessage"] = "Password reset. You can now log in with your new password.";
         return RedirectToAction(nameof(Login));
     }
+
+    // ---------- Logout ----------
 
     [HttpPost]
     [Authorize]

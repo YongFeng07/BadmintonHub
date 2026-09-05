@@ -13,7 +13,7 @@ namespace BadmintonHub.Controllers;
 /// Reservation administration (M4): AJAX search/filter/sort/pagination,
 /// status management, staff payment recording and cancellations.
 /// </summary>
-[Authorize(Roles = "Admin,Staff")]
+[Authorize(Roles = "SuperAdmin,Admin")]
 public class AdminReservationsController : Controller
 {
     private readonly ApplicationDbContext _db;
@@ -152,13 +152,13 @@ public class AdminReservationsController : Controller
         return RedirectToLocal(returnUrl);
     }
 
-    /// <summary>Staff records a payment received at the counter; the booking is confirmed.</summary>
+    /// <summary>Admin records a payment received at the counter; the booking is confirmed.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkPaid(int id, PaymentMethod method, string? reference, string? returnUrl)
     {
-        var staffUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var (success, error) = await _reservationService.MarkPaidAsync(id, staffUserId, method, reference, isAdminOrStaff: true);
+        var backOfficeUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var (success, error) = await _reservationService.MarkPaidAsync(id, backOfficeUserId, method, reference, isBackOffice: true);
 
         TempData[success ? "SuccessMessage" : "ErrorMessage"] =
             success ? "Payment recorded. The booking is confirmed." : (error ?? "Could not record the payment.");
@@ -169,8 +169,8 @@ public class AdminReservationsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Cancel(int id, string? reason, string? returnUrl)
     {
-        var staffUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var (success, error) = await _reservationService.CancelAsync(id, staffUserId, reason, isAdminOrStaff: true);
+        var backOfficeUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var (success, error) = await _reservationService.CancelAsync(id, backOfficeUserId, reason, isBackOffice: true);
 
         TempData[success ? "SuccessMessage" : "ErrorMessage"] =
             success ? "Reservation cancelled." : (error ?? "Could not cancel the reservation.");

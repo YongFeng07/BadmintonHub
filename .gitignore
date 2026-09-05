@@ -38,3 +38,6 @@ appsettings.Secrets.json
 ## Logs
 *.log
 logs/
+
+# Seeded placeholder images are regenerated at startup (see docs/AUDIT.md item 7)
+BadmintonHub/wwwroot/images/

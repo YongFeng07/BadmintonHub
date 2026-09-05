@@ -12,4 +12,10 @@
   <data name="ForgotLbl" xml:space="preserve"><value>Lupa kata laluan?</value></data>
   <data name="NewHere" xml:space="preserve"><value>Baru di sini?</value></data>
   <data name="CreateAccount" xml:space="preserve"><value>Cipta akaun</value></data>
+  <data name="Title" xml:space="preserve"><value>Selamat kembali</value></data>
+  <data name="SubtitleSmall" xml:space="preserve"><value>Log masuk untuk mengurus tempahan anda</value></data>
+  <data name="FeatBook" xml:space="preserve"><value>Tempah gelanggang dalam tiga langkah mudah</value></data>
+  <data name="FeatPay" xml:space="preserve"><value>Bayar dalam talian atau di kaunter</value></data>
+  <data name="FeatQr" xml:space="preserve"><value>Tunjukkan pengesahan QR di pintu masuk</value></data>
+  <data name="ResendLink" xml:space="preserve"><value>Hantar semula e-mel pengesahan</value></data>
 </root>

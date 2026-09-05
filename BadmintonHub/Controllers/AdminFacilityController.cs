@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BadmintonHub.Controllers;
 
 /// <summary>Admin-only facility settings (single-facility system).</summary>
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "SuperAdmin,Admin")]
 public class AdminFacilityController : Controller
 {
     private readonly ApplicationDbContext _db;

@@ -15,4 +15,7 @@
   <data name="RegisterBtn" xml:space="preserve"><value>Register</value></data>
   <data name="HaveAccount" xml:space="preserve"><value>Already have an account?</value></data>
   <data name="LoginLink" xml:space="preserve"><value>Log in</value></data>
+  <data name="FeatBook" xml:space="preserve"><value>Book courts in three easy steps</value></data>
+  <data name="FeatPay" xml:space="preserve"><value>Pay online or at the counter</value></data>
+  <data name="FeatQr" xml:space="preserve"><value>Show your QR confirmation at the entrance</value></data>
 </root>

@@ -1,5 +1,6 @@
 using BadmintonHub.Data;
 using BadmintonHub.Services;
+using DNTCaptcha.Core;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -51,10 +52,33 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 builder.Services.AddAuthorization();
 
+// Captcha (3rd-party library integration, revised spec): DNTCaptcha.Core renders the
+// challenge image and stores the answer encrypted in a cookie, so no server-side session
+// state is needed. The keys below only protect that captcha token — they are not real
+// credentials. Validation is applied by ValidateCaptchaAttribute, which honours the
+// "Security:EnableCaptcha" setting (disabled only for the automated e2e suite).
+builder.Services.AddDNTCaptcha(options =>
+{
+    options.UseCookieStorageProvider()
+        .AbsoluteExpiration(minutes: 7)
+        .ShowThousandsSeparators(false)
+        .WithNoise(0.01f, 0.01f, 1, 0.0f)
+        .WithEncryptionKey("BadmintonHubCaptcha2026")
+        .WithNonceKey("BadmintonHubCaptchaNonce2026");
+});
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ICourtService, CourtService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
+
+// Outbound email: real SMTP (MailKit) only when Email:Smtp:Host is configured —
+// otherwise a demo fallback captures the mail in-app so the assignment demo works
+// without committing any real credentials (see README).
+builder.Services.AddScoped<IEmailService>(sp =>
+    EmailServiceFactory.Create(
+        sp.GetRequiredService<IConfiguration>(),
+        sp.GetRequiredService<ApplicationDbContext>()));
 
 // M2 additional feature: automatic reservation status updates.
 builder.Services.AddHostedService<ReservationStatusUpdaterService>();

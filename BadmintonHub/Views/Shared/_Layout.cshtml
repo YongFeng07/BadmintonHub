@@ -1,22 +1,31 @@
 @inject IViewLocalizer Localizer
+@inject ApplicationDbContext Db
 @{
     var currentCulture = CultureInfo.CurrentUICulture.Name;
+    // Site-wide settings (SuperAdmin-editable) drive the title, brand and announcement
+    // banner. Read directly so the values are available for both the <head> and the page.
+    var siteSettings = await Db.SystemSettings
+        .Where(s => s.Key == "SiteName" || s.Key == "SiteAnnouncement")
+        .ToListAsync();
+    var siteName = siteSettings.FirstOrDefault(s => s.Key == "SiteName")?.Value ?? "BadmintonHub";
+    var announcement = siteSettings.FirstOrDefault(s => s.Key == "SiteAnnouncement")?.Value;
 }
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - BadmintonHub</title>
+    <title>@ViewData["Title"] - @siteName</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-lg bh-navbar">
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-dark bh-navbar">
             <div class="container">
-                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
-                    <span class="bh-brand-icon">🏸</span>BadmintonHub
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                    <span class="bh-brand-icon">🏸</span>
+                    <span class="bh-brand-text">@siteName</span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -31,7 +40,7 @@
                             <li class="nav-item"><a class="nav-link" asp-controller="Reservations" asp-action="MyReservations">@Localizer["NavMyReservations"]</a></li>
                         }
                     </ul>
-                    <ul class="navbar-nav">
+                    <ul class="navbar-nav align-items-lg-center">
                         <li class="nav-item me-lg-2 mt-1 mt-lg-0">
                             <form asp-controller="Culture" asp-action="SetLanguage" method="post" class="d-flex">
                                 <input type="hidden" name="returnUrl" value="@Context.Request.GetEncodedPathAndQuery()" />
@@ -57,12 +66,12 @@
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     👤 @User.Identity.Name
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
+                                <ul class="dropdown-menu dropdown-menu-end bh-dropdown">
                                     <li><a class="dropdown-item" asp-controller="Reservations" asp-action="MyReservations">@Localizer["DropMyReservations"]</a></li>
                                     <li><a class="dropdown-item" asp-controller="Payments" asp-action="Index">@Localizer["DropPayments"]</a></li>
                                     <li><a class="dropdown-item" asp-controller="Notifications" asp-action="Index">@Localizer["DropNotifications"]</a></li>
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">@Localizer["DropProfile"]</a></li>
-                                    @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+                                    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
                                     {
                                         <li><hr class="dropdown-divider" /></li>
                                         <li><a class="dropdown-item" asp-controller="AdminDashboard" asp-action="Index">@Localizer["DropDashboard"]</a></li>
@@ -70,10 +79,12 @@
                                         <li><a class="dropdown-item" asp-controller="AdminCourts" asp-action="Index">@Localizer["DropManageCourts"]</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminAvailability" asp-action="Index">@Localizer["DropManageAvailability"]</a></li>
                                         <li><a class="dropdown-item" asp-controller="AdminReports" asp-action="Index">@Localizer["DropReports"]</a></li>
-                                        @if (User.IsInRole("Admin"))
+                                        <li><a class="dropdown-item" asp-controller="AdminFacility" asp-action="Edit">@Localizer["DropFacilitySettings"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminUsers" asp-action="Index">@Localizer["DropUserAccounts"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminEmails" asp-action="Index">@Localizer["DropDemoMail"]</a></li>
+                                        @if (User.IsInRole("SuperAdmin"))
                                         {
-                                            <li><a class="dropdown-item" asp-controller="AdminFacility" asp-action="Edit">@Localizer["DropFacilitySettings"]</a></li>
-                                            <li><a class="dropdown-item" asp-controller="AdminUsers" asp-action="Index">@Localizer["DropUserAccounts"]</a></li>
+                                            <li><a class="dropdown-item" asp-controller="AdminSettings" asp-action="Index">@Localizer["DropSystemSettings"]</a></li>
                                         }
                                     }
                                     <li><hr class="dropdown-divider" /></li>
@@ -96,6 +107,12 @@
                 </div>
             </div>
         </nav>
+        @if (!string.IsNullOrWhiteSpace(announcement))
+        {
+            <div class="bh-announcement">
+                <div class="container">📢 @announcement</div>
+            </div>
+        }
     </header>
 
     <main role="main" class="pb-5">
@@ -127,9 +144,9 @@
 
     <footer class="bh-footer mt-auto">
         <div class="container">
-            <div class="row">
+            <div class="row g-4">
                 <div class="col-md-6">
-                    <h6>🏸 BadmintonHub</h6>
+                    <h6>🏸 @siteName</h6>
                     <p class="mb-1">@Localizer["FooterTagline"]</p>
                     <p class="mb-0 small">@Localizer["FooterDemo"]</p>
                 </div>

@@ -15,4 +15,7 @@
   <data name="RegisterBtn" xml:space="preserve"><value>注册</value></data>
   <data name="HaveAccount" xml:space="preserve"><value>已有账户？</value></data>
   <data name="LoginLink" xml:space="preserve"><value>登录</value></data>
+  <data name="FeatBook" xml:space="preserve"><value>三步轻松预订球场</value></data>
+  <data name="FeatPay" xml:space="preserve"><value>在线或柜台付款</value></data>
+  <data name="FeatQr" xml:space="preserve"><value>入场时出示 QR 确认</value></data>
 </root>

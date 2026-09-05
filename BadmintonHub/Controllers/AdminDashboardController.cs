@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BadmintonHub.Controllers;
 
-/// <summary>Staff operational dashboard with real-data KPIs and charts (M4).</summary>
-[Authorize(Roles = "Admin,Staff")]
+/// <summary>Admin operational dashboard with real-data KPIs and charts.</summary>
+[Authorize(Roles = "SuperAdmin,Admin")]
 public class AdminDashboardController : Controller
 {
     private readonly ApplicationDbContext _db;

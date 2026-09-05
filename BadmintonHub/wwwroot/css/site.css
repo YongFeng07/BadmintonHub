@@ -34,7 +34,7 @@ main { flex: 1 0 auto; }
 
 /* ---------- Navbar ---------- */
 .bh-navbar {
-    background-color: var(--bh-green-900);
+    background: linear-gradient(90deg, var(--bh-green-900) 0%, var(--bh-green-800) 55%, #0e543c 100%);
     box-shadow: var(--bh-shadow-sm);
     padding: .6rem 0;
 }
@@ -146,6 +146,120 @@ main { flex: 1 0 auto; }
 .badge-role-admin { background: #5b2d8e; color: #fff; }
 .badge-role-staff { background: #1d5f8f; color: #fff; }
 .badge-role-member { background: var(--bh-green-700); color: #fff; }
+.badge-role-superadmin { background: #a33b2b; color: #fff; }
+
+/* ---------- Announcement strip (site settings, revised spec) ---------- */
+.bh-announcement {
+    background: linear-gradient(90deg, var(--bh-amber) 0%, #f7d45c 100%);
+    color: var(--bh-green-900);
+    font-weight: 600;
+    font-size: .88rem;
+    padding: .45rem 0;
+    border-bottom: 1px solid #e0b52e;
+}
+.bh-announcement a { color: var(--bh-green-900); text-decoration: underline; }
+
+/* ---------- Account dropdown ---------- */
+.bh-dropdown {
+    border: 1px solid var(--bh-line);
+    border-radius: 10px;
+    box-shadow: var(--bh-shadow-md);
+    padding: .35rem;
+}
+.bh-dropdown .dropdown-item { border-radius: 7px; padding: .45rem .8rem; font-size: .92rem; }
+.bh-dropdown .dropdown-item:hover { background: var(--bh-green-50); color: var(--bh-green-900); }
+
+/* ---------- Auth split panel (login / register / forgot) ---------- */
+.auth-wrap {
+    display: flex;
+    min-height: calc(100vh - 220px);
+    margin: 2rem 0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--bh-shadow-md);
+    border: 1px solid var(--bh-line);
+    background: #fff;
+}
+.auth-brand-panel {
+    flex: 1 1 45%;
+    background:
+        radial-gradient(1200px 400px at -10% -20%, rgba(242, 197, 61, .18), transparent 60%),
+        linear-gradient(150deg, var(--bh-green-900) 0%, var(--bh-green-700) 70%, #1d8a5c 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2.5rem;
+}
+.auth-brand-inner { max-width: 380px; }
+.auth-logo {
+    width: 74px;
+    height: 74px;
+    font-size: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: 20px;
+    margin-bottom: 1.25rem;
+}
+.auth-brand-panel h1 { font-weight: 800; letter-spacing: -.5px; margin-bottom: .5rem; }
+.auth-brand-sub { color: #cfe3d8; }
+.auth-features { list-style: none; padding: 0; margin: 1.75rem 0 0; }
+.auth-features li {
+    background: rgba(255, 255, 255, .1);
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 10px;
+    padding: .6rem .9rem;
+    margin-bottom: .6rem;
+    color: #eaf4ee;
+    font-size: .92rem;
+}
+.auth-form-panel {
+    flex: 1 1 55%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem;
+    background: linear-gradient(180deg, #fbfdfc 0%, #f4f8f5 100%);
+}
+.auth-form-inner { width: 100%; max-width: 420px; }
+@media (max-width: 767.98px) {
+    .auth-wrap { flex-direction: column; }
+    .auth-brand-panel { padding: 2rem 1.5rem; }
+    .auth-form-panel { padding: 2rem 1.5rem; }
+}
+
+/* ---------- Email verification card ---------- */
+.bh-verify-icon {
+    width: 84px;
+    height: 84px;
+    font-size: 2.6rem;
+    line-height: 84px;
+    margin: 0 auto 1.25rem;
+    background: var(--bh-green-50);
+    border: 1px solid var(--bh-green-100);
+    border-radius: 50%;
+}
+
+/* ---------- Demo mail preview ---------- */
+.bh-mail-body {
+    background: #fdfdfd;
+    font-size: .93rem;
+}
+.bh-mail-body a { color: var(--bh-green-700); }
+
+/* ---------- Captcha widget (DNTCaptcha.Core) ---------- */
+.bh-captcha img {
+    border: 1px solid var(--bh-line);
+    border-radius: 8px;
+    height: 44px;
+    background: #fff;
+}
+.bh-captcha input[type="text"] { max-width: 150px; }
+.bh-captcha .validation-message, .bh-captcha .dnt-validation-message,
+.bh-captcha [class*="validation"] { color: var(--bh-danger); font-size: .8rem; flex-basis: 100%; }
 
 /* Reservation/payment status colours */
 .badge-pending { background: #fff3cd; color: #8a6d1a; }

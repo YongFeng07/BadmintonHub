@@ -2,8 +2,10 @@
 # Capture screenshots of all BadmintonHub pages with headless Microsoft Edge.
 #
 # Prereq: the app must already be running at $BASE, e.g.:
-#   dotnet run --project BadmintonHub/BadmintonHub.csproj --no-launch-profile --urls http://localhost:5080
-# or Visual Studio F5 (then set BASE=https://localhost:7153).
+#   Security__EnableCaptcha=false dotnet run --project BadmintonHub/BadmintonHub.csproj --no-launch-profile --urls http://localhost:5080
+# or Visual Studio F5 (then set BASE=https://localhost:7153). The captcha is
+# still RENDERED on the login/register pages (screenshot 05/06) — only the
+# server-side check is switched off so the scripted curl logins below work.
 #
 # Output: docs/screenshots/*.png  (overwrites previous captures).
 # Authenticated pages are captured by saving the logged-in HTML into
@@ -19,11 +21,11 @@ EDGE="/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
 [ -f "$EDGE" ] || EDGE="/c/Program Files/Microsoft/Edge/Application/msedge.exe"
 PROFILE=$(mktemp -d /tmp/edge-shots-XXXX)
 STAGE=BadmintonHub/wwwroot/__shots__
-JAR_MEMBER=$(mktemp); JAR_STAFF=$(mktemp); JAR_ADMIN=$(mktemp)
+JAR_MEMBER=$(mktemp); JAR_ADMIN2=$(mktemp); JAR_ADMIN=$(mktemp); JAR_SUPER=$(mktemp)
 FAILED=""
 
 mkdir -p "$OUT" "$STAGE"
-trap 'rm -rf "$STAGE" "$PROFILE" "$JAR_MEMBER" "$JAR_STAFF" "$JAR_ADMIN"' EXIT
+trap 'rm -rf "$STAGE" "$PROFILE" "$JAR_MEMBER" "$JAR_ADMIN2" "$JAR_ADMIN" "$JAR_SUPER"' EXIT
 
 http() { curl -s -o /dev/null -w "%{http_code}" -b "${2:-}" "$1"; }
 
@@ -84,9 +86,9 @@ auth_shot "$JAR_MEMBER" "$BASE/Reservations/MyReservations?culture=zh-CN" 12-mem
 auth_shot "$JAR_MEMBER" "$BASE/Payments/Index"                         13-member-payments
 auth_shot "$JAR_MEMBER" "$BASE/Account/Profile"                        14-member-profile
 
-echo "== Staff pages =="
-login "$JAR_STAFF" "staff@badmintonhub.my" "Staff@123"
-auth_shot "$JAR_STAFF" "$BASE/AdminReservations/Index" 15-staff-reservations-admin
+echo "== Admin (second account) pages =="
+login "$JAR_ADMIN2" "admin2@badmintonhub.my" "Admin@123"
+auth_shot "$JAR_ADMIN2" "$BASE/AdminReservations/Index" 15-admin-reservations
 
 echo "== Admin pages =="
 login "$JAR_ADMIN" "admin@badmintonhub.my" "Admin@123"
@@ -97,6 +99,11 @@ auth_shot "$JAR_ADMIN" "$BASE/AdminFacility/Edit"     19-admin-facility
 auth_shot "$JAR_ADMIN" "$BASE/AdminCourts/Index"      20-admin-courts
 auth_shot "$JAR_ADMIN" "$BASE/AdminCourts/Create"     21-admin-court-create
 auth_shot "$JAR_ADMIN" "$BASE/AdminAvailability/Index" 22-admin-availability
+auth_shot "$JAR_ADMIN" "$BASE/AdminEmails/Index"      23-admin-demo-mail
+
+echo "== SuperAdmin pages =="
+login "$JAR_SUPER" "superadmin@badmintonhub.my" "SuperAdmin@123"
+auth_shot "$JAR_SUPER" "$BASE/AdminSettings/Index"    24-admin-system-settings
 
 echo
 if [ -n "$FAILED" ]; then

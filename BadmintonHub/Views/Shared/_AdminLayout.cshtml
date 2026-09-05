@@ -12,14 +12,25 @@
         <aside class="bh-admin-sidebar">
             <div class="bh-admin-brand">
                 🏸 BadmintonHub
-                <small>@(User.IsInRole("Admin") ? "Administrator" : "Staff Operations")</small>
+                <small>@(User.IsInRole("SuperAdmin") ? "Super Admin" : "Administrator")</small>
             </div>
             <nav>
+                <div class="section-label">Operations</div>
+                <a asp-controller="AdminDashboard" asp-action="Index">Dashboard</a>
+                <a asp-controller="AdminReservations" asp-action="Index">Reservations</a>
+                <a asp-controller="AdminReports" asp-action="Index">Reports</a>
+                <a asp-controller="AdminUsers" asp-action="Index">User Accounts</a>
                 <div class="section-label">Facility</div>
                 <a asp-controller="AdminFacility" asp-action="Edit">Facility Settings</a>
                 <a asp-controller="AdminCourts" asp-action="Index">Courts</a>
                 <a asp-controller="AdminAvailability" asp-action="Index">Availability</a>
                 <a asp-controller="AdminAvailability" asp-action="Generate">Generate Slots</a>
+                <div class="section-label">System</div>
+                <a asp-controller="AdminEmails" asp-action="Index">Demo Mail</a>
+                @if (User.IsInRole("SuperAdmin"))
+                {
+                    <a asp-controller="AdminSettings" asp-action="Index">System Settings</a>
+                }
             </nav>
             <div class="bh-admin-sidebar-footer">
                 <a asp-controller="Home" asp-action="Index">← Back to site</a>

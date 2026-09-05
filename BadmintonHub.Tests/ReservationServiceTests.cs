@@ -153,12 +153,12 @@ public class ReservationServiceTests
     public async Task MarkPaid_AnotherMemberCannotPay_Fails()
     {
         var (service, db, memberId, courtId) = Create();
-        var otherId = db.Users.Single(u => u.Email == "staff@test.local").Id;
+        var otherId = db.Users.Single(u => u.Email == "admin2@test.local").Id;
         var (_, _, reservation) = await service.CreateAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1, null);
 
         var (success, error) = await service.MarkPaidAsync(reservation!.Id, otherId, PaymentMethod.Cash, null);
 
-        Assert.False(success); // staff id is not admin/staff here — the flag was not passed
+        Assert.False(success); // another user's id — the back-office flag was not passed
         Assert.Equal("You can only pay for your own reservations.", error);
     }
 

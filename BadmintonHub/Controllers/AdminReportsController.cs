@@ -13,7 +13,7 @@ namespace BadmintonHub.Controllers;
 /// Business reports (M4): revenue, court utilisation, popular courts and peak hours
 /// over a selectable date range, with charts and CSV export.
 /// </summary>
-[Authorize(Roles = "Admin,Staff")]
+[Authorize(Roles = "SuperAdmin,Admin")]
 public class AdminReportsController : Controller
 {
     private readonly ApplicationDbContext _db;
