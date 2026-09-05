@@ -44,6 +44,15 @@ public class Reservation
     [Display(Name = "Total Amount (RM)")]
     public decimal TotalAmount { get; set; }
 
+    /// <summary>Voucher discount deducted at checkout; 0 when no voucher was applied.</summary>
+    [Column(TypeName = "decimal(10,2)")]
+    [Display(Name = "Discount (RM)")]
+    public decimal DiscountAmount { get; set; }
+
+    /// <summary>Code of the voucher applied at checkout (audit trail; survives voucher deletion).</summary>
+    [StringLength(20)]
+    public string? VoucherCode { get; set; }
+
     public ReservationStatus Status { get; set; } = ReservationStatus.Pending;
 
     [StringLength(500)]

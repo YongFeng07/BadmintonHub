@@ -133,6 +133,54 @@ auth_shot "$JAR_ADMIN" "$BASE/AdminCategories/Create"     31-admin-category-crea
 auth_shot "$JAR_ADMIN" "$BASE/AdminFacility/Create"       32-admin-facility-create
 auth_shot "$JAR_ADMIN" "$BASE/AdminFacility/ManagePhotos/1" 33-admin-facility-photos
 
+echo "== P4: cart + checkout + wishlist + admin vouchers =="
+# Stage two cart lines on a day the e2e suite does not touch (+4 is taken),
+# then check them out with WELCOME10 so the payment page shows the discount.
+BOOKDATE_CAP=$(date -d '+5 days' +%F)
+add_cart() { # $1=startTime -> HTTP code
+  local t
+  t=$(token "$JAR_MEMBER" "$BASE/Reservations/Create")
+  curl -s -b "$JAR_MEMBER" -c "$JAR_MEMBER" -o /dev/null -w "%{http_code}" \
+    -X POST "$BASE/Cart/AddItem" \
+    --data-urlencode "__RequestVerificationToken=$t" \
+    --data-urlencode "courtId=1" --data-urlencode "date=$BOOKDATE_CAP" \
+    --data-urlencode "startTime=$1" --data-urlencode "durationHours=1"
+}
+A1=$(add_cart 10:00); A2=$(add_cart 13:00)
+if [ "$A1" = "302" ] && [ "$A2" = "302" ] \
+   && [ "$(curl -s -b "$JAR_MEMBER" "$BASE/Cart" | grep -c 'name="itemIds" value=')" = "2" ]; then
+  auth_shot "$JAR_MEMBER" "$BASE/Cart" 34-cart
+  CART=$(curl -s -b "$JAR_MEMBER" -c "$JAR_MEMBER" "$BASE/Cart")
+  IDS=$(printf '%s' "$CART" | grep -oE 'name="itemId" value="[0-9]+"' | sed 's/.*value="//;s/"//' | uniq)
+  t=$(printf '%s' "$CART" | grep -o 'name="__RequestVerificationToken"[^>]*value="[^"]*"' | tail -n1 | sed 's/.*value="//;s/"//')
+  CK=$(curl -s -b "$JAR_MEMBER" -c "$JAR_MEMBER" -o /dev/null -w "%{http_code} %{redirect_url}" \
+    -X POST "$BASE/Cart/Checkout" \
+    --data-urlencode "__RequestVerificationToken=$t" \
+    --data-urlencode "itemIds=$(printf '%s' "$IDS" | sed -n '1p')" \
+    --data-urlencode "itemIds=$(printf '%s' "$IDS" | sed -n '2p')" \
+    --data-urlencode "voucherCode=WELCOME10")
+  CK_CODE=$(printf '%s' "$CK" | cut -d' ' -f1)
+  LOC=$(printf '%s' "$CK" | cut -d' ' -f2-)  # absolute URL from the Location header
+  if [ "$CK_CODE" = "302" ] && printf '%s' "$LOC" | grep -q "CheckoutComplete"; then
+    code=$(http "$LOC" "$JAR_MEMBER")
+    if [ "$code" = "200" ]; then
+      curl -s -b "$JAR_MEMBER" -c "$JAR_MEMBER" "$LOC" -o "$STAGE/35-checkout.html"
+      [ -s "$STAGE/35-checkout.html" ] || { echo "  ✗ 35-checkout (empty page)"; FAILED="$FAILED 35-checkout"; }
+      shot "$BASE/__shots__/35-checkout.html" 35-checkout
+    else
+      echo "  ✗ 35-checkout (probe -> HTTP $code, loc=$LOC)"; FAILED="$FAILED 35-checkout"
+    fi
+  else
+    echo "  ✗ 35-checkout (checkout -> $CK)"; FAILED="$FAILED 35-checkout"
+  fi
+else
+  echo "  ✗ 34-cart (staging add -> $A1/$A2)"; FAILED="$FAILED 34-cart"
+fi
+
+auth_shot "$JAR_MEMBER" "$BASE/Wishlist"          36-wishlist
+auth_shot "$JAR_ADMIN"  "$BASE/AdminVouchers/Index"  37-admin-vouchers
+auth_shot "$JAR_ADMIN"  "$BASE/AdminVouchers/Create" 38-admin-voucher-create
+
 echo
 if [ -n "$FAILED" ]; then
   echo "Failed: $FAILED"

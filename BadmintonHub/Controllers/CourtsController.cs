@@ -4,6 +4,7 @@ using BadmintonHub.Services;
 using BadmintonHub.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BadmintonHub.Controllers;
 
@@ -62,6 +63,12 @@ public class CourtsController : Controller
 
         if (court == null)
             return NotFound();
+
+        // Wishlist entry point: the details page shows "Add to Wishlist" (or the
+        // "already wishlisted" state) — especially for unavailable courts.
+        ViewBag.IsWishlisted = User.Identity?.IsAuthenticated == true &&
+            int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) &&
+            await _db.WishlistItems.AnyAsync(w => w.UserId == userId && w.CourtId == court.Id);
 
         return View(court);
     }

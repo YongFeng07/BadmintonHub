@@ -32,4 +32,9 @@
   <data name="DropDemoMail" xml:space="preserve"><value>📮 Demo Mail</value></data>
   <data name="DropAdminAccounts" xml:space="preserve"><value>⚙️ Admin Accounts</value></data>
   <data name="DropSystemSettings" xml:space="preserve"><value>⚙️ System Settings</value></data>
+  <data name="NavCart" xml:space="preserve"><value>🛒 Cart</value></data>
+  <data name="NavWishlist" xml:space="preserve"><value>❤️ Wishlist</value></data>
+  <data name="DropCart" xml:space="preserve"><value>🛒 My Cart</value></data>
+  <data name="DropWishlist" xml:space="preserve"><value>❤️ My Wishlist</value></data>
+  <data name="DropVouchers" xml:space="preserve"><value>🎟️ Vouchers</value></data>
 </root>

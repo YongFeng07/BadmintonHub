@@ -32,4 +32,9 @@
   <data name="DropDemoMail" xml:space="preserve"><value>📮 演示邮件</value></data>
   <data name="DropAdminAccounts" xml:space="preserve"><value>⚙️ 管理员账号</value></data>
   <data name="DropSystemSettings" xml:space="preserve"><value>⚙️ 系统设置</value></data>
+  <data name="NavCart" xml:space="preserve"><value>🛒 购物车</value></data>
+  <data name="NavWishlist" xml:space="preserve"><value>❤️ 心愿单</value></data>
+  <data name="DropCart" xml:space="preserve"><value>🛒 我的购物车</value></data>
+  <data name="DropWishlist" xml:space="preserve"><value>❤️ 我的心愿单</value></data>
+  <data name="DropVouchers" xml:space="preserve"><value>🎟️ 优惠券</value></data>
 </root>

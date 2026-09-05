@@ -58,7 +58,8 @@ Table Tennis, Futsal, …), 6 multi-sport facilities across those categories
 (24 courts/lanes/tables/pitches in total, RM 10–120/hour), 14 days of hourly
 availability per unit (including maintenance days and blocked slots), and 28
 reservations with payments and notifications in various statuses so every
-screen has data.
+screen has data. It further seeds three demo vouchers (`WELCOME10`,
+`STUDENT5`, one expired) and two wishlist rows for the demo member.
 
 ## Feature overview by module
 
@@ -70,21 +71,25 @@ screen has data.
 | M4 Admin / Reports | LEE XH | Dashboard KPIs with Chart.js; reservation administration (AJAX search/filter/sort/pagination, whitelisted status transitions, counter payment, cancellations); business reports with CSV export; user administration with lockout unlock and member activation control |
 | Category / Facility Maintenance & Catalog (P3) | YAP SJ | 11-seed facility categories (name-unique, status, unit label, icon, display order); multi-facility CRUD with per-facility opening hours and drag-drop photo manager (800×450, cover photo); courts/availability scoped per facility; public catalog with category/name filters, Top-5 popularity ranking and same-evening low-availability alert; localized facility detail pages |
 | Admin & Member Maintenance (P2) | LIM LI ZHE | Profile photos with real-format validation, 256×256 crop-resize (ImageSharp); member self-service avatar upload/remove; admin edit of member profiles with email uniqueness; member activity details (stats + total paid); SuperAdmin-only admin-account CRUD (create/edit/reset password/activate/deactivate) with guard rails (no self-deactivation, last active SuperAdmin protected) |
+| Booking Cart / Checkout / Wishlist / Vouchers (P4) | WONG YONG FENG | DB-backed booking cart (add, duration update, batch remove, clear) with overlap protection; transactional checkout with voucher discount (percentage/fixed, expiry, redemption limits), server-side re-validation and all-or-nothing batch payment; wishlist for unavailable courts; admin voucher CRUD |
 | Shared (P6) | Team | Multi-language (en-US / zh-CN / ms-MY) with cookie-based switcher; Monday-first localized calendars |
 | Revised-spec security & roles (P7) | Team | SuperAdmin / Admin / Member roles (Staff removed, demo account migrated); SuperAdmin-only system settings (site name + announcement banner); image captcha on login/register/reset (DNTCaptcha.Core, toggleable via `Security:EnableCaptcha`); email verification flow with 24h hashed tokens, resend and admin manual verify; Remember Me (30-day persistent cookie); demo mail inbox for verification/reset emails when no SMTP is configured |
 
 ## Testing
 
 All tests run in **Visual Studio**: open the solution, then **Test → Test
-Explorer → Run All**. The `BadmintonHub.Tests` xUnit project has 113 tests
+Explorer → Run All**. The `BadmintonHub.Tests` xUnit project has 193 tests
 covering password policy, the 3-strike login lockout, email verification
 (register/verify/expiry/anti-enumeration resend), booking/double-booking/
 payment/refund rules, admin status transitions, the culture switcher, QR and
 PDF generation, the photo-upload pipeline (size/format validation, 256×256
 resize, safe delete), the admin-account CRUD guard rails, the facility-catalog
-service (category/name filters, Top-5 ranking, low-availability signal) and the
-category/facility maintenance CRUD with delete guards — all against an
-isolated in-memory database (it never touches the real data file). See
+service (category/name filters, Top-5 ranking, low-availability signal), the
+category/facility maintenance CRUD with delete guards, and the booking cart /
+checkout / voucher / wishlist flows (cart overlap + owner scoping, transactional
+checkout with proportional discount split and rollback, voucher validation and
+redemption limits, batch payment, wishlist open-redirect guard) — all against
+an isolated in-memory database (it never touches the real data file). See
 [docs/TESTING.md](docs/TESTING.md) for the full plan, rubric mapping and the
 supplementary end-to-end script (`tests/e2e.sh`).
 

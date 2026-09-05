@@ -19,9 +19,16 @@
 #          reservation table, CSV report), 3-strike lockout -> unlock,
 #          deactivate -> reactivate, password reset, notifications,
 #          SuperAdmin account CRUD + guard rails, member profile edit,
-#          profile photo upload/remove (P2).
+#          profile photo upload/remove (P2), booking cart (add/update/batch
+#          remove), checkout with WELCOME10 + batch payment, voucher admin CRUD
+#          + single-use redemption limits, wishlist round trip (P4).
 # =============================================================================
 set -u
+# Git Bash rewrites "name=/path"-looking arguments into Windows paths
+# ("returnUrl=/Courts/..." -> "returnUrl=C:/Program Files/Git/Courts/..."), which
+# breaks local return-URL checks. Exclude just that argument from conversion
+# (MSYS_NO_PATHCONV would also break /tmp cookie-jar paths for Windows curl).
+export MSYS2_ARG_CONV_EXCL='returnUrl='
 
 BASE="${1:-http://localhost:5080}"
 WORK="$(mktemp -d)"
@@ -486,6 +493,271 @@ case "$(get_page "$AD" "$BASE/AdminCategories")" in
   *"Edit/$NEWCATID"*) bad "deleted category gone (still in table)" ;;
   *) ok "deleted category gone" ;;
 esac
+
+say "T14 cart: add, subtotal, update duration, batch remove (P4)"
+JAR="$WORK/mem.jar"
+
+# two 1-hour lines on the same court — the page's own prices are parsed so the
+# arithmetic below stays valid whatever the seeded hourly rate is.
+t=$(get_page "$JAR" "$BASE/Reservations/Create" | last_token)
+ADD=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/Cart/AddItem" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "courtId=1" --data-urlencode "date=$BOOKDATE" \
+  --data-urlencode "startTime=12:00" --data-urlencode "durationHours=1")
+check "add to cart -> redirect" "302" "$ADD"
+t=$(get_page "$JAR" "$BASE/Reservations/Create" | last_token)
+ADD=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/Cart/AddItem" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "courtId=1" --data-urlencode "date=$BOOKDATE" \
+  --data-urlencode "startTime=15:00" --data-urlencode "durationHours=1")
+check "add second line -> redirect" "302" "$ADD"
+
+CART=$(get_page "$JAR" "$BASE/Cart")
+# count the row checkboxes — "Court 01" also appears in notification text, so
+# the visible name is not a reliable row counter.
+check "cart lists two lines" "2" "$(printf '%s' "$CART" | grep -c 'name="itemIds" value=')"
+# prices in page order: line 1, line 2, subtotal — equal lines, subtotal = 2x
+CENTS=$(printf '%s' "$CART" | grep -oE 'RM [0-9]+\.[0-9]{2}' | awk '{c=int($2*100+0.5); a[NR]=c} END{printf "%d", (a[1]==a[2] && a[3]==2*a[1])}')
+check "subtotal = line1 + line2 (equal lines)" "1" "$CENTS"
+
+IDS=$(printf '%s' "$CART" | grep -oE 'name="itemId" value="[0-9]+"' | sed 's/.*value="//;s/"//' | uniq)
+ITEM_A=$(printf '%s' "$IDS" | sed -n '1p')
+ITEM_B=$(printf '%s' "$IDS" | sed -n '2p')
+[ -n "$ITEM_A" ] && [ -n "$ITEM_B" ] && [ "$ITEM_A" != "$ITEM_B" ] \
+  && ok "cart item ids captured ($ITEM_A, $ITEM_B)" \
+  || bad "cart item ids captured (got: $IDS)"
+
+t=$(get_page "$JAR" "$BASE/Cart" | last_token)
+UP=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/Cart/Update" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "itemId=$ITEM_A" --data-urlencode "durationHours=2")
+check "update duration -> redirect" "302" "$UP"
+CART=$(get_page "$JAR" "$BASE/Cart")
+# now line 1 = 2x, line 2 = x, subtotal = 3x
+CENTS=$(printf '%s' "$CART" | grep -oE 'RM [0-9]+\.[0-9]{2}' | awk '{c=int($2*100+0.5); a[NR]=c} END{printf "%d", (a[1]==2*a[2] && a[3]==a[1]+a[2])}')
+check "subtotal reflects updated duration" "1" "$CENTS"
+
+t=$(get_page "$JAR" "$BASE/Cart" | last_token)
+BR=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/Cart/BatchRemove" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "itemIds=$ITEM_A" --data-urlencode "itemIds=$ITEM_B")
+check "batch remove -> redirect" "302" "$BR"
+EMPTY=$(get_page "$JAR" "$BASE/Cart")
+contains "batch remove flash" "2 item(s) removed" "$EMPTY"
+contains "cart empty after batch remove" "Your cart is empty" "$EMPTY"
+
+say "T15 checkout: WELCOME10 discount, batch payment, paid page (P4)"
+# re-add the two lines and check out together with the demo voucher
+t=$(get_page "$JAR" "$BASE/Reservations/Create" | last_token)
+curl -s -b "$JAR" -c "$JAR" -o /dev/null -X POST "$BASE/Cart/AddItem" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "courtId=1" --data-urlencode "date=$BOOKDATE" \
+  --data-urlencode "startTime=12:00" --data-urlencode "durationHours=1"
+t=$(get_page "$JAR" "$BASE/Reservations/Create" | last_token)
+curl -s -b "$JAR" -c "$JAR" -o /dev/null -X POST "$BASE/Cart/AddItem" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "courtId=1" --data-urlencode "date=$BOOKDATE" \
+  --data-urlencode "startTime=15:00" --data-urlencode "durationHours=1"
+CART=$(get_page "$JAR" "$BASE/Cart")
+SUB=$(printf '%s' "$CART" | grep -oE 'RM [0-9]+\.[0-9]{2}' | sed -n '3p' | awk '{print $2}')
+IDS=$(printf '%s' "$CART" | grep -oE 'name="itemId" value="[0-9]+"' | sed 's/.*value="//;s/"//' | uniq)
+ITEM_A=$(printf '%s' "$IDS" | sed -n '1p')
+ITEM_B=$(printf '%s' "$IDS" | sed -n '2p')
+
+t=$(printf '%s' "$CART" | last_token)
+CK=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code} %{redirect_url}' \
+  -X POST "$BASE/Cart/Checkout" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "itemIds=$ITEM_A" --data-urlencode "itemIds=$ITEM_B" \
+  --data-urlencode "voucherCode=WELCOME10")
+check "checkout with WELCOME10 -> redirect" "302" "${CK%% *}"
+contains "checkout redirects to payment step" "/Cart/CheckoutComplete" "${CK#* }"
+RIDS=$(printf '%s' "${CK#* }" | grep -oE 'reservationIds=[0-9]+' | sed 's/reservationIds=//')
+R1=$(printf '%s' "$RIDS" | sed -n '1p')
+R2=$(printf '%s' "$RIDS" | sed -n '2p')
+[ -n "$R1" ] && [ -n "$R2" ] && [ "$R1" != "$R2" ] \
+  && ok "checkout reservation ids captured ($R1, $R2)" \
+  || bad "checkout reservation ids captured (got: $RIDS)"
+
+CC=$(get_page "$JAR" "$BASE/Cart/CheckoutComplete?reservationIds=$R1&reservationIds=$R2")
+contains "payment page shows voucher applied" "WELCOME10" "$CC"
+contains "payment page shows savings banner" "saved" "$CC"
+# total due = subtotal - round(10% of subtotal, 2) — matches VoucherService rounding
+EXPECTED=$(awk -v s="$SUB" 'BEGIN{d=int(0.1*s*100+0.5)/100; printf "%.2f", s-d}')
+contains "payment page shows discounted total" "RM $EXPECTED" "$CC"
+
+t=$(printf '%s' "$CC" | last_token)
+PAY=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code} %{redirect_url}' \
+  -X POST "$BASE/Cart/CheckoutComplete" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "ReservationIds=$R1" --data-urlencode "ReservationIds=$R2" \
+  --data-urlencode "Method=OnlineTransfer")
+check "batch payment -> redirect" "302" "${PAY%% *}"
+contains "batch payment redirects to paid page" "/Cart/Paid" "${PAY#* }"
+PAIDP=$(get_page "$JAR" "$BASE/Cart/Paid?reservationIds=$R1&reservationIds=$R2")
+contains "paid page shows confirmed status" "Confirmed" "$PAIDP"
+contains "paid page shows booking reference" "BH-" "$PAIDP"
+
+say "T16 admin vouchers: CRUD + single-use redemption limit (P4)"
+AD="$WORK/admin.jar"
+check "member -> admin vouchers 302" 302 "$(code -b "$WORK/mem.jar" "$BASE/AdminVouchers")"
+check "admin -> admin vouchers 200"  200 "$(code -b "$AD" "$BASE/AdminVouchers")"
+VINDEX=$(get_page "$AD" "$BASE/AdminVouchers")
+contains "seeded WELCOME10 listed" "WELCOME10" "$VINDEX"
+contains "seeded STUDENT5 listed"   "STUDENT5"  "$VINDEX"
+contains "expired voucher flagged"  "Expired"   "$VINDEX"
+
+VCODE="E2ELIMIT1"
+VEXP=$(date -d '+30 days' +%F)
+t=$(get_page "$AD" "$BASE/AdminVouchers/Create" | last_token)
+CREATED=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminVouchers/Create" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "Code=$VCODE" --data-urlencode "Description=E2E single-use demo" \
+  --data-urlencode "DiscountType=Percentage" --data-urlencode "DiscountValue=10" \
+  --data-urlencode "ExpiryDate=$VEXP" --data-urlencode "UsageLimit=1" \
+  --data-urlencode "Status=Active")
+check "create single-use voucher -> redirect" "302" "$CREATED"
+VINDEX=$(get_page "$AD" "$BASE/AdminVouchers")
+contains "created voucher listed" "$VCODE" "$VINDEX"
+contains "usage column shows 0 / 1" "0 / 1" "$VINDEX"
+VID=$(printf '%s' "$VINDEX" | grep -oE 'Edit/[0-9]+' | head -1 | cut -d/ -f2)
+[ -n "$VID" ] && ok "voucher id captured ($VID)" || bad "voucher id captured (empty)"
+
+# duplicate code is refused by the service
+t=$(get_page "$AD" "$BASE/AdminVouchers/Create" | last_token)
+DUP=$(curl -s -b "$AD" -c "$AD" -o "$WORK/vdup.html" -w '%{http_code}' \
+  -X POST "$BASE/AdminVouchers/Create" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "Code=$VCODE" --data-urlencode "Description=Duplicate" \
+  --data-urlencode "DiscountType=Percentage" --data-urlencode "DiscountValue=5" \
+  --data-urlencode "ExpiryDate=$VEXP" --data-urlencode "UsageLimit=1" \
+  --data-urlencode "Status=Active")
+check "duplicate voucher refused (200, not redirect)" "200" "$DUP"
+contains "duplicate voucher error shown" "already exists" "$(cat "$WORK/vdup.html")"
+
+# member redeems it once — success
+JAR="$WORK/mem.jar"
+t=$(get_page "$JAR" "$BASE/Reservations/Create" | last_token)
+curl -s -b "$JAR" -c "$JAR" -o /dev/null -X POST "$BASE/Cart/AddItem" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "courtId=1" --data-urlencode "date=$BOOKDATE" \
+  --data-urlencode "startTime=18:00" --data-urlencode "durationHours=1"
+CART=$(get_page "$JAR" "$BASE/Cart")
+ITEM_C=$(printf '%s' "$CART" | grep -oE 'name="itemId" value="[0-9]+"' | head -1 | sed 's/.*value="//;s/"//')
+t=$(printf '%s' "$CART" | last_token)
+CK1=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/Cart/Checkout" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "itemIds=$ITEM_C" --data-urlencode "voucherCode=$VCODE")
+check "first redemption accepted -> redirect" "302" "$CK1"
+
+# second redemption with the same voucher is refused and the cart is kept
+t=$(get_page "$JAR" "$BASE/Reservations/Create" | last_token)
+curl -s -b "$JAR" -c "$JAR" -o /dev/null -X POST "$BASE/Cart/AddItem" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "courtId=1" --data-urlencode "date=$BOOKDATE" \
+  --data-urlencode "startTime=19:00" --data-urlencode "durationHours=1"
+CART=$(get_page "$JAR" "$BASE/Cart")
+ITEM_D=$(printf '%s' "$CART" | grep -oE 'name="itemId" value="[0-9]+"' | head -1 | sed 's/.*value="//;s/"//')
+t=$(printf '%s' "$CART" | last_token)
+CK2=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code} %{redirect_url}' \
+  -X POST "$BASE/Cart/Checkout" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "itemIds=$ITEM_D" --data-urlencode "voucherCode=$VCODE")
+check "second redemption -> redirect back to cart" "302" "${CK2%% *}"
+REFUSED=$(get_page "$JAR" "$BASE/Cart")
+contains "second redemption refused with limit message" "reached its redemption limit" "$REFUSED"
+contains "cart line kept after refused checkout" "19:00" "$REFUSED"
+VINDEX=$(get_page "$AD" "$BASE/AdminVouchers")
+contains "usage column shows 1 / 1 after redemption" "1 / 1" "$VINDEX"
+contains "limit reached badge shown" "Limit reached" "$VINDEX"
+
+# cleanup: drop the refused cart line, edit the voucher, then delete it
+t=$(printf '%s' "$REFUSED" | last_token)
+curl -s -b "$JAR" -c "$JAR" -o /dev/null -X POST "$BASE/Cart/Remove" \
+  --data-urlencode "__RequestVerificationToken=$t" --data-urlencode "itemId=$ITEM_D"
+t=$(get_page "$AD" "$BASE/AdminVouchers/Edit/$VID" | last_token)
+EDITED=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminVouchers/Edit" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "Id=$VID" --data-urlencode "Code=$VCODE" \
+  --data-urlencode "Description=E2E edited" --data-urlencode "DiscountType=Percentage" \
+  --data-urlencode "DiscountValue=10" --data-urlencode "ExpiryDate=$VEXP" \
+  --data-urlencode "UsageLimit=" --data-urlencode "Status=Active")
+check "edit voucher -> redirect" "302" "$EDITED"
+contains "edited voucher listed" "E2E edited" "$(get_page "$AD" "$BASE/AdminVouchers")"
+
+t=$(get_page "$AD" "$BASE/AdminVouchers/Delete/$VID" | last_token)
+DELETED=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminVouchers/Delete" \
+  --data-urlencode "__RequestVerificationToken=$t" --data-urlencode "id=$VID")
+check "delete voucher -> redirect" "302" "$DELETED"
+# the success flash echoes the code, so assert on the row's Edit link instead.
+case "$(get_page "$AD" "$BASE/AdminVouchers")" in
+  *"Edit/$VID"*) bad "deleted voucher gone (still listed)" ;;
+  *) ok "deleted voucher gone" ;;
+esac
+
+say "T17 wishlist: unavailable court round trip (P4)"
+AD="$WORK/admin.jar"
+JAR="$WORK/mem.jar"
+
+# admin opens an "unavailable" court in the seeded facility for the wishlist test
+t=$(get_page "$AD" "$BASE/AdminCourts/Create" | last_token)
+K=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminCourts/Create" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "FacilityId=$FD" --data-urlencode "CourtNumber=98" \
+  --data-urlencode "CourtType=Standard" --data-urlencode "HourlyRate=15.00" \
+  --data-urlencode "Status=Unavailable")
+check "create unavailable court -> redirect" "302" "$K"
+WCOURT=$(get_page "$AD" "$BASE/AdminCourts?facilityId=$FD" | grep -oE 'Edit/[0-9]+' | tail -1 | cut -d/ -f2)
+[ -n "$WCOURT" ] && ok "unavailable court id captured ($WCOURT)" || bad "unavailable court id captured (empty)"
+
+# the detail page offers the wishlist instead of booking
+DET=$(get_page "$JAR" "$BASE/Courts/Details/$WCOURT")
+contains "details shows unavailable notice" "Currently unavailable" "$DET"
+contains "details shows wishlist button" "Add to Wishlist" "$DET"
+
+t=$(printf '%s' "$DET" | last_token)
+W=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code} %{redirect_url}' \
+  -X POST "$BASE/Wishlist/Add" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "courtId=$WCOURT" --data-urlencode "returnUrl=/Courts/Details/$WCOURT")
+check "wishlist add -> redirect" "302" "${W%% *}"
+contains "wishlist add returns to detail page" "/Courts/Details/$WCOURT" "${W#* }"
+contains "details now shows in-wishlist state" "In Your Wishlist" \
+  "$(get_page "$JAR" "$BASE/Courts/Details/$WCOURT")"
+
+WL=$(get_page "$JAR" "$BASE/Wishlist")
+contains "wishlist lists saved court" "Court 98" "$WL"
+# the seeder gives member@ two demo wishlist rows — both display "Court 02",
+# and removal below must only touch the member's own new entry.
+contains "seeded wishlist rows shown" "Court 02" "$WL"
+WID=$(printf '%s' "$WL" | grep -oE 'name="itemId" value="[0-9]+"' | head -1 | sed 's/.*value="//;s/"//')
+t=$(printf '%s' "$WL" | last_token)
+WR=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/Wishlist/Remove" \
+  --data-urlencode "__RequestVerificationToken=$t" --data-urlencode "itemId=$WID")
+check "wishlist remove -> redirect" "302" "$WR"
+WLAFTER=$(get_page "$JAR" "$BASE/Wishlist")
+case "$WLAFTER" in
+  *"Court 98"*) bad "removed court gone from wishlist (still listed)" ;;
+  *) ok "removed court gone from wishlist" ;;
+esac
+contains "seeded wishlist rows survive user removal" "Court 02" "$WLAFTER"
+
+# cleanup: delete the unavailable court again
+t=$(get_page "$AD" "$BASE/AdminCourts/Delete/$WCOURT" | last_token)
+KD=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminCourts/Delete/$WCOURT" \
+  --data-urlencode "__RequestVerificationToken=$t")
+check "cleanup: delete unavailable court -> redirect" "302" "$KD"
 
 rm -rf "$WORK"
 printf '\n========================================\n'
