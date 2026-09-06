@@ -177,14 +177,54 @@ public class CheckoutService : ICheckoutService
                 Message = discount > 0
                     ? $"{reservations.Count} booking(s) created from your cart; voucher {voucherCode!.Trim().ToUpperInvariant()} saved you RM {discount:0.00}. Awaiting payment."
                     : $"{reservations.Count} booking(s) created from your cart. Awaiting payment.",
-                Type = NotificationType.Reservation
+                Type = NotificationType.Reservation,
+                TargetUrl = "/Reservations/MyReservations"
             });
+
+            // G-M5: staff are notified the moment a pending batch needs their attention.
+            var adminIds = await _db.Users
+                .Where(u => u.Role == Role.Admin || u.Role == Role.SuperAdmin)
+                .Select(u => u.Id)
+                .ToListAsync();
+            foreach (var adminId in adminIds)
+            {
+                _db.Notifications.Add(new Notification
+                {
+                    UserId = adminId,
+                    Title = "New booking pending",
+                    Message = $"{reservations.Count} booking(s) from a cart checkout are awaiting approval.",
+                    Type = NotificationType.Reservation,
+                    TargetUrl = $"/AdminReservations?search={reservations[0].ReservationReference}"
+                });
+            }
 
             // The checked-out lines leave the cart in the same transaction.
             _db.CartItems.RemoveRange(items);
 
+            // G-M4: booking a court removes it from the member's wishlist (same transaction).
+            var wishCourtIds = reservations.Select(r => r.CourtId).Distinct().ToList();
+            var wishlisted = await _db.WishlistItems
+                .Where(w => w.UserId == userId && wishCourtIds.Contains(w.CourtId))
+                .ToListAsync();
+            if (wishlisted.Count > 0) _db.WishlistItems.RemoveRange(wishlisted);
+
             await _db.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            // G-M5: booking-received email (demo sender when no SMTP is configured).
+            var member = await _db.Users.FindAsync(userId);
+            if (member != null && !string.IsNullOrWhiteSpace(member.Email))
+            {
+                var first = reservations[0];
+                await _emails.SendAsync(member.Email,
+                    $"Booking received — {reservations.Count} booking(s) await payment",
+                    EmailTemplates.BookingReceivedEmail(member.FullName,
+                        first.ReservationReference,
+                        $"Court {items[0].Court!.CourtNumber}",
+                        $"{first.ReservationDate:dd MMM yyyy}, {first.StartTime:HH:mm}–{first.EndTime:HH:mm}",
+                        reservations.Sum(r => r.TotalAmount - r.DiscountAmount).ToString("0.00")));
+            }
+
             return (true, null, reservations, warning);
         }
         catch (DbUpdateException)
@@ -218,7 +258,9 @@ public class CheckoutService : ICheckoutService
             var paid = 0;
             foreach (var id in ids)
             {
-                var (ok, error) = await _reservations.MarkPaidAsync(id, userId, method, reference);
+                // Receipt emails are sent once for the whole batch below.
+                var (ok, error) = await _reservations.MarkPaidAsync(id, userId, method, reference,
+                    sendReceiptEmail: false);
                 if (!ok)
                 {
                     await transaction.RollbackAsync();
@@ -229,13 +271,28 @@ public class CheckoutService : ICheckoutService
 
             await transaction.CommitAsync();
 
-            // Outbound payment confirmation (demo sender when no SMTP is configured).
+            // Outbound payment confirmation with every PDF e-receipt attached
+            // (demo sender when no SMTP is configured).
             var user = await _db.Users.FindAsync(userId);
             if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
+                var paidReservations = await _db.Reservations
+                    .Include(r => r.Court).ThenInclude(c => c!.Facility)
+                    .Include(r => r.Payment)
+                    .Include(r => r.User)
+                    .Where(r => ids.Contains(r.Id))
+                    .ToListAsync();
+                var footer = _db.SystemSettings.FirstOrDefault(s => s.Key == "ReceiptFooter")?.Value
+                    ?? "SportHub · 12 Jalan Ampang, 50450 Kuala Lumpur · 03-4142 8899 · info@sporthub.my";
+                var attachments = paidReservations
+                    .Select(r => new EmailAttachment($"Receipt-{r.ReservationReference}.pdf",
+                        ReceiptPdfGenerator.Generate(r, footer), "application/pdf"))
+                    .ToList();
+
                 await _emails.SendAsync(user.Email,
                     $"Payment received — {paid} booking(s) confirmed",
-                    EmailTemplates.PaymentConfirmationEmail(user.FullName, paid));
+                    EmailTemplates.PaymentConfirmationEmail(user.FullName, paid),
+                    attachments);
             }
 
             return (true, null, paid);

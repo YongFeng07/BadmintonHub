@@ -20,4 +20,11 @@ public class WishlistItem
     public Court? Court { get; set; }
 
     public DateTime AddedAt { get; set; } = DateTime.Now;
+
+    /// <summary>
+    /// G-M4: when the member was last notified that this court is bookable again.
+    /// Cleared when the court becomes unavailable again, so each re-opening
+    /// triggers a fresh notification instead of spamming every worker pass.
+    /// </summary>
+    public DateTime? NotifiedAt { get; set; }
 }

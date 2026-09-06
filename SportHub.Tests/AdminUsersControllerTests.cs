@@ -100,7 +100,7 @@ public class AdminUsersControllerTests
         var memberId = db.Users.Single(u => u.Email == "member@test.local").Id;
         var courtId = db.Courts.Single().Id;
         var date = DateOnly.FromDateTime(DateTime.Today.AddDays(2));
-        var service = new ReservationService(db, new CourtService(db));
+        var service = new ReservationService(db, new CourtService(db), new NoopEmailSender());
 
         var (_, _, confirmed) = await service.CreateAsync(memberId, courtId, date, new TimeOnly(9, 0), 1, null);
         await service.MarkPaidAsync(confirmed!.Id, memberId, PaymentMethod.Cash, null);

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="PageTitle" xml:space="preserve"><value>❤️ Senarai Hajat Saya</value></data>
+  <data name="Subtitle" xml:space="preserve"><value>Gelanggang yang anda simpan — kami beritahu anda sebaik sahaja ia dibuka semula.</value></data>
+  <data name="EmptyTitle" xml:space="preserve"><value>Senarai hajat anda kosong. Gelanggang yang tidak tersedia menawarkan “Add to Wishlist” pada halaman butirannya.</value></data>
+  <data name="BrowseBtn" xml:space="preserve"><value>Layari Gelanggang</value></data>
+  <data name="SelectAll" xml:space="preserve"><value>Pilih semua</value></data>
+  <data name="RemoveSelected" xml:space="preserve"><value>Buang Pilihan</value></data>
+  <data name="BookNow" xml:space="preserve"><value>Tempah Sekarang</value></data>
+  <data name="ViewCourt" xml:space="preserve"><value>Lihat Gelanggang</value></data>
+  <data name="Remove" xml:space="preserve"><value>Buang daripada senarai hajat</value></data>
+  <data name="BadgeAvailable" xml:space="preserve"><value>Tersedia</value></data>
+  <data name="BadgeOpenSlots" xml:space="preserve"><value>{0} slot terbuka dalam 3 hari akan datang</value></data>
+  <data name="BadgeNoSlots" xml:space="preserve"><value>Tiada slot terbuka dalam 3 hari akan datang</value></data>
+  <data name="BadgeUnavailable" xml:space="preserve"><value>Tidak tersedia</value></data>
+  <data name="NotifiedChip" xml:space="preserve"><value>Dimaklumkan semasa dibuka semula</value></data>
+  <data name="NotifyNote" xml:space="preserve"><value>Kami akan memaklumkan anda melalui e-mel dan notifikasi sebaik sahaja ia dibuka semula.</value></data>
+  <data name="AddedOn" xml:space="preserve"><value>Ditambah {0}</value></data>
+</root>

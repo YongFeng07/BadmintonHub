@@ -22,7 +22,8 @@ public class SmtpEmailSender : IEmailService
         _db = db;
     }
 
-    public async Task<bool> SendAsync(string to, string subject, string htmlBody)
+    public async Task<bool> SendAsync(string to, string subject, string htmlBody,
+        IReadOnlyCollection<EmailAttachment>? attachments = null)
     {
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress(
@@ -30,7 +31,17 @@ public class SmtpEmailSender : IEmailService
             _config["Email:Smtp:FromAddress"] ?? "noreply@sporthub.my"));
         message.To.Add(MailboxAddress.Parse(to));
         message.Subject = subject;
-        message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
+
+        var body = new BodyBuilder { HtmlBody = htmlBody };
+        if (attachments != null)
+        {
+            foreach (var attachment in attachments)
+            {
+                body.Attachments.Add(attachment.FileName, attachment.Content,
+                    ContentType.Parse(attachment.ContentType));
+            }
+        }
+        message.Body = body.ToMessageBody();
 
         try
         {
@@ -57,7 +68,20 @@ public class SmtpEmailSender : IEmailService
         {
             // A failed send must never break the flow (e.g. booking): capture the
             // message in-app so it is still demonstrable and retryable.
-            _db.DemoEmails.Add(new DemoEmail { To = to, Subject = subject, BodyHtml = htmlBody });
+            _db.DemoEmails.Add(new DemoEmail
+            {
+                To = to,
+                Subject = subject,
+                BodyHtml = htmlBody,
+                Attachments = attachments?
+                    .Select(a => new DemoEmailAttachment
+                    {
+                        FileName = a.FileName,
+                        ContentType = a.ContentType,
+                        Data = a.Content
+                    })
+                    .ToList() ?? new List<DemoEmailAttachment>()
+            });
             await _db.SaveChangesAsync();
             return false;
         }

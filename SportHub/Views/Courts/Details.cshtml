@@ -107,18 +107,21 @@
                     </div>
                 }
 
-                <form asp-controller="Wishlist" asp-action="Add" method="post" class="mt-2">
-                    <input type="hidden" name="courtId" value="@Model.Id" />
-                    <input type="hidden" name="returnUrl" value="@Context.Request.GetEncodedPathAndQuery()" />
-                    @if (ViewBag.IsWishlisted == true)
-                    {
-                        <button type="submit" class="btn btn-outline-secondary w-100" disabled>♥ In Your Wishlist</button>
-                    }
-                    else
-                    {
-                        <button type="submit" class="btn btn-outline-danger w-100">♡ Add to Wishlist</button>
-                    }
-                </form>
+                @if (Model.Status != CourtStatus.Available)
+                {
+                    <form asp-controller="Wishlist" asp-action="Add" method="post" class="mt-2">
+                        <input type="hidden" name="courtId" value="@Model.Id" />
+                        <input type="hidden" name="returnUrl" value="@Context.Request.GetEncodedPathAndQuery()" />
+                        @if (ViewBag.IsWishlisted == true)
+                        {
+                            <button type="submit" class="btn btn-outline-secondary w-100" disabled>♥ In Your Wishlist</button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-outline-danger w-100">♡ Add to Wishlist</button>
+                        }
+                    </form>
+                }
             }
             else
             {

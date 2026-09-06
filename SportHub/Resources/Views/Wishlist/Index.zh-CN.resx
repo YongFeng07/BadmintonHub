@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="PageTitle" xml:space="preserve"><value>❤️ 我的心愿单</value></data>
+  <data name="Subtitle" xml:space="preserve"><value>您收藏的场地 — 恢复开放时我们会第一时间通知您。</value></data>
+  <data name="EmptyTitle" xml:space="preserve"><value>您的心愿单是空的。不可预订的场地在详情页提供“加入心愿单”按钮。</value></data>
+  <data name="BrowseBtn" xml:space="preserve"><value>浏览场地</value></data>
+  <data name="SelectAll" xml:space="preserve"><value>全选</value></data>
+  <data name="RemoveSelected" xml:space="preserve"><value>删除所选</value></data>
+  <data name="BookNow" xml:space="preserve"><value>立即预订</value></data>
+  <data name="ViewCourt" xml:space="preserve"><value>查看场地</value></data>
+  <data name="Remove" xml:space="preserve"><value>从心愿单移除</value></data>
+  <data name="BadgeAvailable" xml:space="preserve"><value>可预订</value></data>
+  <data name="BadgeOpenSlots" xml:space="preserve"><value>未来 3 天有 {0} 个开放时段</value></data>
+  <data name="BadgeNoSlots" xml:space="preserve"><value>未来 3 天暂无开放时段</value></data>
+  <data name="BadgeUnavailable" xml:space="preserve"><value>不可预订</value></data>
+  <data name="NotifiedChip" xml:space="preserve"><value>重新开放时已通知</value></data>
+  <data name="NotifyNote" xml:space="preserve"><value>恢复开放时我们会通过邮件和站内通知第一时间告知您。</value></data>
+  <data name="AddedOn" xml:space="preserve"><value>加入于 {0}</value></data>
+</root>

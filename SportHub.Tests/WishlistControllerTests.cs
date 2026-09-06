@@ -29,7 +29,12 @@ public class WishlistControllerTests
         CreateController(string userEmail = "member@test.local", ApplicationDbContext? db = null)
     {
         db ??= TestDb.Create();
-        var controller = new WishlistController(new WishlistService(db));
+        // The wishlist is for unavailable courts; flip the seeded court so adds succeed.
+        db.Courts.Single().Status = CourtStatus.Maintenance;
+        db.SaveChanges();
+        var courtService = new CourtService(db);
+        var controller = new WishlistController(
+            new WishlistService(db, courtService, new NoopEmailSender()), courtService);
         var httpContext = new DefaultHttpContext();
         // The Add action resolves Url.IsLocalUrl; give the context a real UrlHelperFactory.
         httpContext.RequestServices = new ServiceCollection()
@@ -64,10 +69,11 @@ public class WishlistControllerTests
         var result = await controller.Index();
 
         var view = Assert.IsType<ViewResult>(result);
-        var items = Assert.IsType<List<WishlistItem>>(view.Model);
-        var item = Assert.Single(items);
-        Assert.Equal(courtId, item.CourtId);
-        Assert.NotNull(item.Court);
+        var model = Assert.IsType<ViewModels.WishlistIndexViewModel>(view.Model);
+        var item = Assert.Single(model.Items);
+        Assert.Equal(courtId, item.Item.CourtId);
+        Assert.NotNull(item.Item.Court);
+        Assert.False(item.HasOpenSlots); // no per-hour availability rows in the test db
     }
 
     [Fact]

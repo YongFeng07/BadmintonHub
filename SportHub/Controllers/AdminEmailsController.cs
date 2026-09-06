@@ -28,8 +28,18 @@ public class AdminEmailsController : Controller
 
     public async Task<IActionResult> Details(int id)
     {
-        var mail = await _db.DemoEmails.FindAsync(id);
+        var mail = await _db.DemoEmails
+            .Include(e => e.Attachments)
+            .FirstOrDefaultAsync(e => e.Id == id);
         if (mail == null) return NotFound();
         return View(mail);
+    }
+
+    /// <summary>G-M5: downloads one attachment (e.g. the PDF e-receipt) from a demo email.</summary>
+    public async Task<IActionResult> Attachment(int id)
+    {
+        var attachment = await _db.DemoEmailAttachments.FindAsync(id);
+        if (attachment == null) return NotFound();
+        return File(attachment.Data, attachment.ContentType, attachment.FileName);
     }
 }

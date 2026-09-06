@@ -26,6 +26,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<LoginAttempt> LoginAttempts => Set<LoginAttempt>();
     public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
     public DbSet<DemoEmail> DemoEmails => Set<DemoEmail>();
+    public DbSet<DemoEmailAttachment> DemoEmailAttachments => Set<DemoEmailAttachment>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
     public DbSet<Voucher> Vouchers => Set<Voucher>();

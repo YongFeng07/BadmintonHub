@@ -26,9 +26,9 @@ public class AdminReservationsControllerTests
         CreateController(bool withAdminClaims)
     {
         var db = TestDb.Create();
-        var service = new ReservationService(db, new CourtService(db));
+        var service = new ReservationService(db, new CourtService(db), new NoopEmailSender());
         var httpContext = new DefaultHttpContext();
-        var controller = new AdminReservationsController(db, service)
+        var controller = new AdminReservationsController(db, service, new NoopEmailSender())
         {
             ControllerContext = new ControllerContext { HttpContext = httpContext },
             TempData = new TempDataDictionary(httpContext, new NoopTempDataProvider())

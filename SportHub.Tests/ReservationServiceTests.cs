@@ -11,10 +11,11 @@ namespace SportHub.Tests;
 /// </summary>
 public class ReservationServiceTests
 {
-    private static (ReservationService Service, ApplicationDbContext Db, int MemberId, int CourtId) Create()
+    private static (ReservationService Service, ApplicationDbContext Db, int MemberId, int CourtId) Create(
+        NoopEmailSender? emails = null)
     {
         var db = TestDb.Create();
-        var service = new ReservationService(db, new CourtService(db));
+        var service = new ReservationService(db, new CourtService(db), emails ?? new NoopEmailSender());
         var memberId = db.Users.Single(u => u.Email == "member@test.local").Id;
         var courtId = db.Courts.Single().Id;
         return (service, db, memberId, courtId);
@@ -40,7 +41,8 @@ public class ReservationServiceTests
         var payment = db.Payments.Single();
         Assert.Equal(reservation.Id, payment.ReservationId);
         Assert.Equal(PaymentStatus.Pending, payment.Status);
-        Assert.Single(db.Notifications); // creation notification
+        Assert.Single(db.Notifications, n => n.UserId == memberId && n.Title == "Reservation created");
+        Assert.Equal(3, await db.Notifications.CountAsync(n => n.Title == "New booking pending")); // admins alerted
     }
 
     [Theory]
@@ -302,5 +304,113 @@ public class ReservationServiceTests
         Assert.Equal(ReservationStatus.Pending, reservation!.Status);
         Assert.Equal(PaymentStatus.Pending, db.Payments.Single().Status);
         Assert.Single(db.ReservationSlots); // claim survives
+    }
+
+    [Fact]
+    public async Task Create_RemovesWishlistEntry_OnBooking()
+    {
+        var (service, db, memberId, courtId) = Create();
+        db.WishlistItems.Add(new WishlistItem { UserId = memberId, CourtId = courtId });
+        await db.SaveChangesAsync();
+
+        var (success, error, _) = await service.CreateAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1, null);
+
+        Assert.True(success, error);
+        Assert.Equal(0, await db.WishlistItems.CountAsync()); // booked — no longer wanted
+    }
+
+    [Fact]
+    public async Task Create_LeavesOtherMembersWishlistEntries_Untouched()
+    {
+        var (service, db, memberId, courtId) = Create();
+        var otherUserId = db.Users.Single(u => u.Email == "admin2@test.local").Id;
+        db.WishlistItems.Add(new WishlistItem { UserId = otherUserId, CourtId = courtId });
+        await db.SaveChangesAsync();
+
+        var (success, error, _) = await service.CreateAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1, null);
+
+        Assert.True(success, error);
+        var remaining = db.WishlistItems.Single();
+        Assert.Equal(otherUserId, remaining.UserId);
+    }
+
+    // ---------- G-M5: e-receipt & lifecycle emails ----------
+
+    [Fact]
+    public async Task Create_SendsBookingReceivedEmail()
+    {
+        var emails = new NoopEmailSender();
+        var (service, _, memberId, courtId) = Create(emails);
+
+        var (success, error, reservation) = await service.CreateAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1, null);
+
+        Assert.True(success, error);
+        var mail = Assert.Single(emails.Sent);
+        Assert.Equal($"Booking received — {reservation!.ReservationReference}", mail.Subject);
+        Assert.Equal("member@test.local", mail.To);
+        Assert.Null(mail.Attachments);
+    }
+
+    [Fact]
+    public async Task MarkPaidAsync_SendsEReceiptEmail_WithPdfAttachment()
+    {
+        var emails = new NoopEmailSender();
+        var (service, _, memberId, courtId) = Create(emails);
+        var (_, _, reservation) = await service.CreateAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1, null);
+
+        var (success, error) = await service.MarkPaidAsync(reservation!.Id, memberId, PaymentMethod.Card, "REF-1");
+
+        Assert.True(success, error);
+        var receiptMail = emails.Sent.Single(m => m.Subject.StartsWith("E-receipt"));
+        Assert.Equal($"E-receipt — {reservation.ReservationReference}", receiptMail.Subject);
+        var attachment = Assert.Single(receiptMail.Attachments!);
+        Assert.Equal($"Receipt-{reservation.ReservationReference}.pdf", attachment.FileName);
+        Assert.Equal("application/pdf", attachment.ContentType);
+        Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString(attachment.Content.Take(4).ToArray()));
+    }
+
+    [Fact]
+    public async Task MarkPaidAsync_SuppressedReceiptEmail_DoesNotSend()
+    {
+        var emails = new NoopEmailSender();
+        var (service, _, memberId, courtId) = Create(emails);
+        var (_, _, reservation) = await service.CreateAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1, null);
+
+        var (success, error) = await service.MarkPaidAsync(reservation!.Id, memberId, PaymentMethod.Card, null,
+            sendReceiptEmail: false);
+
+        Assert.True(success, error);
+        Assert.DoesNotContain(emails.Sent, m => m.Subject.StartsWith("E-receipt"));
+    }
+
+    [Fact]
+    public async Task Cancel_PaidBooking_SendsCancellationEmailWithRefundNote()
+    {
+        var emails = new NoopEmailSender();
+        var (service, _, memberId, courtId) = Create(emails);
+        var (_, _, reservation) = await service.CreateAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1, null);
+        await service.MarkPaidAsync(reservation!.Id, memberId, PaymentMethod.Card, null);
+
+        var (success, error) = await service.CancelAsync(reservation.Id, memberId, "No longer needed");
+
+        Assert.True(success, error);
+        var mail = emails.Sent.Single(m => m.Subject.StartsWith("Booking cancelled"));
+        Assert.Contains("refunded", mail.Body);
+    }
+
+    [Fact]
+    public async Task ReleaseUnpaidPendingAsync_SendsReleasedEmail()
+    {
+        var emails = new NoopEmailSender();
+        var (service, db, memberId, courtId) = Create(emails);
+        var (_, _, reservation) = await service.CreateAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1, null);
+        reservation!.CreatedAt = DateTime.Now.Subtract(TimeSpan.FromMinutes(31));
+        await db.SaveChangesAsync();
+
+        var released = await service.ReleaseUnpaidPendingAsync(TimeSpan.FromMinutes(30));
+
+        Assert.Equal(1, released);
+        var mail = emails.Sent.Single(m => m.Subject.StartsWith("Booking released"));
+        Assert.Contains(reservation.ReservationReference, mail.Subject);
     }
 }

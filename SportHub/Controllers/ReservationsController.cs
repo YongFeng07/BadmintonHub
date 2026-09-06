@@ -15,12 +15,15 @@ public class ReservationsController : Controller
     private readonly ApplicationDbContext _db;
     private readonly ICourtService _courtService;
     private readonly IReservationService _reservationService;
+    private readonly IEmailService _emails;
 
-    public ReservationsController(ApplicationDbContext db, ICourtService courtService, IReservationService reservationService)
+    public ReservationsController(ApplicationDbContext db, ICourtService courtService,
+        IReservationService reservationService, IEmailService emails)
     {
         _db = db;
         _courtService = courtService;
         _reservationService = reservationService;
+        _emails = emails;
     }
 
     private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -283,8 +286,64 @@ public class ReservationsController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        var pdf = ReceiptPdfGenerator.Generate(reservation);
+        var pdf = ReceiptPdfGenerator.Generate(reservation, ReceiptFooter);
         return File(pdf, "application/pdf", $"Receipt-{reservation.ReservationReference}.pdf");
+    }
+
+    /// <summary>
+    /// G-M5: emails the PDF e-receipt to the booking owner. Owner or staff only;
+    /// requires a Paid/Refunded payment record. Idempotent — safe to click again.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EmailReceipt(int id)
+    {
+        var reservation = await _db.Reservations
+            .Include(r => r.Court).ThenInclude(c => c!.Facility)
+            .Include(r => r.User)
+            .Include(r => r.Payment)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (reservation == null)
+            return NotFound();
+
+        if (reservation.UserId != CurrentUserId && !IsBackOffice)
+            return Forbid();
+
+        if (reservation.Payment == null || reservation.Payment.Status is not (PaymentStatus.Paid or PaymentStatus.Refunded))
+        {
+            TempData["ErrorMessage"] = "A receipt is only available for paid bookings.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var member = reservation.User;
+        if (member == null || string.IsNullOrWhiteSpace(member.Email))
+        {
+            TempData["ErrorMessage"] = "This member has no email address on file.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var pdf = ReceiptPdfGenerator.Generate(reservation, ReceiptFooter);
+        await _emails.SendAsync(member.Email,
+            $"Your e-receipt — {reservation.ReservationReference}",
+            EmailTemplates.ReceiptEmail(member.FullName, reservation.ReservationReference),
+            new[] { new EmailAttachment($"Receipt-{reservation.ReservationReference}.pdf", pdf, "application/pdf") });
+
+        TempData["SuccessMessage"] = $"Receipt emailed to {MaskEmail(member.Email)}.";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    /// <summary>G-M5: the site footer line for the PDF e-receipt (admin-editable).</summary>
+    private string ReceiptFooter =>
+        _db.SystemSettings.FirstOrDefault(s => s.Key == "ReceiptFooter")?.Value
+        ?? "SportHub · 12 Jalan Ampang, 50450 Kuala Lumpur · 03-4142 8899 · info@sporthub.my";
+
+    /// <summary>Shows only the first characters of an email address in flash messages.</summary>
+    private static string MaskEmail(string email)
+    {
+        var at = email.IndexOf('@');
+        if (at <= 1) return email;
+        return email[..2] + new string('•', Math.Min(6, at - 2)) + email[at..];
     }
 
     /// <summary>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="PageTitle" xml:space="preserve"><value>❤️ My Wishlist</value></data>
+  <data name="Subtitle" xml:space="preserve"><value>Courts you saved — we notify you as soon as they open up again.</value></data>
+  <data name="EmptyTitle" xml:space="preserve"><value>Your wishlist is empty. Unavailable courts offer “Add to Wishlist” on their detail page.</value></data>
+  <data name="BrowseBtn" xml:space="preserve"><value>Browse Courts</value></data>
+  <data name="SelectAll" xml:space="preserve"><value>Select all</value></data>
+  <data name="RemoveSelected" xml:space="preserve"><value>Remove Selected</value></data>
+  <data name="BookNow" xml:space="preserve"><value>Book Now</value></data>
+  <data name="ViewCourt" xml:space="preserve"><value>View Court</value></data>
+  <data name="Remove" xml:space="preserve"><value>Remove from wishlist</value></data>
+  <data name="BadgeAvailable" xml:space="preserve"><value>Available</value></data>
+  <data name="BadgeOpenSlots" xml:space="preserve"><value>{0} open slot(s) in the next 3 days</value></data>
+  <data name="BadgeNoSlots" xml:space="preserve"><value>No open slots in the next 3 days</value></data>
+  <data name="BadgeUnavailable" xml:space="preserve"><value>Unavailable</value></data>
+  <data name="NotifiedChip" xml:space="preserve"><value>Notified on reopening</value></data>
+  <data name="NotifyNote" xml:space="preserve"><value>We'll notify you by email and notification as soon as it opens up again.</value></data>
+  <data name="AddedOn" xml:space="preserve"><value>Added {0}</value></data>
+</root>

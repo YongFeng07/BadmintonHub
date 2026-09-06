@@ -106,6 +106,13 @@ builder.Services.AddHostedService<VoucherExpiryWorker>();
 // G-M3: expired 15-minute cart holds are released back to "Open".
 builder.Services.AddHostedService<CartHoldWorker>();
 
+// G-M4: wishlisted courts that reopened are announced to the waiting members.
+builder.Services.AddHostedService<WishlistNotifyWorker>();
+
+// G-M5: 24-hour "your booking starts soon" reminders (email + notification).
+builder.Services.AddScoped<ReminderService>();
+builder.Services.AddHostedService<ReservationReminderWorker>();
+
 var app = builder.Build();
 
 // Apply pending migrations and seed demo data when the database is empty.

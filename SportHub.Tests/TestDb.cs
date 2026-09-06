@@ -86,8 +86,18 @@ internal static class TestDb
     }
 }
 
-/// <summary>Test double for IEmailService: records nothing, sends nothing.</summary>
+/// <summary>
+/// Test double for IEmailService: records every send (with attachments) so tests can
+/// assert on the outbound email, and delivers nothing.
+/// </summary>
 internal sealed class NoopEmailSender : IEmailService
 {
-    public Task<bool> SendAsync(string to, string subject, string htmlBody) => Task.FromResult(false);
+    public List<(string To, string Subject, string Body, IReadOnlyCollection<EmailAttachment>? Attachments)> Sent { get; } = new();
+
+    public Task<bool> SendAsync(string to, string subject, string htmlBody,
+        IReadOnlyCollection<EmailAttachment>? attachments = null)
+    {
+        Sent.Add((to, subject, htmlBody, attachments));
+        return Task.FromResult(false);
+    }
 }

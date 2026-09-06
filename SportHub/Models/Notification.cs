@@ -19,6 +19,13 @@ public class Notification
 
     public NotificationType Type { get; set; } = NotificationType.System;
 
+    /// <summary>
+    /// G-M5: deep link the notification centre row to the relevant page
+    /// (reservation detail, wishlist, admin list…). Null shows a plain row.
+    /// </summary>
+    [StringLength(300)]
+    public string? TargetUrl { get; set; }
+
     public bool IsRead { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.Now;

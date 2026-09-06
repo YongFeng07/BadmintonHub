@@ -20,7 +20,7 @@ public class ReceiptPdfGeneratorTests
     public async Task Generate_PaidReservation_ReturnsPdfBytes()
     {
         using var db = TestDb.Create();
-        var service = new ReservationService(db, new CourtService(db));
+        var service = new ReservationService(db, new CourtService(db), new NoopEmailSender());
         var memberId = db.Users.Single(u => u.Email == "member@test.local").Id;
         var courtId = db.Courts.Single().Id;
         var date = DateOnly.FromDateTime(DateTime.Today.AddDays(2));

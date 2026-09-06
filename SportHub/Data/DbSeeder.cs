@@ -596,6 +596,7 @@ public static class DbSeeder
 
         AddSetting("SiteName", "SportHub");
         AddSetting("SiteAnnouncement", "New season — book your court today! Open daily 8:00 AM to 11:00 PM.");
+        AddSetting("ReceiptFooter", "SportHub · 12 Jalan Ampang, 50450 Kuala Lumpur · 03-4142 8899 · info@sporthub.my");
         db.SaveChanges();
     }
 

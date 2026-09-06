@@ -18,11 +18,14 @@ public class AdminReservationsController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly IReservationService _reservationService;
+    private readonly IEmailService _emails;
 
-    public AdminReservationsController(ApplicationDbContext db, IReservationService reservationService)
+    public AdminReservationsController(ApplicationDbContext db, IReservationService reservationService,
+        IEmailService emails)
     {
         _db = db;
         _reservationService = reservationService;
+        _emails = emails;
     }
 
     public async Task<IActionResult> Index(string? search, string? status, int? courtId, DateOnly? date, string? sort, int page = 1)
@@ -102,6 +105,7 @@ public class AdminReservationsController : Controller
         var reservation = await _db.Reservations
             .Include(r => r.User)
             .Include(r => r.Payment)
+            .Include(r => r.Court).ThenInclude(c => c!.Facility)
             .FirstOrDefaultAsync(r => r.Id == id);
         if (reservation == null)
         {
@@ -148,10 +152,39 @@ public class AdminReservationsController : Controller
             UserId = reservation.UserId,
             Title = "Reservation updated",
             Message = $"Booking {reservation.ReservationReference} is now {newStatus}.",
-            Type = NotificationType.Reservation
+            Type = NotificationType.Reservation,
+            TargetUrl = $"/Reservations/Details/{reservation.Id}"
         });
 
         await _db.SaveChangesAsync();
+
+        // G-M5: lifecycle email to the member (demo sender when no SMTP is configured).
+        var member = reservation.User;
+        if (member != null && !string.IsNullOrWhiteSpace(member.Email))
+        {
+            var when = $"{reservation.ReservationDate:dd MMM yyyy}, {reservation.StartTime:HH:mm}–{reservation.EndTime:HH:mm}";
+            var court = $"Court {reservation.Court?.CourtNumber}";
+            switch (newStatus)
+            {
+                case ReservationStatus.Confirmed:
+                    await _emails.SendAsync(member.Email,
+                        $"Booking confirmed — {reservation.ReservationReference}",
+                        EmailTemplates.BookingConfirmedEmail(member.FullName, reservation.ReservationReference,
+                            court, when));
+                    break;
+                case ReservationStatus.Rejected:
+                    await _emails.SendAsync(member.Email,
+                        $"Booking not accepted — {reservation.ReservationReference}",
+                        EmailTemplates.BookingRejectedEmail(member.FullName, reservation.ReservationReference));
+                    break;
+                case ReservationStatus.Completed:
+                    await _emails.SendAsync(member.Email,
+                        $"Booking completed — {reservation.ReservationReference}",
+                        EmailTemplates.BookingCompletedEmail(member.FullName, reservation.ReservationReference));
+                    break;
+            }
+        }
+
         TempData["SuccessMessage"] = $"{reservation.ReservationReference} updated to {newStatus}.";
         return RedirectToLocal(returnUrl);
     }

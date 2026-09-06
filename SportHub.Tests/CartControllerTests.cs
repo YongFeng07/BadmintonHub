@@ -33,7 +33,7 @@ public class CartControllerTests
     {
         db ??= TestDb.Create();
         var courts = new CourtService(db);
-        var checkout = new CheckoutService(db, courts, new VoucherService(db), new ReservationService(db, courts), new NoopEmailSender());
+        var checkout = new CheckoutService(db, courts, new VoucherService(db), new ReservationService(db, courts, new NoopEmailSender()), new NoopEmailSender());
         var controller = new CartController(
             db,
             new CartService(db, courts),

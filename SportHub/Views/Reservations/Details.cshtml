@@ -84,6 +84,16 @@
                 <p class="text-muted">No payment record.</p>
             }
 
+            @if (Model.Payment?.Status == PaymentStatus.Paid || Model.Payment?.Status == PaymentStatus.Refunded)
+            {
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <a asp-action="Receipt" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-sm">⬇ Download E-Receipt (PDF)</a>
+                    <form asp-action="EmailReceipt" asp-route-id="@Model.Id" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">📧 Email Me the Receipt</button>
+                    </form>
+                </div>
+            }
+
             @if (Model.Status == ReservationStatus.Cancelled)
             {
                 <h2 class="h6 text-uppercase text-muted mb-2 mt-4">Cancellation</h2>

@@ -15,4 +15,10 @@ public interface ICourtService
 
     /// <summary>True when the court has no overlapping active reservation for the window.</summary>
     Task<bool> HasOverlappingReservationAsync(int courtId, DateOnly date, TimeOnly start, TimeOnly end, int? excludeReservationId = null);
+
+    /// <summary>
+    /// G-M4: first date with at least one open slot and the total open-slot count
+    /// over the next <paramref name="days"/> days (held slots count as not open).
+    /// </summary>
+    Task<(DateOnly? FirstOpenDate, int OpenSlotCount)> GetUpcomingOpenSlotsAsync(int courtId, int days = 3);
 }

@@ -15,9 +15,23 @@ public class DemoEmailSender : IEmailService
 
     public DemoEmailSender(ApplicationDbContext db) => _db = db;
 
-    public async Task<bool> SendAsync(string to, string subject, string htmlBody)
+    public async Task<bool> SendAsync(string to, string subject, string htmlBody,
+        IReadOnlyCollection<EmailAttachment>? attachments = null)
     {
-        _db.DemoEmails.Add(new DemoEmail { To = to, Subject = subject, BodyHtml = htmlBody });
+        _db.DemoEmails.Add(new DemoEmail
+        {
+            To = to,
+            Subject = subject,
+            BodyHtml = htmlBody,
+            Attachments = attachments?
+                .Select(a => new DemoEmailAttachment
+                {
+                    FileName = a.FileName,
+                    ContentType = a.ContentType,
+                    Data = a.Content
+                })
+                .ToList() ?? new List<DemoEmailAttachment>()
+        });
         await _db.SaveChangesAsync();
         return false;
     }

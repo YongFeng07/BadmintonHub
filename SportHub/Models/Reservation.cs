@@ -68,5 +68,11 @@ public class Reservation
 
     public DateTime? CancelledAt { get; set; }
 
+    /// <summary>
+    /// G-M5: when the 24-hour "your booking starts soon" reminder was sent.
+    /// Null = not yet sent; the reminder worker sends exactly one per booking.
+    /// </summary>
+    public DateTime? ReminderSentAt { get; set; }
+
     public Payment? Payment { get; set; }
 }

@@ -1,5 +1,6 @@
 using SportHub.Data;
 using SportHub.Models;
+using SportHub.Services;
 using SportHub.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,11 +18,13 @@ public class AdminCourtsController : Controller
 
     private readonly ApplicationDbContext _db;
     private readonly IWebHostEnvironment _env;
+    private readonly IWishlistService _wishlistService;
 
-    public AdminCourtsController(ApplicationDbContext db, IWebHostEnvironment env)
+    public AdminCourtsController(ApplicationDbContext db, IWebHostEnvironment env, IWishlistService wishlistService)
     {
         _db = db;
         _env = env;
+        _wishlistService = wishlistService;
     }
 
     // ---------- List with search / filter / pagination ----------
@@ -142,6 +145,11 @@ public class AdminCourtsController : Controller
 
         var court = await _db.Courts.FindAsync(vm.Id);
         if (court == null) return NotFound();
+
+        // G-M4: when a court leaves Available, re-arm wishlist notifications so the
+        // members waiting on it get told about the next reopening.
+        if (court.Status == CourtStatus.Available && vm.Status != CourtStatus.Available)
+            await _wishlistService.ResetNotifiedForCourtAsync(court.Id);
 
         court.FacilityId = vm.FacilityId;
         court.CourtNumber = vm.CourtNumber.Trim();

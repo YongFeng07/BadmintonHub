@@ -12,9 +12,14 @@ public interface IReservationService
     Task<(bool Success, string? Error, Reservation? Reservation)> CreateAsync(
         int userId, int courtId, DateOnly date, TimeOnly startTime, int durationHours, string? notes);
 
-    /// <summary>Marks the reservation's payment as paid and confirms the booking.</summary>
+    /// <summary>
+    /// Marks the reservation's payment as paid and confirms the booking. Sends the
+    /// member the PDF e-receipt by email unless <paramref name="sendReceiptEmail"/>
+    /// is false (the checkout batch sends one email with all receipts attached).
+    /// </summary>
     Task<(bool Success, string? Error)> MarkPaidAsync(
-        int reservationId, int userId, PaymentMethod method, string? reference, bool isBackOffice = false);
+        int reservationId, int userId, PaymentMethod method, string? reference, bool isBackOffice = false,
+        bool sendReceiptEmail = true);
 
     /// <summary>Cancels an upcoming booking (owner or staff). Paid payments become refunded.</summary>
     Task<(bool Success, string? Error)> CancelAsync(

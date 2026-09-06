@@ -34,7 +34,16 @@
                 {
                     <li class="list-group-item @(n.IsRead ? "" : "list-group-item-success") d-flex justify-content-between align-items-start">
                         <div class="me-2">
-                            <div class="fw-semibold @(n.IsRead ? "text-muted" : "")">@n.Title</div>
+                            @if (!string.IsNullOrEmpty(n.TargetUrl))
+                            {
+                                <a href="@n.TargetUrl" class="text-decoration-none" style="color: inherit;">
+                                    <div class="fw-semibold @(n.IsRead ? "text-muted" : "")">@n.Title →</div>
+                                </a>
+                            }
+                            else
+                            {
+                                <div class="fw-semibold @(n.IsRead ? "text-muted" : "")">@n.Title</div>
+                            }
                             <div class="text-muted small">@n.Message</div>
                             <div class="text-muted" style="font-size: .72rem;">@n.CreatedAt.ToString("dd MMM yyyy HH:mm") · @n.Type</div>
                         </div>

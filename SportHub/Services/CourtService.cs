@@ -117,6 +117,34 @@ public class CourtService : ICourtService
         return slots;
     }
 
+    /// <summary>
+    /// G-M4: true bookability over the next <paramref name="days"/> days — the first
+    /// date with at least one open slot and the total open-slot count. Held slots are
+    /// not open (they are someone's 15-minute claim), so the summary reflects what a
+    /// member can actually book right now. Used by the wishlist badge and the
+    /// notify-when-available worker.
+    /// </summary>
+    public async Task<(DateOnly? FirstOpenDate, int OpenSlotCount)> GetUpcomingOpenSlotsAsync(int courtId, int days = 3)
+    {
+        DateOnly? firstOpenDate = null;
+        var openSlotCount = 0;
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        for (var d = 0; d < days; d++)
+        {
+            var date = today.AddDays(d);
+            var slots = await GetAvailabilityForDateAsync(date, courtId);
+            var open = slots.Count(s => s.Status == "open");
+            if (open > 0)
+            {
+                firstOpenDate ??= date;
+                openSlotCount += open;
+            }
+        }
+
+        return (firstOpenDate, openSlotCount);
+    }
+
     public async Task<bool> IsWindowWithinOpenSlotsAsync(int courtId, DateOnly date, TimeOnly start, TimeOnly end)
     {
         // Facility rules come from the court's own facility (multi-facility).

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SportHub.Data;
 
@@ -11,9 +12,11 @@ using SportHub.Data;
 namespace SportHub.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260906105725_G4_WishlistNotify")]
+    partial class G4_WishlistNotify
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -249,38 +252,6 @@ namespace SportHub.Migrations
                     b.ToTable("DemoEmails");
                 });
 
-            modelBuilder.Entity("SportHub.Models.DemoEmailAttachment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<byte[]>("Data")
-                        .IsRequired()
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<int>("DemoEmailId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DemoEmailId");
-
-                    b.ToTable("DemoEmailAttachments");
-                });
-
             modelBuilder.Entity("SportHub.Models.Facility", b =>
                 {
                     b.Property<int>("Id")
@@ -423,10 +394,6 @@ namespace SportHub.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("TargetUrl")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -561,9 +528,6 @@ namespace SportHub.Migrations
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime?>("ReminderSentAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<DateOnly>("ReservationDate")
                         .HasColumnType("date");
@@ -905,17 +869,6 @@ namespace SportHub.Migrations
                     b.Navigation("Court");
                 });
 
-            modelBuilder.Entity("SportHub.Models.DemoEmailAttachment", b =>
-                {
-                    b.HasOne("SportHub.Models.DemoEmail", "DemoEmail")
-                        .WithMany("Attachments")
-                        .HasForeignKey("DemoEmailId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DemoEmail");
-                });
-
             modelBuilder.Entity("SportHub.Models.Facility", b =>
                 {
                     b.HasOne("SportHub.Models.Category", "Category")
@@ -1076,11 +1029,6 @@ namespace SportHub.Migrations
                     b.Navigation("Photos");
 
                     b.Navigation("Reservations");
-                });
-
-            modelBuilder.Entity("SportHub.Models.DemoEmail", b =>
-                {
-                    b.Navigation("Attachments");
                 });
 
             modelBuilder.Entity("SportHub.Models.Facility", b =>

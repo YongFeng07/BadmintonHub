@@ -14,17 +14,18 @@ public class CheckoutServiceTests
 {
     private static (
         CheckoutService Checkout, CartService Cart, ReservationService Reservations,
-        ApplicationDbContext Db, int MemberId, int OtherUserId, int CourtId) Create()
+        ApplicationDbContext Db, int MemberId, int OtherUserId, int CourtId, NoopEmailSender Emails) Create()
     {
         var db = TestDb.Create();
         var courts = new CourtService(db);
-        var reservations = new ReservationService(db, courts);
-        var checkout = new CheckoutService(db, courts, new VoucherService(db), reservations, new NoopEmailSender());
+        var emails = new NoopEmailSender();
+        var reservations = new ReservationService(db, courts, emails);
+        var checkout = new CheckoutService(db, courts, new VoucherService(db), reservations, emails);
         var cart = new CartService(db, courts);
         var memberId = db.Users.Single(u => u.Email == "member@test.local").Id;
         var otherUserId = db.Users.Single(u => u.Email == "admin2@test.local").Id;
         var courtId = db.Courts.Single().Id;
-        return (checkout, cart, reservations, db, memberId, otherUserId, courtId);
+        return (checkout, cart, reservations, db, memberId, otherUserId, courtId, emails);
     }
 
     private static DateOnly FutureDate(int days) => DateOnly.FromDateTime(DateTime.Today.AddDays(days));
@@ -50,7 +51,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task Preview_EmptySelection_Fails()
     {
-        var (checkout, _, _, _, memberId, _, _) = Create();
+        var (checkout, _, _, _, memberId, _, _, _) = Create();
 
         var (success, error, items, _, _, _, _) = await checkout.PreviewAsync(memberId, new List<int>(), null);
 
@@ -62,7 +63,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task Preview_ComputesSubtotal()
     {
-        var (checkout, cart, _, _, memberId, _, courtId) = Create();
+        var (checkout, cart, _, _, memberId, _, courtId, _) = Create();
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);  // 25
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(11, 0), 2); // 50
         var ids = await cart.GetItemsAsync(memberId);
@@ -81,7 +82,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task Preview_AppliesVoucherDiscount()
     {
-        var (checkout, cart, _, db, memberId, _, courtId) = Create();
+        var (checkout, cart, _, db, memberId, _, courtId, _) = Create();
         AddVoucher(db, "WELCOME10", 10m);
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);  // 25
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(11, 0), 2); // 50
@@ -99,7 +100,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task Preview_UnknownItemId_Fails()
     {
-        var (checkout, cart, _, _, memberId, _, courtId) = Create();
+        var (checkout, cart, _, _, memberId, _, courtId, _) = Create();
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
 
         var (success, error, _, _, _, _, _) = await checkout.PreviewAsync(memberId, new[] { 9999 }, null);
@@ -113,7 +114,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task Checkout_CreatesPendingReservationsWithPayments_AndClearsCart()
     {
-        var (checkout, cart, _, db, memberId, _, courtId) = Create();
+        var (checkout, cart, _, db, memberId, _, courtId, _) = Create();
         var date = FutureDate(3);
         await cart.AddAsync(memberId, courtId, date, new TimeOnly(9, 0), 1);
         await cart.AddAsync(memberId, courtId, date, new TimeOnly(11, 0), 2);
@@ -128,13 +129,14 @@ public class CheckoutServiceTests
         Assert.Equal($"SH-{date.Year}-000002", reservations[1].ReservationReference);
         Assert.Equal(2, await db.Payments.CountAsync(p => p.Status == PaymentStatus.Pending));
         Assert.Equal(0, await db.CartItems.CountAsync()); // checked-out lines leave the cart
-        Assert.Single(db.Notifications);
+        Assert.Single(db.Notifications, n => n.UserId == memberId && n.Title == "Cart checkout");
+        Assert.Equal(3, await db.Notifications.CountAsync(n => n.Title == "New booking pending")); // admins alerted
     }
 
     [Fact]
     public async Task Checkout_SplitsDiscountProportionally_LastLineAbsorbsRemainder()
     {
-        var (checkout, cart, _, db, memberId, _, courtId) = Create();
+        var (checkout, cart, _, db, memberId, _, courtId, _) = Create();
         AddVoucher(db, "WELCOME10", 10m);
         var date = FutureDate(3);
         await cart.AddAsync(memberId, courtId, date, new TimeOnly(9, 0), 1);  // gross 25
@@ -156,7 +158,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task Checkout_InvalidVoucher_FailsAndKeepsCart()
     {
-        var (checkout, cart, _, db, memberId, _, courtId) = Create();
+        var (checkout, cart, _, db, memberId, _, courtId, _) = Create();
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
         var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
 
@@ -172,7 +174,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task Checkout_RevalidatesAgainstNewReservations_FailsAndRollsBack()
     {
-        var (checkout, cart, reservations, db, memberId, _, courtId) = Create();
+        var (checkout, cart, reservations, db, memberId, _, courtId, _) = Create();
         var date = FutureDate(3);
         await cart.AddAsync(memberId, courtId, date, new TimeOnly(10, 0), 2);
         var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
@@ -191,7 +193,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task Checkout_OverlappingTamperedCartLines_AreRejected()
     {
-        var (checkout, _, _, db, memberId, _, courtId) = Create();
+        var (checkout, _, _, db, memberId, _, courtId, _) = Create();
         // Bypass the cart service to simulate two overlapping lines in one cart.
         var date = FutureDate(3);
         db.CartItems.AddRange(
@@ -211,7 +213,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task Checkout_AnotherUsersItemIds_Fails()
     {
-        var (checkout, cart, _, db, memberId, otherUserId, courtId) = Create();
+        var (checkout, cart, _, db, memberId, otherUserId, courtId, _) = Create();
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
         var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
 
@@ -225,7 +227,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task Checkout_IncrementsVoucherUsage_AndRefusesSecondUse()
     {
-        var (checkout, cart, _, db, memberId, _, courtId) = Create();
+        var (checkout, cart, _, db, memberId, _, courtId, _) = Create();
         var voucher = AddVoucher(db, "ONCE10", 10m, limit: 1);
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
         var firstIds = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
@@ -248,7 +250,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task Checkout_UpsertsPerUserRedemptionCounter()
     {
-        var (checkout, cart, _, db, memberId, _, courtId) = Create();
+        var (checkout, cart, _, db, memberId, _, courtId, _) = Create();
         AddVoucher(db, "PERSONAL", 10m);
         var voucher = db.Vouchers.Single(v => v.Code == "PERSONAL");
         voucher.PerUserLimit = 2;
@@ -267,7 +269,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task Checkout_PerUserLimitBlocksSecondRedemptionBeyondCap()
     {
-        var (checkout, cart, _, db, memberId, _, courtId) = Create();
+        var (checkout, cart, _, db, memberId, _, courtId, _) = Create();
         AddVoucher(db, "PERSONAL", 10m);
         var voucher = db.Vouchers.Single(v => v.Code == "PERSONAL");
         voucher.PerUserLimit = 1;
@@ -291,7 +293,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task MarkBatchPaid_ConfirmsAllReservationsAtOnce()
     {
-        var (checkout, cart, _, db, memberId, _, courtId) = Create();
+        var (checkout, cart, _, db, memberId, _, courtId, _) = Create();
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(11, 0), 1);
         var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
@@ -309,7 +311,7 @@ public class CheckoutServiceTests
     [Fact]
     public async Task MarkBatchPaid_OneAlreadyPaid_FailsWholeBatch()
     {
-        var (checkout, cart, reservations, db, memberId, _, courtId) = Create();
+        var (checkout, cart, reservations, db, memberId, _, courtId, _) = Create();
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(11, 0), 1);
         var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
@@ -329,12 +331,72 @@ public class CheckoutServiceTests
     [Fact]
     public async Task MarkBatchPaid_EmptySelection_Fails()
     {
-        var (checkout, _, _, _, memberId, _, _) = Create();
+        var (checkout, _, _, _, memberId, _, _, _) = Create();
 
         var (success, error, paid) = await checkout.MarkBatchPaidAsync(memberId, new List<int>(), PaymentMethod.Card);
 
         Assert.False(success);
         Assert.Equal("Select at least one reservation to pay.", error);
         Assert.Equal(0, paid);
+    }
+
+    [Fact]
+    public async Task Checkout_RemovesWishlistEntry_ForBookedCourt()
+    {
+        var (checkout, cart, _, db, memberId, _, courtId, _) = Create();
+        db.WishlistItems.Add(new WishlistItem { UserId = memberId, CourtId = courtId });
+        await db.SaveChangesAsync();
+        await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
+        var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
+
+        var (success, error, reservations, _) = await checkout.CheckoutAsync(memberId, ids, null);
+
+        Assert.True(success, error);
+        Assert.Single(reservations);
+        Assert.Equal(0, await db.WishlistItems.CountAsync()); // booked from the wishlist
+    }
+
+    // ---------- G-M5: one email, one PDF per booking in the batch ----------
+
+    [Fact]
+    public async Task MarkBatchPaid_SendsOneEmail_WithOnePdfPerBooking()
+    {
+        var (checkout, cart, _, _, memberId, _, courtId, emails) = Create();
+        var date = FutureDate(3);
+        await cart.AddAsync(memberId, courtId, date, new TimeOnly(9, 0), 1);
+        await cart.AddAsync(memberId, courtId, date, new TimeOnly(11, 0), 2);
+        var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
+        var (_, _, reservations, _) = await checkout.CheckoutAsync(memberId, ids, null);
+
+        var (success, error, paid) = await checkout.MarkBatchPaidAsync(
+            memberId, reservations.Select(r => r.Id), PaymentMethod.Card);
+
+        Assert.True(success, error);
+        Assert.Equal(2, paid);
+        var mail = emails.Sent.Single(m => m.Subject.StartsWith("Payment received"));
+        Assert.Equal("Payment received — 2 booking(s) confirmed", mail.Subject);
+        Assert.Equal(2, mail.Attachments!.Count);
+        Assert.All(mail.Attachments, a => Assert.Equal("application/pdf", a.ContentType));
+        Assert.All(mail.Attachments, a =>
+            Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString(a.Content.Take(4).ToArray())));
+        // Attachments are named after each booking's reference, not the batch.
+        Assert.Contains(mail.Attachments, a => a.FileName == $"Receipt-{reservations[0].ReservationReference}.pdf");
+        Assert.Contains(mail.Attachments, a => a.FileName == $"Receipt-{reservations[1].ReservationReference}.pdf");
+    }
+
+    [Fact]
+    public async Task Checkout_SendsBookingReceivedEmail_ForWholeBatch()
+    {
+        var (checkout, cart, _, _, memberId, _, courtId, emails) = Create();
+        await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
+        await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(11, 0), 2);
+        var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
+
+        var (success, error, reservations, _) = await checkout.CheckoutAsync(memberId, ids, null);
+
+        Assert.True(success, error);
+        var mail = emails.Sent.Single(m => m.Subject.StartsWith("Booking received"));
+        Assert.Equal("Booking received — 2 booking(s) await payment", mail.Subject);
+        Assert.Null(mail.Attachments);
     }
 }

@@ -52,7 +52,14 @@ else
                             }
                         </td>
                         <td class="text-end">RM @r.TotalAmount.ToString("0.00")</td>
-                        <td class="text-end"><a class="btn btn-sm btn-outline-success" asp-action="Details" asp-route-id="@r.Id">View</a></td>
+                        <td class="text-end text-nowrap">
+                            @if (r.Payment?.Status == PaymentStatus.Paid || r.Payment?.Status == PaymentStatus.Refunded)
+                            {
+                                <a class="btn btn-sm btn-outline-secondary" asp-action="Receipt" asp-route-id="@r.Id"
+                                   title="Download PDF e-receipt" aria-label="Download PDF e-receipt">⬇ PDF</a>
+                            }
+                            <a class="btn btn-sm btn-outline-success" asp-action="Details" asp-route-id="@r.Id">View</a>
+                        </td>
                     </tr>
                 }
             </tbody>
