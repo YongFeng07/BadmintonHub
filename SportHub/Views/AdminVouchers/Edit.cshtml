@@ -1,0 +1,27 @@
+@model SportHub.Models.Voucher
+@{
+    ViewData["Title"] = "Edit Voucher";
+    Layout = "_AdminLayout";
+}
+
+<div class="sh-form-section" style="max-width: 720px;">
+    <h2 class="sh-page-title mb-1">Edit Voucher</h2>
+    <p class="sh-page-sub">Update the voucher rules; redemptions stay counted.</p>
+
+    @if (Model.Id > 0)
+    {
+        <div class="alert alert-light border small mb-3">
+            Times used: <strong>@Model.UsageCount</strong> ·
+            Created: @Model.CreatedAt.ToString("dd MMM yyyy HH:mm") —
+            system-maintained; bookings keep the applied code even if this voucher is deleted.
+        </div>
+    }
+
+    <form asp-action="Edit" method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        <input type="hidden" asp-for="Id" />
+        <partial name="_Form" model="Model" />
+        <button type="submit" class="btn btn-sh">Save Changes</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+    </form>
+</div>

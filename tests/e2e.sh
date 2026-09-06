@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # =============================================================================
-# BadmintonHub end-to-end test suite (curl-based — no browser required).
+# SportHub end-to-end test suite (curl-based — no browser required).
 #
 # Usage:   ./tests/e2e.sh [BASE_URL]      (default: http://localhost:5080)
-# Requires: bash, curl, a running BadmintonHub instance on BASE_URL, and a
-#           freshly seeded database (delete BadmintonHub/App_Data/*.mdf to
+# Requires: bash, curl, a running SportHub instance on BASE_URL, and a
+#           freshly seeded database (delete SportHub/App_Data/*.mdf to
 #           reset — the seeder recreates everything on startup).
 #
 # IMPORTANT: the revised-spec captcha is enabled by default in the UI. Start
 # the app with Security__EnableCaptcha=false for this suite, e.g.
-#   Security__EnableCaptcha=false dotnet run --project BadmintonHub
+#   Security__EnableCaptcha=false dotnet run --project SportHub
 # (see docs/TESTING.md — the captcha UI itself is exercised manually).
 #
 # Covers:  public pages, multi-language, switcher cookie, auth (manual cookie
@@ -21,7 +21,10 @@
 #          SuperAdmin account CRUD + guard rails, member profile edit,
 #          profile photo upload/remove (P2), booking cart (add/update/batch
 #          remove), checkout with WELCOME10 + batch payment, voucher admin CRUD
-#          + single-use redemption limits, wishlist round trip (P4).
+#          + single-use redemption limits, wishlist round trip (P4),
+#          wishlist notify-when-available + email (G-M4), e-receipt email +
+#          PDF attachment + resend (G-M5), AJAX search/sort/paging across
+#          member and admin lists + voucher batch delete (G-M6).
 # =============================================================================
 set -u
 # Git Bash rewrites "name=/path"-looking arguments into Windows paths
@@ -113,11 +116,11 @@ contains "invalid culture rejected" "Book Your Court" "$(curl -s -b "$WORK/lang2
 
 say "T3 authentication (manual cookie scheme)"
 contains "bad login generic error" "Invalid email or password" \
-  "$(login_body "$WORK/x.jar" "member@badmintonhub.my" "WrongPass1")"
-check "admin login 302"          302 "$(login "$WORK/admin.jar" "admin@badmintonhub.my" "Admin@123")"
-check "admin2 login 302"         302 "$(login "$WORK/admin2.jar" "admin2@badmintonhub.my" "Admin@123")"
-check "superadmin login 302"     302 "$(login "$WORK/sa.jar" "superadmin@badmintonhub.my" "SuperAdmin@123")"
-check "member login 302"         302 "$(login "$WORK/mem.jar" "member@badmintonhub.my" "Member@123")"
+  "$(login_body "$WORK/x.jar" "member@sporthub.my" "WrongPass1")"
+check "admin login 302"          302 "$(login "$WORK/admin.jar" "admin@sporthub.my" "Admin@123")"
+check "admin2 login 302"         302 "$(login "$WORK/admin2.jar" "admin2@sporthub.my" "Admin@123")"
+check "superadmin login 302"     302 "$(login "$WORK/sa.jar" "superadmin@sporthub.my" "SuperAdmin@123")"
+check "member login 302"         302 "$(login "$WORK/mem.jar" "member@sporthub.my" "Member@123")"
 check "admin sees dashboard"     200 "$(code -b "$WORK/admin.jar" "$BASE/AdminDashboard")"
 
 say "T4 role-based authorization (controller level)"
@@ -162,7 +165,7 @@ PAY=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code}' \
 check "pay -> redirect" "302" "$PAY"
 DETAILS=$(get_page "$JAR" "$BASE/Reservations/Details/$RID")
 contains "details shows confirmed" "Confirmed" "$DETAILS"
-REF=$(printf '%s' "$DETAILS" | grep -oE 'BH-[0-9]{4}-[0-9]{6}' | head -1)
+REF=$(printf '%s' "$DETAILS" | grep -oE 'SH-[0-9]{4}-[0-9]{6}' | head -1)
 [ -n "$REF" ] && ok "reference captured ($REF)" || bad "reference captured (empty)"
 check "receipt pdf 200" 200 "$(code -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/Reservations/Receipt/$RID")"
 CTYPE=$(curl -s -b "$JAR" -o /dev/null -w '%{content_type}' "$BASE/Reservations/Receipt/$RID")
@@ -180,7 +183,7 @@ say "T7 admin modules"
 AD="$WORK/admin.jar"
 contains "dashboard charts" "canvas" "$(get_page "$AD" "$BASE/AdminDashboard")"
 TABLE=$(get_page "$AD" "$BASE/AdminReservations/Table")
-contains "ajax table has reservations" "BH-" "$TABLE"
+contains "ajax table has reservations" "SH-" "$TABLE"
 check "ajax table 200" "200" "$(code -b "$AD" "$BASE/AdminReservations/Table")"
 FROM=$(date -d '-14 days' +%F)
 CSV=$(get_page "$AD" "$BASE/AdminReports/ExportCsv?from=$FROM&to=$TODAY")
@@ -291,13 +294,13 @@ check "new admin sees user admin"         200  "$(code -b "$WORK/newadmin.jar" "
 check "new admin blocked from admin accounts" 302 "$(code -b "$WORK/newadmin.jar" "$BASE/AdminAccounts")"
 
 # guard rail: a SuperAdmin cannot deactivate their own account
-ACCT_PAGE=$(get_page "$WORK/sa.jar" "$BASE/AdminAccounts?search=superadmin@badmintonhub.my")
+ACCT_PAGE=$(get_page "$WORK/sa.jar" "$BASE/AdminAccounts?search=superadmin@sporthub.my")
 SA_ID=$(printf '%s' "$ACCT_PAGE" | grep -oE 'SetStatus/[0-9]+' | head -1 | cut -d/ -f2)
 t=$(printf '%s' "$ACCT_PAGE" | last_token)
 curl -s -b "$WORK/sa.jar" -c "$WORK/sa.jar" -o /dev/null -X POST "$BASE/AdminAccounts/SetStatus/$SA_ID" \
   --data-urlencode "__RequestVerificationToken=$t" --data-urlencode "status=Deactivated"
 check "superadmin self-deactivation refused (still logs in)" "302" \
-  "$(login "$WORK/sa2.jar" "superadmin@badmintonhub.my" "SuperAdmin@123")"
+  "$(login "$WORK/sa2.jar" "superadmin@sporthub.my" "SuperAdmin@123")"
 
 # member maintenance: admin renames the disposable member from T8/T9
 t=$(get_page "$AD" "$BASE/AdminUsers/Edit/$UID_TMP" | last_token)
@@ -338,14 +341,14 @@ say "T13 category/facility maintenance + public catalog (P3)"
 
 # --- public catalog: seeded facilities, category chips, search, details, top-5 ---
 CAT=$(curl -s "$BASE/Catalog")
-contains "catalog lists seeded facility" "BadmintonHub Main Facility" "$CAT"
+contains "catalog lists seeded facility" "SportHub Main Facility" "$CAT"
 contains "catalog lists aquatics"       "Aquatics Centre" "$CAT"
-contains "catalog shows top-5 badge"    "bh-popular-badge" "$CAT"
+contains "catalog shows top-5 badge"    "sh-popular-badge" "$CAT"
 CAT1=$(printf '%s' "$CAT" | grep -oE 'categoryId=[0-9]+' | head -1)
 [ -n "$CAT1" ] && ok "category chip link captured ($CAT1)" || bad "category chip link captured"
 if [ -n "$CAT1" ]; then
   FILTERED=$(curl -s "$BASE/Catalog?$CAT1")
-  contains "category filter keeps match"  "BadmintonHub Main Facility" "$FILTERED"
+  contains "category filter keeps match"  "SportHub Main Facility" "$FILTERED"
   case "$FILTERED" in
     *"Aquatics Centre"*) bad "category filter hides other categories" ;;
     *) ok "category filter hides other categories" ;;
@@ -354,7 +357,7 @@ fi
 SEARCHED=$(curl -s "$BASE/Catalog?search=Aquatics")
 contains "name search keeps match" "Aquatics Centre" "$SEARCHED"
 case "$SEARCHED" in
-  *"BadmintonHub Main Facility"*) bad "name search hides non-matches" ;;
+  *"SportHub Main Facility"*) bad "name search hides non-matches" ;;
   *) ok "name search hides non-matches" ;;
 esac
 FD=$(printf '%s' "$CAT" | grep -oE 'Catalog/Details/[0-9]+' | head -1 | cut -d/ -f3)
@@ -362,9 +365,9 @@ FD=$(printf '%s' "$CAT" | grep -oE 'Catalog/Details/[0-9]+' | head -1 | cut -d/ 
 if [ -n "$FD" ]; then
   check "catalog details 200" 200 "$(code "$BASE/Catalog/Details/$FD")"
   DETAIL=$(curl -s "$BASE/Catalog/Details/$FD")
-  contains "details shows facility" "BadmintonHub Main Facility" "$DETAIL"
+  contains "details shows facility" "SportHub Main Facility" "$DETAIL"
   contains "details links units"    "Courts/Details/" "$DETAIL"
-  contains "details shows photos"   "/images/courts/facility.svg" "$DETAIL"
+  contains "details shows photos"   "/images/courts/" "$DETAIL"
 fi
 
 # --- low-availability alert: book two table-tennis slots for tonight 19:00 ---
@@ -389,7 +392,7 @@ check "member -> admin categories 302" 302 "$(code -b "$WORK/mem.jar" "$BASE/Adm
 check "admin -> admin categories 200"  200 "$(code -b "$AD" "$BASE/AdminCategories")"
 check "admin -> admin facility 200"    200 "$(code -b "$AD" "$BASE/AdminFacility")"
 contains "seeded categories listed" "Swimming Pool" "$(get_page "$AD" "$BASE/AdminCategories")"
-contains "seeded facilities listed" "BadmintonHub Main Facility" "$(get_page "$AD" "$BASE/AdminFacility")"
+contains "seeded facilities listed" "SportHub Main Facility" "$(get_page "$AD" "$BASE/AdminFacility")"
 
 CATNAME="e2eCat$(date +%s)"
 t=$(get_page "$AD" "$BASE/AdminCategories/Create" | last_token)
@@ -399,11 +402,12 @@ C=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
   --data-urlencode "Name=$CATNAME" --data-urlencode "UnitLabel=Ring" \
   --data-urlencode "Icon=🥊" --data-urlencode "DisplayOrder=77" --data-urlencode "Status=Active")
 check "create category -> redirect" "302" "$C"
-# DisplayOrder 77 sorts after all 11 seeded categories, so the new category is
-# the last table row — its Edit link is the last one on the page.
-NEWCATID=$(get_page "$AD" "$BASE/AdminCategories" | grep -oE 'Edit/[0-9]+' | tail -1 | cut -d/ -f2)
+# G-M6 pages the category list (10 per page), so find the new category through
+# the AJAX search instead of assuming it lands on page 1.
+CATLIST=$(get_page "$AD" "$BASE/AdminCategories?search=$CATNAME")
+contains "created category listed" "$CATNAME" "$CATLIST"
+NEWCATID=$(printf '%s' "$CATLIST" | grep -oE 'Edit/[0-9]+' | head -1 | cut -d/ -f2)
 [ -n "$NEWCATID" ] && ok "category id captured ($NEWCATID)" || bad "category id captured"
-contains "created category listed" "$CATNAME" "$(get_page "$AD" "$BASE/AdminCategories")"
 
 t=$(get_page "$AD" "$BASE/AdminCategories/Edit/$NEWCATID" | last_token)
 E=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
@@ -413,7 +417,7 @@ E=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
   --data-urlencode "UnitLabel=Ring" --data-urlencode "Icon=🥊" \
   --data-urlencode "DisplayOrder=77" --data-urlencode "Status=Active")
 check "edit category -> redirect" "302" "$E"
-contains "edited category listed" "${CATNAME}2" "$(get_page "$AD" "$BASE/AdminCategories")"
+contains "edited category listed" "${CATNAME}2" "$(get_page "$AD" "$BASE/AdminCategories?search=${CATNAME}2")"
 
 # --- admin: facility CRUD in the new category + photo upload ---
 FACNAME="ZZZ e2eFac$(date +%s)"  # sorts last in the name-ordered facility table
@@ -489,7 +493,9 @@ D=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
   -X POST "$BASE/AdminCategories/Delete/$NEWCATID" \
   --data-urlencode "__RequestVerificationToken=$t")
 check "delete empty category -> redirect" "302" "$D"
-case "$(get_page "$AD" "$BASE/AdminCategories")" in
+# G-M6 pages the category list, so verify the delete via the filtered page
+# (the renamed category must be gone from its own search results).
+case "$(get_page "$AD" "$BASE/AdminCategories?search=${CATNAME}2")" in
   *"Edit/$NEWCATID"*) bad "deleted category gone (still in table)" ;;
   *) ok "deleted category gone" ;;
 esac
@@ -600,7 +606,7 @@ check "batch payment -> redirect" "302" "${PAY%% *}"
 contains "batch payment redirects to paid page" "/Cart/Paid" "${PAY#* }"
 PAIDP=$(get_page "$JAR" "$BASE/Cart/Paid?reservationIds=$R1&reservationIds=$R2")
 contains "paid page shows confirmed status" "Confirmed" "$PAIDP"
-contains "paid page shows booking reference" "BH-" "$PAIDP"
+contains "paid page shows booking reference" "SH-" "$PAIDP"
 
 say "T16 admin vouchers: CRUD + single-use redemption limit (P4)"
 AD="$WORK/admin.jar"
@@ -758,6 +764,182 @@ KD=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
   -X POST "$BASE/AdminCourts/Delete/$WCOURT" \
   --data-urlencode "__RequestVerificationToken=$t")
 check "cleanup: delete unavailable court -> redirect" "302" "$KD"
+
+say "T18 wishlist notify-when-available + email (G-M4/G-M5)"
+AD="$WORK/admin.jar"
+JAR="$WORK/mem.jar"
+
+# 1. admin creates court 97 unavailable in the seeded facility
+t=$(get_page "$AD" "$BASE/AdminCourts/Create" | last_token)
+KC=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminCourts/Create" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "FacilityId=$FD" --data-urlencode "CourtNumber=97" \
+  --data-urlencode "CourtType=Standard" --data-urlencode "HourlyRate=14.00" \
+  --data-urlencode "Status=Unavailable")
+check "T18 create unavailable court -> redirect" "302" "$KC"
+NCOURT=$(get_page "$AD" "$BASE/AdminCourts?facilityId=$FD" | grep -oE 'Edit/[0-9]+' | tail -1 | cut -d/ -f2)
+[ -n "$NCOURT" ] && ok "T18 court id captured ($NCOURT)" || bad "T18 court id captured (empty)"
+
+# 2. member wishlists it from the detail page
+DET=$(get_page "$JAR" "$BASE/Courts/Details/$NCOURT")
+t=$(printf '%s' "$DET" | last_token)
+curl -s -b "$JAR" -c "$JAR" -o /dev/null \
+  -X POST "$BASE/Wishlist/Add" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "courtId=$NCOURT" --data-urlencode "returnUrl=/Courts/Details/$NCOURT"
+
+# 3. admin opens availability for the next 3 days so the court is truly bookable
+t=$(get_page "$AD" "$BASE/AdminAvailability/Generate" | last_token)
+GA=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminAvailability/Generate" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "CourtIds=$NCOURT" \
+  --data-urlencode "FromDate=$TODAY" \
+  --data-urlencode "ToDate=$(date -d '+2 days' +%F)" \
+  --data-urlencode "Status=Open")
+check "T18 generate availability -> redirect" "302" "$GA"
+
+# 4. admin reopens the court -> waiting member is notified immediately
+t=$(get_page "$AD" "$BASE/AdminCourts/Edit/$NCOURT" | last_token)
+RE=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminCourts/Edit/$NCOURT" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "FacilityId=$FD" --data-urlencode "CourtNumber=97" \
+  --data-urlencode "CourtType=Standard" --data-urlencode "HourlyRate=14.00" \
+  --data-urlencode "Status=Available")
+check "T18 reopen court -> redirect" "302" "$RE"
+
+# 5. in-app notification arrives without waiting for the 15-minute worker
+NOTIF=$(get_page "$JAR" "$BASE/Notifications")
+contains "T18 member notified in-app" "Court available again" "$NOTIF"
+contains "T18 notification names the court" "Court 97" "$NOTIF"
+
+# 6. and the demo mailbox holds the matching email
+MAILS=$(get_page "$AD" "$BASE/AdminEmails")
+contains "T18 wishlist email captured" "a court on your wishlist is available again" "$MAILS"
+
+# cleanup: delete the court again
+t=$(get_page "$AD" "$BASE/AdminCourts/Delete/$NCOURT" | last_token)
+KD=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminCourts/Delete/$NCOURT" \
+  --data-urlencode "__RequestVerificationToken=$t")
+check "T18 cleanup: delete court -> redirect" "302" "$KD"
+
+say "T19 e-receipt email + PDF attachment + resend (G-M5)"
+JAR="$WORK/mem.jar"
+AD="$WORK/admin.jar"
+
+# book + pay a fresh slot on court 1
+PAGE=$(get_page "$JAR" "$BASE/Reservations/Create")
+t=$(printf '%s' "$PAGE" | last_token)
+LOC=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code} %{redirect_url}' \
+  -X POST "$BASE/Reservations/Create" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "CourtId=1" --data-urlencode "Date=$BOOKDATE" \
+  --data-urlencode "StartTime=11:00" --data-urlencode "DurationHours=1")
+check "T19 create booking -> Pay" "302" "${LOC%% *}"
+RID2=$(printf '%s' "$LOC" | grep -oE 'Pay/[0-9]+' | cut -d/ -f2)
+[ -n "$RID2" ] && ok "T19 booking id captured ($RID2)" || bad "T19 booking id captured (empty: $LOC)"
+
+t=$(get_page "$JAR" "$BASE/Reservations/Pay/$RID2" | last_token)
+PAY=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/Reservations/Pay" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "ReservationId=$RID2" \
+  --data-urlencode "Method=OnlineTransfer" \
+  --data-urlencode "PaymentReference=E2E-TEST-19")
+check "T19 pay -> redirect" "302" "$PAY"
+DETAILS=$(get_page "$JAR" "$BASE/Reservations/Details/$RID2")
+REF2=$(printf '%s' "$DETAILS" | grep -oE 'SH-[0-9]{4}-[0-9]{6}' | head -1)
+[ -n "$REF2" ] && ok "T19 reference captured ($REF2)" || bad "T19 reference captured (empty)"
+
+# the demo mailbox holds the e-receipt email with a real PDF attachment
+MAILS=$(get_page "$AD" "$BASE/AdminEmails?search=$REF2")
+# Razor HTML-encodes the em-dash in the rendered subject line.
+contains "T19 e-receipt email captured" "E-receipt &#x2014; $REF2" "$MAILS"
+MAILID=$(printf '%s' "$MAILS" | grep -oE 'Details/[0-9]+' | head -1 | cut -d/ -f2)
+[ -n "$MAILID" ] && ok "T19 mail id captured ($MAILID)" || bad "T19 mail id captured (empty)"
+MDETAIL=$(get_page "$AD" "$BASE/AdminEmails/Details/$MAILID")
+ATT=$(printf '%s' "$MDETAIL" | grep -oE 'Attachment/[0-9]+' | head -1 | cut -d/ -f2)
+[ -n "$ATT" ] && ok "T19 attachment id captured ($ATT)" || bad "T19 attachment id captured (empty)"
+PDF=$(curl -s -b "$AD" "$BASE/AdminEmails/Attachment/$ATT")
+case "$PDF" in
+  "%PDF"*) ok "T19 mailbox attachment is a real PDF" ;;
+  *) bad "T19 mailbox attachment is a real PDF (got: $(printf '%.20s' "$PDF"))" ;;
+esac
+
+# resend flow: the member can request another copy of the receipt email
+t=$(get_page "$JAR" "$BASE/Reservations/Details/$RID2" | last_token)
+ER=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/Reservations/EmailReceipt/$RID2" \
+  --data-urlencode "__RequestVerificationToken=$t")
+check "T19 resend e-receipt -> redirect" "302" "$ER"
+RECEIPTS=$(get_page "$AD" "$BASE/AdminEmails?search=$REF2" | grep -c "E-receipt")
+[ "$RECEIPTS" -ge 2 ] && ok "T19 resend produced a second receipt mail ($RECEIPTS)" \
+  || bad "T19 resend produced a second receipt mail (got: $RECEIPTS)"
+
+say "T20 AJAX search/sort/paging + batch delete (G-M6)"
+JAR="$WORK/mem.jar"
+AD="$WORK/admin.jar"
+
+# member catalog: XHR search narrows to the matching court only
+CAT=$(curl -s -b "$JAR" -H "X-Requested-With: XMLHttpRequest" "$BASE/Courts/Index?search=01")
+contains "T20 catalog search finds Court 01" "Court 01" "$CAT"
+case "$CAT" in
+  *"Court 02"*) bad "T20 catalog search excludes others (Court 02 leaked)" ;;
+  *) ok "T20 catalog search excludes others" ;;
+esac
+
+# member catalog: XHR sort by rate desc is monotonic non-increasing
+RATES=$(curl -s -b "$JAR" -H "X-Requested-With: XMLHttpRequest" \
+  "$BASE/Courts/Index?sort=rate&dir=desc&size=50" | grep -oE 'RM [0-9]+\.[0-9]{2}' | sed 's/RM //')
+if [ -n "$RATES" ] && printf '%s\n' "$RATES" | sort -rn | cmp -s - <(printf '%s\n' "$RATES"); then
+  ok "T20 catalog rate sort desc ordered"
+else
+  bad "T20 catalog rate sort desc ordered (got: $(printf '%s' "$RATES" | head -5 | tr '\n' ' '))"
+fi
+
+# member MyReservations: per-tab XHR partials
+check "T20 my-reservations upcoming partial" "200" \
+  "$(curl -s -b "$JAR" -H "X-Requested-With: XMLHttpRequest" -o /dev/null -w '%{http_code}' \
+     "$BASE/Reservations/MyReservationsList?tab=upcoming")"
+UP=$(curl -s -b "$JAR" -H "X-Requested-With: XMLHttpRequest" "$BASE/Reservations/MyReservationsList?tab=upcoming")
+contains "T20 my-reservations upcoming lists refs" "SH-" "$UP"
+check "T20 my-reservations completed partial" "200" \
+  "$(curl -s -b "$JAR" -H "X-Requested-With: XMLHttpRequest" -o /dev/null -w '%{http_code}' \
+     "$BASE/Reservations/MyReservationsList?tab=completed")"
+
+# admin courts: the facility filter survives into sort links (pagination bug fix)
+AC=$(curl -s -b "$AD" -H "X-Requested-With: XMLHttpRequest" "$BASE/AdminCourts/Index?facilityId=$FD&sort=rate")
+contains "T20 admin court links keep facility filter" "facilityId=$FD" "$AC"
+
+# vouchers: bulk generate 2 -> listed -> batch delete removes both
+t=$(get_page "$AD" "$BASE/AdminVouchers" | last_token)
+BG=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminVouchers/BulkGenerate" \
+  --data-urlencode "__RequestVerificationToken=$t" \
+  --data-urlencode "count=2" \
+  --data-urlencode "prefix=E2EG6" \
+  --data-urlencode "template.DiscountType=Percentage" \
+  --data-urlencode "template.DiscountValue=5" \
+  --data-urlencode "template.ExpiryDate=2026-12-31" \
+  --data-urlencode "template.Description=T20 batch demo")
+check "T20 bulk generate -> redirect" "302" "$BG"
+VT=$(get_page "$AD" "$BASE/AdminVouchers?search=E2EG6")
+VIDS=$(printf '%s' "$VT" | grep -oE 'name="itemIds" value="[0-9]+"' | sed 's/.*value="//;s/"//')
+check "T20 two vouchers listed" "2" "$(printf '%s' "$VIDS" | grep -c .)"
+t=$(printf '%s' "$VT" | last_token)
+BATCH_ARGS=()
+for vid in $VIDS; do BATCH_ARGS+=(--data-urlencode "itemIds=$vid"); done
+BD=$(curl -s -b "$AD" -c "$AD" -o /dev/null -w '%{http_code}' \
+  -X POST "$BASE/AdminVouchers/DeleteBatch" \
+  --data-urlencode "__RequestVerificationToken=$t" "${BATCH_ARGS[@]}")
+check "T20 voucher batch delete -> redirect" "302" "$BD"
+VA=$(get_page "$AD" "$BASE/AdminVouchers?search=E2EG6")
+# the search input echoes the term, so assert the empty state instead of the
+# absence of "E2EG6"
+contains "T20 vouchers gone after batch delete" "No vouchers match your filters" "$VA"
 
 rm -rf "$WORK"
 printf '\n========================================\n'

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="PageTitle" xml:space="preserve"><value>📋 Tempahan Saya</value></data>
+  <data name="BookBtn" xml:space="preserve"><value>+ Tempah Gelanggang</value></data>
+  <data name="CalendarTitle" xml:space="preserve"><value>Kalendar tempahan</value></data>
+  <data name="TodayBtn" xml:space="preserve"><value>Hari ini</value></data>
+  <data name="Filtering" xml:space="preserve"><value>Penapisan:</value></data>
+  <data name="ClearFilter" xml:space="preserve"><value>Kosongkan penapis</value></data>
+  <data name="CalendarHint" xml:space="preserve"><value>Hari dengan tempahan ditonjolkan. Klik hari untuk menapis senarai di bawah.</value></data>
+  <data name="TabUpcoming" xml:space="preserve"><value>Akan Datang</value></data>
+  <data name="TabCompleted" xml:space="preserve"><value>Selesai</value></data>
+  <data name="TabCancelled" xml:space="preserve"><value>Dibatalkan</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Cari rujukan atau nombor gelanggang…</value></data>
+</root>

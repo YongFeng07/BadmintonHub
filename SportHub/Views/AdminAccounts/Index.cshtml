@@ -1,0 +1,26 @@
+@model AdminAccountIndexViewModel
+@{
+    ViewData["Title"] = "Admin Accounts";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1 class="h3 mb-0">⚙️ Admin Accounts <span class="badge-role-superadmin ms-1">SuperAdmin only</span></h1>
+    <a asp-action="Create" class="btn btn-sh btn-sm">＋ New Admin Account</a>
+</div>
+
+<div data-ajax-list data-url="@Url.Action("Index")">
+    <form asp-action="Index" method="get" class="sh-form-section mt-3 row g-2 align-items-end" data-ajax-filter>
+        <div class="col-md-4">
+            <label class="form-label small mb-1">Search</label>
+            <input type="text" name="search" value="@Model.Page.Pager.Search" class="form-control form-control-sm" placeholder="Name or email" />
+        </div>
+        <div class="col-md-2 d-grid">
+            <button type="submit" class="btn btn-sh btn-sm">Filter</button>
+        </div>
+    </form>
+
+    <div data-ajax-target>
+        <partial name="_AccountTable" model="Model" />
+    </div>
+</div>

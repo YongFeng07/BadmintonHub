@@ -1,0 +1,92 @@
+@model SportHub.ViewModels.FacilityCatalogViewModel
+@inject IViewLocalizer Localizer
+@{
+    ViewData["Title"] = Localizer["Title"].Value;
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 my-4">
+    <div>
+        <h1 class="sh-page-title mb-0">@Localizer["Heading"]</h1>
+        <p class="sh-page-sub mb-0">@Localizer["SubHeading"]</p>
+    </div>
+</div>
+
+@* Category chips *@
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a asp-action="Index"
+       class="sh-chip @(Model.CategoryId == null ? "sh-chip-active" : "")">@Localizer["AllCategories"]</a>
+    @foreach (var category in Model.Categories)
+    {
+        <a asp-action="Index" asp-route-categoryId="@category.Id"
+           class="sh-chip @(Model.CategoryId == category.Id ? "sh-chip-active" : "")">
+            @category.Icon @category.Name
+        </a>
+    }
+</div>
+
+<form method="get" asp-action="Index" class="sh-form-section d-flex flex-wrap gap-2 align-items-center">
+    <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+    <div class="flex-grow-1" style="min-width: 220px;">
+        <label class="form-label visually-hidden" for="search">@Localizer["SearchPlaceholder"]</label>
+        <input type="text" id="search" name="search" class="form-control" placeholder="@Localizer["SearchPlaceholder"]" value="@Model.Search" />
+    </div>
+    <button type="submit" class="btn btn-sh">@Localizer["Search"]</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">@Localizer["Reset"]</a>
+</form>
+
+@if (Model.Cards.Count == 0)
+{
+    <div class="sh-empty">
+        <span class="emoji">🔍</span>
+        @Localizer["NoResults"]
+    </div>
+}
+else
+{
+    <div class="row g-4 mt-1">
+        @foreach (var card in Model.Cards)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card sh-card sh-court-card h-100">
+                    @if (!string.IsNullOrEmpty(card.PrimaryPhotoPath))
+                    {
+                        <img src="@card.PrimaryPhotoPath" class="card-img-top" alt="@card.Facility.Name" />
+                    }
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h5 class="card-title mb-1">@card.Facility.Name</h5>
+                                <span class="badge badge-status" style="background:#eef3f8;color:#3c5670;">
+                                    @card.Facility.Category?.Icon @card.Facility.Category?.Name
+                                </span>
+                            </div>
+                            @if (card.PopularityRank.HasValue)
+                            {
+                                <span class="badge sh-popular-badge" title="@Localizer["PopularTitle"]">
+                                    🏆 @Localizer["Top5"] #@card.PopularityRank
+                                </span>
+                            }
+                        </div>
+                        <p class="card-text small text-muted mb-3" style="min-height: 40px;">@card.Facility.Description</p>
+
+                        <div class="d-flex gap-3 small mb-2">
+                            <span>📍 @card.Facility.Category?.UnitLabel × @card.UnitCount</span>
+                            <span>💲 @Localizer["From"] RM @card.MinHourlyRate.ToString("0.00")</span>
+                        </div>
+
+                        @if (card.UnitCount > 0 && card.AvailableAt1900 <= 2)
+                        {
+                            <div class="alert alert-warning py-2 px-3 small mb-2">
+                                ⚠️ @Localizer["AlertLowAvailability", card.AvailableAt1900, "7:00 PM", card.Facility.Category?.UnitLabel ?? "unit"]
+                            </div>
+                        }
+
+                        <div class="mt-auto">
+                            <a asp-action="Details" asp-route-id="@card.Facility.Id" class="btn btn-sh btn-sm w-100">@Localizer["ViewDetails"]</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

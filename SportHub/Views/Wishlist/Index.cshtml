@@ -1,0 +1,109 @@
+@model SportHub.ViewModels.WishlistIndexViewModel
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@{
+    ViewData["Title"] = "My Wishlist";
+}
+<link rel="stylesheet" href="~/css/reservations.css" asp-append-version="true" />
+
+<div class="mt-3">
+    <h1 class="h3 mb-1">@Localizer["PageTitle"]</h1>
+    <p class="text-muted mb-3">@Localizer["Subtitle"]</p>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="sh-form-section">
+            <div class="sh-empty">
+                <span class="emoji">❤️</span>
+                @Localizer["EmptyTitle"]
+            </div>
+            <div class="text-center">
+                <a asp-controller="Courts" asp-action="Index" class="btn btn-sh">@Localizer["BrowseBtn"]</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <form id="wishlistForm" asp-action="RemoveBatch" method="post">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <label class="small text-muted mb-0">
+                    <input type="checkbox" id="selectAll" form="wishlistForm" class="form-check-input me-1" />
+                    @Localizer["SelectAll"]
+                </label>
+                <button type="submit" class="btn btn-outline-danger btn-sm">🗑 @Localizer["RemoveSelected"]</button>
+            </div>
+        </form>
+
+        <div class="row g-3">
+            @foreach (var item in Model.Items)
+            {
+                var court = item.Item.Court!;
+                <div class="col-md-6 col-lg-4">
+                    <div class="sh-form-section h-100 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div class="d-flex align-items-start gap-2">
+                                <input type="checkbox" name="itemIds" value="@item.Item.Id" form="wishlistForm"
+                                       class="form-check-input mt-1" aria-label="Select @court.CourtNumber" />
+                                <div>
+                                    <h5 class="mb-0">Court @court.CourtNumber</h5>
+                                    <div class="small text-muted">@court.Facility?.Name</div>
+                                </div>
+                            </div>
+                            @if (item.HasOpenSlots)
+                            {
+                                <span class="badge bg-success">
+                                    @Localizer["BadgeOpenSlots", item.OpenSlotCount]
+                                    · @item.FirstOpenDate!.Value.ToString("dd MMM yyyy")
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@Localizer["BadgeNoSlots"]</span>
+                            }
+                        </div>
+                        <div class="small text-muted mt-2">
+                            RM @court.HourlyRate.ToString("0.00")/hr · @court.CourtType ·
+                            @Localizer["AddedOn", item.Item.AddedAt.ToString("dd MMM yyyy")]
+                        </div>
+                        @if (item.Item.NotifiedAt.HasValue)
+                        {
+                            <div class="small text-sh-green mt-1">🔔 @Localizer["NotifiedChip"]</div>
+                        }
+                        <div class="small text-muted mt-1">
+                            📬 @Localizer["NotifyNote"]
+                        </div>
+                        <div class="d-flex gap-2 mt-auto pt-3">
+                            @if (item.HasOpenSlots)
+                            {
+                                <a asp-controller="Reservations" asp-action="Create"
+                                   asp-route-courtId="@court.Id"
+                                   asp-route-date="@item.FirstOpenDate!.Value.ToString("yyyy-MM-dd")"
+                                   class="btn btn-sh btn-sm flex-fill">@Localizer["BookNow"]</a>
+                            }
+                            else
+                            {
+                                <a asp-controller="Courts" asp-action="Details" asp-route-id="@court.Id"
+                                   class="btn btn-outline-secondary btn-sm flex-fill">@Localizer["ViewCourt"]</a>
+                            }
+                            <form asp-action="Remove" method="post" class="d-inline">
+                                <input type="hidden" name="itemId" value="@item.Item.Id" />
+                                <button type="submit" class="btn btn-outline-danger btn-sm"
+                                        title="@Localizer["Remove"]" aria-label="@Localizer["Remove"]">✕</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('#selectAll').on('change', function () {
+                $('input[name="itemIds"][form="wishlistForm"]').prop('checked', this.checked);
+            });
+        });
+    </script>
+}

@@ -1,4 +1,4 @@
-# BadmintonHub — Final Audit (Section 41)
+# SportHub — Final Audit (Section 41)
 
 PASS/FAIL audit across the twelve rubric areas, with evidence for every
 verdict. **This audit deliberately does not claim a mark.** It records what
@@ -12,10 +12,10 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| ASP.NET Core **MVC** (not Razor Pages / React / other backends) | PASS | `BadmintonHub/` classic MVC layout: Controllers/ Views/ Models/ Services/ Data/; 23 controllers in [Controllers/](BadmintonHub/Controllers/) |
-| .NET 10 | PASS | `BadmintonHub/BadmintonHub.csproj` targets `net10.0` |
-| Layered structure | PASS | Business rules isolated in [Services/](BadmintonHub/Services/) (`ReservationService`, `AuthService`, `CourtService`…), EF in [Data/](BadmintonHub/Data/), presentation in Views + ViewModels |
-| Classic solution, Visual Studio workflow | PASS | [BadmintonHub.sln](BadmintonHub.sln) builds in VS 2022 17.14+/2026; F5 verified (see Build) |
+| ASP.NET Core **MVC** (not Razor Pages / React / other backends) | PASS | `SportHub/` classic MVC layout: Controllers/ Views/ Models/ Services/ Data/; 23 controllers in [Controllers/](SportHub/Controllers/) |
+| .NET 10 | PASS | `SportHub/SportHub.csproj` targets `net10.0` |
+| Layered structure | PASS | Business rules isolated in [Services/](SportHub/Services/) (`ReservationService`, `AuthService`, `CourtService`…), EF in [Data/](SportHub/Data/), presentation in Views + ViewModels |
+| Classic solution, Visual Studio workflow | PASS | [SportHub.sln](SportHub.sln) builds in VS 2022 17.14+/2026; F5 verified (see Build) |
 
 ## 2. Presentation — PASS
 
@@ -32,7 +32,7 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | EF Core **Code First** | PASS | Entities in `Models/`, context in `Data/ApplicationDbContext.cs` |
 | **Migrations** (not EnsureCreated) | PASS | `Migrations/` folder present; `Database.Migrate()` at startup (`Program.cs`) |
 | **Data Annotations** validation | PASS | `[Required]`, `[StringLength]`, `[Range]`, `[RegularExpression]`, `[EmailAddress]`, `[Phone]` on entities |
-| SQL Server (LocalDB, file-based) | PASS | `Server=(localdb)\MSSQLLocalDB;AttachDbFilename={DbFile}` — DB file pinned to `App_Data/BadmintonHub.mdf` (commit `0a70a7c`) |
+| SQL Server (LocalDB, file-based) | PASS | `Server=(localdb)\MSSQLLocalDB;AttachDbFilename={DbFile}` — DB file pinned to `App_Data/SportHub.mdf` (commit `0a70a7c`) |
 
 ## 4. Security — PASS (with noted demo limitations)
 
@@ -40,22 +40,22 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 |---|---|---|
 | **No ASP.NET Core Identity** — manually implemented cookie auth | PASS | `AuthService`, `AccountController`; `AddAuthentication(CookieAuthenticationDefaults…)` in `Program.cs` |
 | Cookie hardening | PASS | HttpOnly, SameSite=Lax, 8 h sliding expiry |
-| **No plain-text passwords** | PASS | PBKDF2-SHA256, 100k iterations, random 16-byte salt, constant-time compare — [PasswordHelper.cs](BadmintonHub/Services/PasswordHelper.cs); covered by unit tests |
+| **No plain-text passwords** | PASS | PBKDF2-SHA256, 100k iterations, random 16-byte salt, constant-time compare — [PasswordHelper.cs](SportHub/Services/PasswordHelper.cs); covered by unit tests |
 | Authorization at controller/action/resource level | PASS | `[Authorize(Roles = "Admin")]` on admin controllers, `SuperAdmin` on System Settings, `Member` on member areas; resource-level ownership checks in `ReservationService`; verified by e2e T4 |
 | Role model per revised spec | PASS | `SuperAdmin / Admin / Member` (Staff removed); migration converts the seeded staff account to a second admin (`admin2@`); seeded SuperAdmin owns system settings |
 | Image captcha on login/register/reset | PASS | DNTCaptcha.Core rendered on all three forms (partial `_Captcha`); server-side validation via `ValidateCaptchaAttribute`, toggleable with `Security:EnableCaptcha` so the scripted e2e can run |
 | E-mail verification before sign-in | PASS | Registration creates unverified members; sign-in gated until the 24 h hashed-token link is followed; resend flow with anti-enumeration neutral responses; admin manual verify; successful password reset auto-verifies |
 | Remember Me | PASS | Opt-in 30-day persistent cookie via the manual cookie scheme (session cookie otherwise) |
-| **QR code carries only a safe identifier** | PASS | [QrCodeHelper.cs](BadmintonHub/Services/QrCodeHelper.cs) + `ReservationsController` passes only the public `ReservationReference`; e2e T6 asserts the member's e-mail never appears in QR content |
+| **QR code carries only a safe identifier** | PASS | [QrCodeHelper.cs](SportHub/Services/QrCodeHelper.cs) + `ReservationsController` passes only the public `ReservationReference`; e2e T6 asserts the member's e-mail never appears in QR content |
 | **No real credentials / secrets in the repository** | PASS | All credentials are seeded demo accounts; secret scan in §12 found none |
-| Anti-enumeration login | PASS | Generic "Invalid email or password." + attempt logged — [AuthService.cs](BadmintonHub/Services/AuthService.cs); unit-tested |
+| Anti-enumeration login | PASS | Generic "Invalid email or password." + attempt logged — [AuthService.cs](SportHub/Services/AuthService.cs); unit-tested |
 | Failed-login lockout + admin unlock | PASS | 3 attempts → 15-minute `LockoutEnd`; `AdminUsersController.Unlock`; unit + e2e tested |
 | Password reset tokens hashed, single-use, 30 min | PASS | `PasswordResetToken.TokenHash` (raw token never stored); e2e T9 |
 | Antiforgery tokens on all POSTs | PASS | `[ValidateAntiForgeryToken]` on state-changing actions; e2e drives real tokens |
-| Open-redirect guard on language switcher | PASS | `Url.IsLocalUrl` in [CultureController.cs](BadmintonHub/Controllers/CultureController.cs); unit-tested |
+| Open-redirect guard on language switcher | PASS | `Url.IsLocalUrl` in [CultureController.cs](SportHub/Controllers/CultureController.cs); unit-tested |
 | Open-redirect guard on wishlist return URL | PASS | `WishlistController.Add` honours only `Url.IsLocalUrl(returnUrl)` values and falls back to the wishlist index otherwise; unit + e2e tested |
 | Checkout resource ownership | PASS | `CheckoutComplete` refuses reservation ids owned by another user (Forbid); checkout re-validates every line server-side in a transaction; voucher usage is incremented inside the same transaction |
-| Uploaded images validated by decoded format | PASS | [ImageService.cs](BadmintonHub/Services/ImageService.cs) decodes with ImageSharp and trusts the *decoded* format (a renamed executable is rejected), 5 MB cap, re-encoded as 256×256 JPEG so raw uploads are never served; unit-tested |
+| Uploaded images validated by decoded format | PASS | [ImageService.cs](SportHub/Services/ImageService.cs) decodes with ImageSharp and trusts the *decoded* format (a renamed executable is rejected), 5 MB cap, re-encoded as 256×256 JPEG so raw uploads are never served; unit-tested |
 | Profile-photo deletes stay inside `/uploads/profiles` | PASS | `DeleteProfilePhoto` refuses null/foreign/traversal paths; unit-tested |
 | Admin-account guard rails | PASS | Nobody can deactivate their own account; the last active SuperAdmin cannot be deactivated (system stays administrable); unit + e2e tested |
 
@@ -72,6 +72,7 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | Category / Facility Maintenance & Catalog (P3) | PASS | `Category` + `FacilityPhoto` entities (migration `P3_CategoryAndFacilityPhotos`); 11 seeded categories; 6 facilities with per-facility hours and photo manager (800×450, cover); category + facility delete guards; public catalog with filters, Top-5 ranking and low-availability alert; `CatalogServiceTests` / `AdminCategoriesControllerTests` / `AdminFacilityControllerTests` + e2e T13 |
 | Booking Cart + Checkout + Wishlist + Vouchers (P4) | PASS | `CartItem` (unique user/court/date/start), `WishlistItem`, `Voucher` + reservation discount fields (migration `P4_CartWishlistVoucher`); DB-backed cart with duration update, batch remove/clear and owner scoping; checkout creates pending reservations + payments in one transaction with server-side re-validation and rollback; discount split proportionally (last line absorbs rounding remainder); **all-or-nothing batch payment**; single-use redemption limits; wishlist entry point on unavailable courts with local-return-url guard; admin voucher CRUD with duplicate-code rejection; `CartServiceTests` / `CheckoutServiceTests` / `VoucherServiceTests` / `WishlistServiceTests` + controller tests + e2e T14–T17 |
 | ToyyibPay + booking/revenue reports (P5) | PASS | `Payment.GatewayBillCode` / `GatewayStatus` (migration `E_ToyyibPay`); `ToyyibPayService` with **simulated fallback** (empty `ToyyibPay:UserSecretKey/CategoryCode` placeholders — no credentials committed) and real-mode `createBill` / `getBillTransactions` with server-side re-verification before marking paid; simulated gateway page (clearly labelled TEST MODE); batch bill reference carried onto payment rows; payment-confirmation e-mail; member booking insights (monthly bookings, spend by month, category split, cancellation rate) + admin monthly bookings / revenue by month / bookings by category / cancellation rate charts (`ChartAggregations`) |
+| Professionalisation (Phase G) | PASS | Branch `feature/g-professional-polish` — G-M0 SportHub rebrand; G-M1 token-based UI redesign + 22 attributed real court photos; **G-M2** voucher rules / checkout preview / receipt discount breakdown / bulk generation; **G-M3** atomic slot claims (time-boxed `CartItem.HeldUntil` cart holds honoured by availability checks, 30-minute payment timeout via `ReservationStatusUpdaterService`); **G-M4** wishlist notify-when-available (immediate in-app + e-mail on court reopen, one-shot `NotifiedAt`, 15-minute worker safety net); **G-M5** lifecycle e-mails with `Receipt-{ref}.pdf` attachments, member resend, 24-hour `ReservationReminderWorker` reminders; **G-M6** shared AJAX search/sort/paging infrastructure (`AjaxListRequest`/`AjaxPager` + `ajax-list.js`) with batch deletion across member and admin lists; 267 unit tests + e2e T1–T20 |
 
 ## 6. Additional features — PASS
 
@@ -98,6 +99,12 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | Voucher administration | `AdminVouchersController` — CRUD with code normalisation, duplicate rejection, expiry/limit/percentage-fixed options, usage counters; screenshots `37`, `38`; e2e T16 |
 | ToyyibPay payment gateway (3rd-party API) | `ToyyibPayService` + `PaymentsController.ToyyibPayReturn` — simulated fallback runs without credentials (SIM- bills, clearly-labelled demo gateway page); real mode POSTs `createBill` and re-verifies `getBillTransactions` before trusting the return; verified by a live curl smoke round trip (cart → bill → gateway → pay → 7 bookings Confirmed, bill code as payment reference, confirmation e-mail captured) |
 | Member booking insights + extended reports | Member "My Reservations → Insights" tab (monthly bookings, spend by month, bookings by category, booking outcomes + cancellation rate); `AdminReports` gains monthly bookings, revenue by month, bookings by category and cancellation rate; verified by live page checks (canvas + serialized data) |
+| Wishlist notify-when-available (G-M4) | Reopening a court (admin Edit → Available) notifies every waiting member immediately — in-app notification naming the court + e-mail ("a court on your wishlist is available again"); one-shot per reopening (`NotifiedAt`), re-armed when the court leaves Available; 15-minute `WishlistNotifyWorker` safety net; e2e T18 |
+| E-receipt & notification centre (G-M5) | Booking-received mail on checkout, **e-receipt mail with the `Receipt-{ref}.pdf` attachment** on payment, cancellation mail, batch-payment confirmation, 24-hour booking reminder (`ReservationReminderWorker`, one-shot `ReminderSentAt`) with deep link; member **resend receipt** action; `DemoEmails` + `DemoEmailAttachments` tables let the demo mailbox serve real PDF downloads; e2e T18/T19 |
+| AJAX searching / sorting / paging + batch deletion (G-M6) | Shared `AjaxListRequest`/`AjaxListPage`/`AjaxPager` + `wwwroot/js/ajax-list.js` (debounced XHR, sort/page/filter links carrying every filter — regression-tested); member catalog search + rate sort, My Reservations per-tab partials, admin courts/categories/facilities/users/vouchers/emails/accounts; checkbox batch delete on vouchers/emails with empty-selection guard; e2e T20 |
+| Discount vouchers — rules, preview, bulk generate (G-M2) | Percentage/fixed vouchers with expiry and redemption caps; checkout preview shows the savings; the PDF receipt breaks the discount down per line; `AdminVouchers.GenerateBatch` bulk-creates voucher codes; e2e T15/T16/T20 |
+| Atomic slot claims + cart hold (G-M3) | Adding a slot to the cart places a time-boxed hold (`CartItem.HeldUntil`, refreshed on duration update, released on remove/expiry); availability and overlap checks honour active holds; unpaid pending reservations auto-release after 30 minutes so stock is never deducted forever; migration `G3_AtomicSlots` |
+| SportHub rebrand + real photography (G-M0/G-M1) | Solution/projects/namespaces/branding renamed BadmintonHub → SportHub (reservation references now `SH-`); token-based design system (`site.css`), hero homepage, professional polish across all views; 22 attributed Wikimedia Commons court photos committed under `wwwroot/images/courts/` ([docs/PHOTO_CREDITS.md](docs/PHOTO_CREDITS.md)) |
 
 ## 7. Report — PARTIAL
 
@@ -123,18 +130,18 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| Auto-migrate + seed at startup | PASS | `Program.cs`: `Database.Migrate()` + `DbSeeder.Seed()`; first F5 creates `App_Data/BadmintonHub.mdf` |
+| Auto-migrate + seed at startup | PASS | `Program.cs`: `Database.Migrate()` + `DbSeeder.Seed()`; first F5 creates `App_Data/SportHub.mdf` |
 | VS F5 reliability | PASS | LocalDB file pinned to `App_Data` (commit `0a70a7c`) — fixes the "Cannot create file because it already exists" crash |
-| Multiple copies on one machine | PASS | Catalog name derived from the data-file path (SHA-256 prefix, commit `2d8a796`); verified working copy + clean clone running side by side with distinct registrations (`BadmintonHub_d8927285` / `BadmintonHub_54ba4478`) |
+| Multiple copies on one machine | PASS | Catalog name derived from the data-file path (SHA-256 prefix, commit `2d8a796`); verified working copy + clean clone running side by side with distinct registrations (pre-rename `BadmintonHub_d8927285` / `BadmintonHub_54ba4478`; since the SportHub rename the catalog is derived from `SportHub\App_Data\SportHub.mdf` — verify with `SELECT name FROM sys.databases WHERE name LIKE 'SportHub%'` before dropping) |
 
 ## 11. Testing — PASS
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| Test project runs in **Visual Studio Test Explorer** | PASS | `BadmintonHub.Tests` (xUnit) in the solution; 193 tests |
-| Unit coverage of business rules | PASS | [docs/TESTING.md](docs/TESTING.md) §2 — passwords, 3-strike lockout, e-mail verification, booking/double-booking/payment/refund, admin transitions, culture switcher, QR, PDF, calendar, photo pipeline, admin-account guard rails, catalog service (filters/top-5/low-availability), category + facility maintenance CRUD with delete guards, cart service (overlap/owner scoping), checkout (transaction, proportional discount split, batch payment, re-validation rollback), voucher validation + limits, wishlist (open-redirect guard, owner scoping) |
-| Latest run | PASS | `Passed! Failed: 0, Passed: 193` (2026-09-06) |
-| End-to-end evidence | PASS | `tests/e2e.sh` (T1–T17) — HTTP-level checks incl. role matrix, register → verify flow, lockout, antiforgery, receipts, admin-account CRUD, photo upload, catalog filters + Top-5 badge + low-availability alert, category/facility CRUD + delete guards, cart arithmetic + batch remove, checkout with WELCOME10 + batch payment, voucher admin CRUD + single-use limits, wishlist round trip |
+| Test project runs in **Visual Studio Test Explorer** | PASS | `SportHub.Tests` (xUnit) in the solution; 267 tests |
+| Unit coverage of business rules | PASS | [docs/TESTING.md](docs/TESTING.md) §2 — passwords, 3-strike lockout, e-mail verification, booking/double-booking/payment/refund, admin transitions, culture switcher, QR, PDF, calendar, photo pipeline, admin-account guard rails, catalog service (filters/top-5/low-availability), category + facility maintenance CRUD with delete guards, cart service (overlap/owner scoping), checkout (transaction, proportional discount split, batch payment, re-validation rollback), voucher validation + limits + G-M6 search/batch-delete, wishlist (open-redirect guard, owner scoping) + G-M4 notify-when-available, G-M5 lifecycle mails + 24-hour reminder, G-M6 AJAX list sanitizer/pager regression tests |
+| Latest run | PASS | `Passed! Failed: 0, Passed: 267` (2026-09-06) |
+| End-to-end evidence | PASS | `tests/e2e.sh` (T1–T20) — HTTP-level checks incl. role matrix, register → verify flow, lockout, antiforgery, receipts, admin-account CRUD, photo upload, catalog filters + Top-5 badge + low-availability alert, category/facility CRUD + delete guards, cart arithmetic + batch remove, checkout with WELCOME10 + batch payment, voucher admin CRUD + single-use limits, wishlist round trip, **wishlist notify-when-available with e-mail (T18), e-receipt e-mail with real PDF attachment + resend (T19), AJAX search/sort/paging with filter carry-through + bulk voucher generate + batch delete (T20)** — latest run `194 passed, 0 failed` (2026-09-06, fresh seeded DB) |
 | Phase E verification | PARTIAL | ToyyibPay simulated round trip and the member/admin charts verified by live HTTP smoke checks; **no dedicated unit tests for `ToyyibPayService`/`ChartAggregations`** — the team decided to skip the Phase E unit-test milestone, and the real-API mode needs real ToyyibPay credentials so it is not automatable (see [TESTING.md](TESTING.md) §3) |
 
 ## 12. Documentation — PASS
@@ -168,5 +175,10 @@ README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.
    public reference and shows status; it is not a cryptographic gatekeeper.
 6. **Demo data only** — the seeded facility/rates/reservations are fictional
    demo content.
-7. `BadmintonHub/wwwroot/images/` is intentionally not committed — the seeder
-   regenerates the placeholder SVGs at first run.
+7. ~~`SportHub/wwwroot/images/` is intentionally not committed — the seeder
+   regenerates the placeholder SVGs at first run.~~ Done 2026-09-06: real-world
+   photographs from Wikimedia Commons are now committed under
+   `SportHub/wwwroot/images/courts/` with an attribution file
+   (docs/PHOTO_CREDITS.md, regenerable via `tools/fetch-photos.ps1`); the seeder
+   seeds the jpg photos with graceful fallbacks and no longer generates
+   placeholder SVGs (only legacy `*.svg` files stay gitignored).

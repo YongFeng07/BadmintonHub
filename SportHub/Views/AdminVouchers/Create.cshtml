@@ -1,0 +1,16 @@
+@model SportHub.Models.Voucher
+@{
+    ViewData["Title"] = "Add Voucher";
+    Layout = "_AdminLayout";
+}
+
+<div class="sh-form-section" style="max-width: 720px;">
+    <h2 class="sh-page-title mb-1">Add Voucher</h2>
+    <p class="sh-page-sub">Create a discount voucher members can apply at cart checkout.</p>
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        <partial name="_Form" model="Model" />
+        <button type="submit" class="btn btn-sh">Create Voucher</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+    </form>
+</div>

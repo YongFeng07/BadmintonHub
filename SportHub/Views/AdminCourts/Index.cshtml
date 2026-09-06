@@ -1,0 +1,53 @@
+@model SportHub.ViewModels.AdminCourtIndexViewModel
+@{
+    ViewData["Title"] = "Court Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="sh-admin-topbar">
+    <div>
+        <h2 class="sh-page-title mb-0">Court Management</h2>
+        <p class="sh-page-sub mb-0">Search, sort and page through every court.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-sh">+ Add Court</a>
+</div>
+
+<div data-ajax-list data-url="@Url.Action("Index")">
+    <form method="get" asp-action="Index" class="sh-form-section d-flex flex-wrap gap-2 align-items-center mb-3" data-ajax-filter>
+        <div class="flex-grow-1" style="min-width: 180px;">
+            <input type="text" name="search" class="form-control" placeholder="Search court number…" value="@Model.Page.Pager.Search" />
+        </div>
+        <div>
+            <select name="facilityId" class="form-select">
+                <option value="">All Facilities</option>
+                @foreach (var facility in Model.Facilities)
+                {
+                    <option value="@facility.Id" selected="@(Model.FacilityId == facility.Id)">@facility.Name</option>
+                }
+            </select>
+        </div>
+        <div>
+            <select name="type" class="form-select">
+                <option value="">All Types</option>
+                @foreach (var t in Enum.GetValues<SportHub.Models.CourtType>())
+                {
+                    <option value="@t" selected="@(Model.Type == t)">@t</option>
+                }
+            </select>
+        </div>
+        <div>
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                @foreach (var s in Enum.GetValues<SportHub.Models.CourtStatus>())
+                {
+                    <option value="@s" selected="@(Model.Status == s)">@s</option>
+                }
+            </select>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </form>
+
+    <div data-ajax-target>
+        <partial name="_CourtTable" model="Model.Page" />
+    </div>
+</div>

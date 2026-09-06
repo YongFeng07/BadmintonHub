@@ -1,0 +1,147 @@
+@model SportHub.ViewModels.AdminVoucherIndexViewModel
+@{
+    // G-M6 AJAX list region for voucher management: sortable headers, batch
+    // deletion (shared select-all/count/action wiring in ajax-list.js) and pager.
+    var pager = Model.Page.Pager;
+    var today = DateOnly.FromDateTime(DateTime.Today);
+}
+
+@if (Model.Page.Items.Count == 0)
+{
+    <div class="sh-empty"><span class="emoji">🎟️</span>No vouchers match your filters.</div>
+}
+else
+{
+    <form method="post" asp-action="DeleteBatch" data-batch-form
+          onsubmit="return confirm('Delete the selected vouchers? This cannot be undone.');">
+        @Html.AntiForgeryToken()
+        <div class="d-flex flex-wrap align-items-center gap-2 border rounded p-2 mb-2 bg-light">
+            <label class="small mb-0 d-flex align-items-center gap-1">
+                <input type="checkbox" class="form-check-input mt-0" data-batch-select-all aria-label="Select all vouchers on this page" />
+                Select all on page
+            </label>
+            <span class="small text-muted"><strong data-batch-count>0</strong> selected</span>
+            <button type="submit" class="btn btn-sm btn-outline-danger ms-auto" data-batch-submit disabled>🗑 Delete Selected</button>
+        </div>
+
+        <div class="table-responsive sh-table">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th style="width: 2rem;"></th>
+                        <th>
+                            <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("code")"
+                               aria-sort="@pager.AriaSortFor("code")">Code <span class="sh-sort-arrow">@pager.ArrowFor("code")</span></a>
+                        </th>
+                        <th>Description</th>
+                        <th>
+                            <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("discount")"
+                               aria-sort="@pager.AriaSortFor("discount")">Discount <span class="sh-sort-arrow">@pager.ArrowFor("discount")</span></a>
+                        </th>
+                        <th>Rules</th>
+                        <th>
+                            <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("expiry")"
+                               aria-sort="@pager.AriaSortFor("expiry")">Expiry <span class="sh-sort-arrow">@pager.ArrowFor("expiry")</span></a>
+                        </th>
+                        <th>
+                            <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("used")"
+                               aria-sort="@pager.AriaSortFor("used")">Used <span class="sh-sort-arrow">@pager.ArrowFor("used")</span></a>
+                        </th>
+                        <th>
+                            <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("status")"
+                               aria-sort="@pager.AriaSortFor("status")">Status <span class="sh-sort-arrow">@pager.ArrowFor("status")</span></a>
+                        </th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var voucher in Model.Page.Items)
+                    {
+                        var expired = voucher.ExpiryDate < today;
+                        var limitReached = voucher.UsageLimit.HasValue && voucher.UsageCount >= voucher.UsageLimit.Value;
+                        var notStarted = voucher.StartDate.HasValue && voucher.StartDate.Value > today;
+                        <tr>
+                            <td class="text-center">
+                                <input type="checkbox" name="itemIds" value="@voucher.Id" class="form-check-input"
+                                       aria-label="Select voucher @voucher.Code" />
+                            </td>
+                            <td><strong class="font-monospace">@voucher.Code</strong></td>
+                            <td>@voucher.Description</td>
+                            <td>
+                                @if (voucher.DiscountType == SportHub.Models.DiscountType.Percentage)
+                                {
+                                    <span class="badge badge-status" style="background:#eef3f8;color:#3c5670;">
+                                        @voucher.DiscountValue.ToString("0.##")% off
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-status" style="background:#eef3f8;color:#3c5670;">
+                                        RM @voucher.DiscountValue.ToString("0.00") off
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                @if (voucher.MinSpend > 0)
+                                {
+                                    <div class="small">Min spend RM @voucher.MinSpend.ToString("0.00")</div>
+                                }
+                                @if (voucher.MaxDiscount.HasValue)
+                                {
+                                    <div class="small">Cap RM @voucher.MaxDiscount.Value.ToString("0.00")</div>
+                                }
+                                @if (voucher.PerUserLimit.HasValue)
+                                {
+                                    <div class="small">@voucher.PerUserLimit× per member</div>
+                                }
+                                @if (notStarted)
+                                {
+                                    <div class="small">Starts @voucher.StartDate!.Value.ToString("dd MMM yyyy")</div>
+                                }
+                                @if (voucher.MinSpend <= 0 && !voucher.MaxDiscount.HasValue
+                                     && !voucher.PerUserLimit.HasValue && !notStarted)
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                            </td>
+                            <td class="text-nowrap">
+                                @voucher.ExpiryDate.ToString("dd MMM yyyy")
+                                @if (expired)
+                                {
+                                    <span class="badge bg-danger">Expired</span>
+                                }
+                            </td>
+                            <td>
+                                @voucher.UsageCount@(voucher.UsageLimit.HasValue ? $" / {voucher.UsageLimit}" : "")
+                                @if (limitReached)
+                                {
+                                    <span class="badge bg-warning text-dark">Limit reached</span>
+                                }
+                            </td>
+                            <td>
+                                @if (voucher.Status == SportHub.Models.VoucherStatus.Active)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else if (voucher.Status == SportHub.Models.VoucherStatus.Expired)
+                                {
+                                    <span class="badge bg-danger">Expired</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@voucher.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                                <a asp-action="Delete" asp-route-id="@voucher.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </form>
+}
+
+<partial name="_AjaxPager" model="pager" />

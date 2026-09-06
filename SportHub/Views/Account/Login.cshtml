@@ -1,0 +1,74 @@
+@model SportHub.ViewModels.LoginViewModel
+@inject IViewLocalizer Localizer
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="auth-wrap">
+    <div class="auth-brand-panel">
+        <div class="auth-brand-inner">
+            <div class="auth-logo">🏸</div>
+            <h1>@Localizer["Title"]</h1>
+            <p class="auth-brand-sub">@Localizer["SubtitleSmall"]</p>
+            <ul class="auth-features">
+                <li>🛡️ @Localizer["FeatBook"]</li>
+                <li>💳 @Localizer["FeatPay"]</li>
+                <li>📱 @Localizer["FeatQr"]</li>
+            </ul>
+        </div>
+    </div>
+    <div class="auth-form-panel">
+        <div class="auth-form-inner">
+            <h2 class="h4 mb-1">@Localizer["Subtitle"]</h2>
+            <p class="text-muted small mb-4">@Localizer["SubtitleSmall"]</p>
+
+            @if (ViewData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger py-2 small">
+                    @ViewData["ErrorMessage"]
+                    @if (ViewData["ShowResendVerification"] is true)
+                    {
+                        <div class="mt-1">
+                            <a asp-action="ResendVerification" asp-route-email="@Model.Email">@Localizer["ResendLink"]</a>
+                        </div>
+                    }
+                </div>
+            }
+
+            <form asp-action="Login" method="post" asp-route-returnUrl="@ViewData["ReturnUrl"]">
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+                <div class="mb-3">
+                    <label for="Email" class="form-label">@Localizer["EmailLbl"]</label>
+                    <input asp-for="Email" class="form-control" autocomplete="username" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="Password" class="form-label">@Localizer["PasswordLbl"]</label>
+                    <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+                <div class="mb-3 form-check form-switch">
+                    <input asp-for="RememberMe" class="form-check-input" />
+                    <label for="RememberMe" class="form-check-label">@Localizer["RememberLbl"]</label>
+                </div>
+
+                <partial name="_Captcha" />
+
+                <button type="submit" class="btn btn-sh w-100">@Localizer["LoginBtn"]</button>
+            </form>
+
+            <p class="text-center small mt-3 mb-2">
+                <a asp-action="ForgotPassword">@Localizer["ForgotLbl"]</a>
+            </p>
+
+            <hr />
+            <p class="text-center mb-0 small">
+                @Localizer["NewHere"] <a asp-controller="Account" asp-action="Register">@Localizer["CreateAccount"]</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

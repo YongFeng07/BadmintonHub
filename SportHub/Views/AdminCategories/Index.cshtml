@@ -1,0 +1,26 @@
+@model SportHub.ViewModels.AjaxListPage<SportHub.Models.Category>
+@{
+    ViewData["Title"] = "Facility Categories";
+    Layout = "_AdminLayout";
+}
+
+<div class="sh-admin-topbar">
+    <div>
+        <h2 class="sh-page-title mb-0">Facility Categories</h2>
+        <p class="sh-page-sub mb-0">Used by the public facility catalog.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-sh">+ Add Category</a>
+</div>
+
+<div data-ajax-list data-url="@Url.Action("Index")">
+    <form method="get" asp-action="Index" class="sh-form-section d-flex flex-wrap gap-2 align-items-center mb-3" data-ajax-filter>
+        <div class="flex-grow-1" style="min-width: 220px;">
+            <input type="text" name="search" class="form-control" placeholder="Search category name or description…" value="@Model.Pager.Search" />
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </form>
+
+    <div data-ajax-target>
+        <partial name="_CategoryTable" model="Model" />
+    </div>
+</div>

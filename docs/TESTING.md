@@ -1,7 +1,7 @@
-# BadmintonHub — Testing Plan & Evidence
+# SportHub — Testing Plan & Evidence
 
-This document is the systematic test plan for BadmintonHub. All testing is done
-**the Visual Studio way**: the primary mechanism is the `BadmintonHub.Tests`
+This document is the systematic test plan for SportHub. All testing is done
+**the Visual Studio way**: the primary mechanism is the `SportHub.Tests`
 xUnit project, which runs in **Visual Studio Test Explorer** (Test → Test
 Explorer → Run All). A supplementary bash end-to-end script (`tests/e2e.sh`)
 exercises the running web app over HTTP and is documented in section 4.
@@ -16,18 +16,18 @@ exercises the running web app over HTTP and is documented in section 4.
 
 ### In Visual Studio (primary)
 
-1. Open `BadmintonHub.sln` in Visual Studio 2022 (17.14+) or 2026.
+1. Open `SportHub.sln` in Visual Studio 2022 (17.14+) or 2026.
 2. **Build → Build Solution**.
-3. **Test → Test Explorer** — the `BadmintonHub.Tests` project is listed.
+3. **Test → Test Explorer** — the `SportHub.Tests` project is listed.
 4. Click **Run All** (or right-click the project → **Run Tests**).
 5. All 113 tests run against an in-memory database — no LocalDB, no web server
-   needed, and they cannot touch the real `App_Data/BadmintonHub.mdf`.
+   needed, and they cannot touch the real `App_Data/SportHub.mdf`.
 
 The same suite can be run from the command line (the CLI underneath Test
 Explorer is identical — VSTest):
 
 ```powershell
-dotnet test BadmintonHub.Tests\BadmintonHub.Tests.csproj
+dotnet test SportHub.Tests\SportHub.Tests.csproj
 ```
 
 ### Supplementary: end-to-end script
@@ -36,7 +36,7 @@ dotnet test BadmintonHub.Tests\BadmintonHub.Tests.csproj
 # 1. start the app (captcha server-side check off for scripted curl logins —
 #    the captcha UI itself is exercised manually / in screenshots 05–06)
 $env:Security__EnableCaptcha = "false"
-dotnet run --project BadmintonHub\BadmintonHub.csproj --no-launch-profile --urls http://localhost:5080
+dotnet run --project SportHub\SportHub.csproj --no-launch-profile --urls http://localhost:5080
 
 # 2. in a second terminal
 bash tests/e2e.sh
@@ -48,7 +48,7 @@ and the language switcher.
 
 ---
 
-## 2. Unit test suite (193 tests, all passing)
+## 2. Unit test suite (267 tests, all passing)
 
 Each test class uses a **fresh isolated in-memory database** (`TestDb.Create()`)
 seeded with one facility (open daily 08:00–23:00), one court at RM 25/hour with
@@ -61,7 +61,7 @@ are real PBKDF2 hashes (all seeded users are treated as e-mail-verified).
 | `AuthServiceTests` (6) | Unknown email → generic error **and** attempt logged (anti-enumeration), failed counter increments, **lockout after 3 failures** (15 min, correct password refused), deactivated account blocked, **unverified e-mail gated with a "verify your email" response**, successful login resets counter and stamps `LastLoginAt` | Manual authentication (no Identity), lockout, email-verification gate, status control |
 | `AccountServiceTests` (8) | Registration creates an **unverified** member whose verification token is stored only as a SHA-256 hash (~24 h expiry); duplicate e-mail rejected; verification succeeds once (idempotent) and clears the token; wrong/expired tokens fail without verifying; verification resend answers neutrally for unknown/already-verified e-mails (anti-enumeration); **a successful password reset proves the mailbox and auto-verifies the account** | Revised spec: email verification, hashed single-use tokens |
 | `DemoEmailSenderTests` (1) | With no SMTP configured, outgoing mail is captured in the in-app demo mailbox (and reported as not delivered) | Demo mail fallback |
-| `ReservationServiceTests` (13) | Booking creation (Pending + Pending payment + `BH-yyyy-######` reference + notification), duration 1–4 rule, past-date rule, unknown court, maintenance court, window outside opening hours, **server-side double-booking protection** (identical + partial overlap), payment → Confirmed consistency, already-paid guard, ownership guard, cancel → refund rule, completed reservations cannot be cancelled | Core business process: reservation + payment |
+| `ReservationServiceTests` (26) | Booking creation (Pending + Pending payment + `SH-yyyy-######` reference + notification), duration 1–4 rule, past-date rule, unknown court, maintenance court, window outside opening hours, **server-side double-booking protection** (identical + partial overlap), payment → Confirmed consistency, already-paid guard, ownership guard, cancel → refund rule, completed reservations cannot be cancelled; **G-M5 lifecycle e-mails**: booking-received mail on create, e-receipt mail with the `Receipt-{ref}.pdf` attachment on payment (suppressed when `sendReceiptEmail:false`), cancellation mail with refund note, released-unpaid mail | Core business process: reservation + payment + G-M5 |
 | `AdminReservationsControllerTests` (9) | Not-found/invalid-status/illegal-transition errors (TempData), **whitelisted transitions only** (Pending→Confirmed, Pending→Rejected, Confirmed→Completed), rejection fails the pending payment, admin counter payment, admin cancellation with refund, index model | M4 reservation administration |
 | `CultureControllerTests` (6) | All three supported cultures stored in a 1-year localization cookie, unsupported culture ignored, local return URL honoured, **external return URL ignored (open-redirect guard)** | P6 multi-language + security |
 | `QrCodeHelperTests` (2) | Output is a valid PNG data URI (magic bytes verified) and content-dependent | QR confirmation code |
@@ -75,16 +75,22 @@ are real PBKDF2 hashes (all seeded users are treated as e-mail-verified).
 | `AdminUsersControllerTests` (5) | Admin edit of a member profile persists (email uniqueness enforced, duplicate rejected); member Details aggregates reservation counts and **total paid (Paid payments only)**; only member accounts can be deactivated here; photo upload stores the returned path | P2 member maintenance |
 | `CartServiceTests` (13) | Add persists with the court's current hourly rate; **duplicate line and overlap against the user's own cart lines rejected** (friendly error, cart untouched); slot outside the open-availability window rejected; invalid duration rejected (parameterised 1–4 rule); update persists or rolls back on overlap; remove / batch-remove / clear are **scoped to the owner**; count is per-user | P4 booking cart |
 | `VoucherServiceTests` (15) | Code normalised to uppercase on create; duplicate code rejected (create and edit); edit changes only editable fields; **validate refuses blank / unknown / inactive / expired / limit-reached / zero-subtotal**; percentage discount computed; **fixed amount capped so the net total stays positive**; list ordered newest-first | P4 vouchers |
-| `CheckoutServiceTests` (14) | Preview computes subtotal and voucher discount; checkout **creates pending reservations + pending payments in one transaction and clears the cart**; discount **split proportionally with the last line absorbing the rounding remainder**; invalid voucher fails and keeps the cart; **server-side re-validation against newly-created bookings (rolls back)**; tampered overlapping cart lines rejected; another user's item ids refused; **voucher usage incremented once and a second use refused**; batch payment confirms all reservations at once, one-already-paid fails the whole batch | P4 checkout + batch payment |
+| `CheckoutServiceTests` (19) | Preview computes subtotal and voucher discount; checkout **creates pending reservations + pending payments in one transaction and clears the cart**; discount **split proportionally with the last line absorbing the rounding remainder**; invalid voucher fails and keeps the cart; **server-side re-validation against newly-created bookings (rolls back)**; tampered overlapping cart lines rejected; another user's item ids refused; **voucher usage incremented once and a second use refused**; batch payment confirms all reservations at once, one-already-paid fails the whole batch; **G-M5: batch payment sends one mail with one PDF receipt per booking; checkout sends one booking-received mail for the whole batch** | P4 checkout + batch payment + G-M5 |
 | `CartControllerTests` (14) | Add → cart redirect with flash, invalid model → booking page, overlap error keeps the cart; update/remove/batch-remove/clear flow with owner-scoped removal; checkout redirects to the payment step and mentions the savings flash; **CheckoutComplete forbids another user's reservation ids**; POST payment marks Confirmed/Paid and lands on the Paid page | P4 cart UI flow |
-| `WishlistServiceTests` (8) | Idempotent adds with friendly duplicate error; unknown court fails; ownership-scoped remove; count per user; items include court + facility for the card grid | P4 wishlist |
+| `WishlistServiceTests` (15) | Idempotent adds with friendly duplicate error; unknown court fails; ownership-scoped remove; count per user; items include court + facility for the card grid; **G-M4 notify-when-available**: a reopened court with real open slots notifies each waiting member once (in-app + e-mail, `NotifiedAt` one-shot), members who were already notified are skipped, courts without open slots keep waiting, leaving the Available state re-arms the notification | P4 wishlist + G-M4 |
 | `WishlistControllerTests` (6) | Add honours a **local** return URL and **ignores an external one (open-redirect guard)**; duplicate/unknown-court flashes; remove scoped to the owner | P4 wishlist + security |
-| `AdminVouchersControllerTests` (9) | Index newest-first; create normalises and redirects; duplicate code shown as a model error; edit updates editable fields; **edit colliding with another voucher's code rejected**; delete removes with flash; unknown ids → NotFound | P4 voucher administration |
+| `AdminVouchersControllerTests` (12) | Index newest-first; create normalises and redirects; duplicate code shown as a model error; edit updates editable fields; **edit colliding with another voucher's code rejected**; delete removes with flash; unknown ids → NotFound; **G-M6 list search filters by code/description; batch delete removes exactly the selected vouchers; empty selection deletes nothing** | P4 voucher administration + G-M6 batch deletion |
+| `ReminderServiceTests` (5) | **G-M5 24-hour reminder**: a confirmed booking starting within 24 h gets one reminder e-mail + in-app notification with a deep link (`NotifiedAt` one-shot); outside the window, already started, and pending bookings are skipped; only in-window bookings are reminded | G-M5 e-receipt & notification |
+| `AjaxListTests` (11) | **G-M6 shared list infrastructure**: the query-string sanitizer clamps page ≥ 1, whitelists page sizes 10/25/50, trims search and parses the sort state; the pager clamps a stale page number to the last page; sort links flip direction and reset to page 1 while carrying search, size and every extra filter (`facilityId`/`type`/`status`/`role`) through — the regression test for the old pagination-drops-filter bug | G-M6 AJAX searching/sorting/paging |
+
+> A `[ModuleInitializer]` in `TestAssemblySetup` declares the QuestPDF
+> community licence once per test process, so PDF-generating tests no longer
+> depend on the parallel scheduler's class order.
 
 ### Latest run evidence
 
 ```
-Passed!  -  Failed: 0, Passed: 193, Skipped: 0, Total: 193
+Passed!  -  Failed: 0, Passed: 267, Skipped: 0, Total: 267
 ```
 (2026-09-06, Debug build, `dotnet test` — the same VSTest engine Visual Studio
 Test Explorer uses.)
@@ -114,7 +120,7 @@ the team decided to skip that milestone. In particular:
 
 ## 4. End-to-end script (`tests/e2e.sh`)
 
-17 test groups (T1–T17) against a running app. Highlights:
+20 test groups (T1–T20) against a running app. Highlights:
 
 | # | Scenario | Checks |
 |---|---|---|
@@ -132,13 +138,24 @@ the team decided to skip that milestone. In particular:
 | T12 | Admin accounts + member edit + photo (P2) | Only SuperAdmin opens Admin Accounts; creating an admin provisions an account that **logs in immediately**; new admin is blocked from Admin Accounts; **SuperAdmin self-deactivation refused**; admin renames a member (visible in search); member uploads a photo (profile shows and serves it), then removes it |
 | T13 | Category/facility maintenance + catalog (P3) | Catalog lists seeded facilities with the **Top-5 badge**; category-chip filter and name search narrow results; facility detail page links its units and photos; booking two table-tennis slots for tonight makes the **low-availability alert appear**; admin creates/edits a category and a facility in it (court 99 included); facility photo upload is listed and served; **delete guards: category blocked while it owns a facility, facility blocked while it owns courts**; cleanup deletes court → facility → category in dependency order |
 | T14 | Booking cart (P4) | Two lines on one court; **subtotal equals the page's own line prices**; duration update re-prices (**line = 2×, subtotal = 3×**); batch-remove both selected lines → "2 item(s) removed" + empty-cart state |
-| T15 | Checkout + batch payment (P4) | Checkout with `WELCOME10` redirects to the payment step; **total due = subtotal − round(10%)**; batch payment (two reservations, one transaction) lands on the paid page with both `BH-` references Confirmed |
+| T15 | Checkout + batch payment (P4) | Checkout with `WELCOME10` redirects to the payment step; **total due = subtotal − round(10%)**; batch payment (two reservations, one transaction) lands on the paid page with both `SH-` references Confirmed |
 | T16 | Voucher administration (P4) | Role guards on admin vouchers; seeded list; admin creates a **limit-1 voucher**; duplicate code refused; member redeems once (redirect), **second redemption refused with "reached its redemption limit" and the cart line kept**; usage column shows **1 / 1** + limit-reached badge; edit and delete; deleted voucher really gone from the index (edit link asserted, not the flash text) |
 | T17 | Wishlist (P4) | Admin creates an **Unavailable** court; its detail page shows "Currently unavailable" + **Add to Wishlist**; add returns to the detail page (local return URL honoured — the suite fixes Git Bash path-mangling of `returnUrl=` so `Url.IsLocalUrl` sees the real value); detail page flips to the in-wishlist state; wishlist page lists the new court plus the **seeded demo rows**; removing the user's item leaves the seeded rows intact; cleanup deletes the court |
+| T18 | Wishlist notify-when-available (G-M4/G-M5) | Admin creates an Unavailable court, the member wishlists it, the admin opens the next 3 days of availability and reopens the court — the member's in-app notification ("Court available again") names the court **immediately, without waiting for the 15-minute worker**, and the demo mailbox holds the matching "on your wishlist is available again" e-mail; cleanup deletes the court |
+| T19 | E-receipt + e-mail + resend (G-M5) | Book + pay a fresh slot; the demo mailbox holds the "E-receipt — `SH-…`" mail whose **attachment downloads as a real `%PDF`**; the member resends the receipt e-mail and a **second copy appears in the mailbox** |
+| T20 | AJAX lists + batch delete (G-M6) | XHR catalog search narrows to the matching court and excludes the rest; rate-desc sort is monotonic; per-tab MyReservations partials render; **admin court sort links keep the facility filter** (the old pagination bug); bulk-generating two vouchers lists both, batch delete removes exactly those two and the list is empty afterwards |
 
-**Phase E manual verification** (no T18/T19 — see §3): a live smoke round trip
-covered the simulated ToyyibPay flow — checkout with the ToyyibPay method
-creates a `SIM-` bill, the simulated gateway page renders the amount and
+### Latest e2e evidence
+
+```
+RESULT: 194 passed, 0 failed  (ALL TESTS PASSED)
+```
+(2026-09-06, T1–T20 against a fresh seeded database on http://localhost:5080,
+captcha server check off for the scripted curl logins.)
+
+**Phase E manual verification** (no scripted T-number — see §3): a live smoke
+round trip covered the simulated ToyyibPay flow — checkout with the ToyyibPay
+method creates a `SIM-` bill, the simulated gateway page renders the amount and
 reservation list, "Pay Now" returns to `ToyyibPayReturn` and the batch is
 marked Paid (bill code stored as the payment reference, `GatewayStatus=1`,
 confirmation e-mail captured in the demo mailbox), "Cancel" returns the user
@@ -152,13 +169,17 @@ data on a fresh seed.
 ## 5. Test data safety
 
 - Unit tests use `UseInMemoryDatabase` — they **never** touch
-  `App_Data/BadmintonHub.mdf`.
+  `App_Data/SportHub.mdf`.
 - `e2e.sh` creates only throwaway accounts (`e2e.<timestamp>@example.com`),
   categories, facilities and courts (deleted again at the end of T13 in
   dependency order); it also books two table-tennis slots for tonight to make
   the low-availability alert deterministic. T16 creates and deletes a
-  limit-1 voucher (`E2ELIMIT1`), and T17 creates and deletes the unavailable
-  court used for the wishlist round trip.
+  limit-1 voucher (`E2ELIMIT1`), T17/T18 create and delete the unavailable
+  courts used for the wishlist round trip and the notify-when-available flow,
+  T19 adds one throwaway booking (its e-receipt mails stay in the demo
+  mailbox), and T20 bulk-generates two `E2EG6` vouchers and batch-deletes
+  them again. **The script must run against a freshly seeded database**
+  (delete `SportHub/App_Data/*.mdf` before starting the app).
 - The seeded database contains **demo accounts only** (see README); no real
   credentials exist anywhere in the repository (verified by secret scan in
   `docs/AUDIT.md`).

@@ -1,0 +1,35 @@
+@model ResendVerificationViewModel
+@{
+    ViewData["Title"] = "Resend Verification Email";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6 col-lg-5">
+        <div class="sh-card p-4">
+            <h1 class="h4 mb-1">Resend verification email</h1>
+            <p class="text-muted small mb-3">
+                Enter the email you registered with and we will issue a fresh verification link.
+                For your privacy, this page gives the same answer whether or not the email exists.
+            </p>
+            <form asp-action="ResendVerification" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" autocomplete="username" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <partial name="_Captcha" />
+
+                <button type="submit" class="btn btn-sh w-100">Send Verification Link</button>
+            </form>
+            <p class="small mt-3 mb-0 text-center">
+                <a asp-action="Login">Back to login</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

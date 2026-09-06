@@ -1,0 +1,99 @@
+@model SportHub.ViewModels.AdminAccountIndexViewModel
+@{
+    // G-M6 AJAX list region for admin-account management.
+    var pager = Model.Page.Pager;
+}
+
+@if (Model.Page.Items.Count == 0)
+{
+    <div class="sh-empty"><span class="emoji">🔍</span>No admin accounts match your search.</div>
+}
+else
+{
+    <div class="table-responsive sh-form-section mt-3">
+        <table class="table table-hover align-middle sh-table mb-0">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("name")"
+                           aria-sort="@pager.AriaSortFor("name")">Name <span class="sh-sort-arrow">@pager.ArrowFor("name")</span></a>
+                    </th>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("email")"
+                           aria-sort="@pager.AriaSortFor("email")">Email <span class="sh-sort-arrow">@pager.ArrowFor("email")</span></a>
+                    </th>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("role")"
+                           aria-sort="@pager.AriaSortFor("role")">Role <span class="sh-sort-arrow">@pager.ArrowFor("role")</span></a>
+                    </th>
+                    <th>Status</th>
+                    <th>Last Login</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var account in Model.Page.Items)
+                {
+                    <tr>
+                        <td class="pe-1">
+                            @if (account.PhotoUrl != null)
+                            {
+                                <img src="@account.PhotoUrl" alt="" class="sh-avatar-md" />
+                            }
+                            else
+                            {
+                                var initials = string.Concat(account.FullName
+                                    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                    .Select(w => char.ToUpperInvariant(w[0]))
+                                    .Take(2));
+                                <span class="sh-avatar-md sh-avatar-initials">@initials</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="fw-semibold">@account.FullName</span>
+                            @if (account.Phone != null)
+                            {
+                                <div class="small text-muted">@account.Phone</div>
+                            }
+                        </td>
+                        <td>@account.Email</td>
+                        <td>
+                            <span class="badge @(account.Role == Role.SuperAdmin ? "bg-danger" : "bg-warning text-dark")">@account.Role</span>
+                        </td>
+                        <td>
+                            @if (account.Status == UserStatus.Active)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-dark">@account.Status</span>
+                            }
+                        </td>
+                        <td>@(account.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "never")</td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Edit" asp-route-id="@account.Id" class="btn btn-sm btn-outline-secondary" title="Edit account">✏️ Edit</a>
+                            @if (account.Status == UserStatus.Active)
+                            {
+                                <form asp-action="SetStatus" asp-route-id="@account.Id" method="post" class="d-inline">
+                                    <input type="hidden" name="status" value="Deactivated" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Deactivate</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="SetStatus" asp-route-id="@account.Id" method="post" class="d-inline">
+                                    <input type="hidden" name="status" value="Active" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Activate</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<partial name="_AjaxPager" model="pager" />

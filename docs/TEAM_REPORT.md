@@ -1,4 +1,4 @@
-# BadmintonHub — Team Report (AMIT2014)
+# SportHub — Team Report (AMIT2014)
 
 > Team: LIM LI ZHE · YAP SJ · WONG YONG FENG · LEE XH. Nothing in this report
 > claims work that was not done; see `docs/AUDIT.md` for the pass/fail audit.
@@ -103,7 +103,8 @@ Each module's work is preserved as a feature branch at its completion commit:
 `feature/member1-court`, `feature/member2-reservation`,
 `feature/member3-member`, `feature/member4-admin`,
 `feature/p4-booking-cart-wishlist-voucher` (P4: cart/checkout/wishlist/vouchers),
-`feature/p5-toyyibpay-charts` (P5: ToyyibPay payment gateway + booking/revenue reports).
+`feature/p5-toyyibpay-charts` (P5: ToyyibPay payment gateway + booking/revenue reports),
+`feature/g-professional-polish` (Phase G: rebrand, UI redesign, real photos, six upgraded features).
 
 ### Phase E (P5) — ToyyibPay payment gateway + booking/revenue reports (team)
 
@@ -114,6 +115,21 @@ Each module's work is preserved as a feature branch at its completion commit:
 | Booking summary / history charts (member) | ✅ | My Reservations → **Insights** tab: monthly bookings, spend by month, bookings by category, booking outcomes + cancellation rate |
 | Booking/revenue reports (admin) | ✅ | Reports gain monthly bookings and revenue by month (last 12 months), bookings by category, cancellation rate |
 | Payment confirmation e-mail | ✅ | Batch-paid bookings trigger a confirmation e-mail (demo mailbox when no SMTP is configured) |
+
+### Phase G — professionalisation: six upgraded features + rebrand (team)
+
+SportHub rename, a token-based UI redesign and real court photography
+(G-M0/G-M1: 22 attributed Wikimedia Commons photos, `docs/PHOTO_CREDITS.md`),
+then each of the six upgrade features professionalised on the **member** side:
+
+| Upgrade feature | Where (member-facing) |
+|---|---|
+| AJAX searching / sorting / paging (G-M6) | Shared `AjaxListRequest`/`AjaxPager` + `wwwroot/js/ajax-list.js`: member catalog search + rate sort, My Reservations per-tab partials, and the same engine on every admin list with filters carried through every link — the old pagination-drops-filter bug is regression-tested |
+| Add to Wishlist (out of stock) (G-M4) | Unavailable-court wishlist; reopening a court notifies every waiting member **immediately** (in-app notification naming the court + e-mail), one-shot per reopening with a 15-minute worker safety net |
+| Batch deletion (G-M6) | Checkbox batch remove on the member cart, and batch delete on admin vouchers/e-mails with an empty-selection guard and antiforgery protection |
+| Discount voucher handling (G-M2) | Percentage/fixed vouchers with expiry and redemption caps; checkout preview shows the savings; the PDF receipt breaks the discount down per line; admin bulk voucher generation |
+| E-receipt & notification (G-M5) | Lifecycle e-mails — booking received, **e-receipt with the `Receipt-{ref}.pdf` attachment**, cancellation, batch-payment confirmation, 24-hour booking reminders — plus a member **resend receipt** action; the demo mailbox serves real PDF downloads |
+| Product stock deduction (G-M3) | Atomic slot claims: adding a slot to the cart places a time-boxed hold (`CartItem.HeldUntil`) that availability checks honour; holds refresh on update and release on remove/expiry; unpaid pending reservations auto-release after 30 minutes |
 
 ## 4.2 Entity Relationship Diagram
 

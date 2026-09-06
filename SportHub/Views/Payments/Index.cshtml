@@ -1,0 +1,66 @@
+@model List<Payment>
+@{
+    ViewData["Title"] = "My Payments";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+    <h1 class="h3 mb-0">💳 My Payments</h1>
+    <span class="text-muted">@Model.Count payment record(s)</span>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="sh-empty">
+        <span class="emoji">💳</span>
+        <p class="mb-0">No payments yet. Payments appear here when you book a court.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive sh-form-section mt-3">
+        <table class="table table-hover align-middle sh-table mb-0">
+            <thead>
+                <tr>
+                    <th>Payment Reference</th>
+                    <th>Reservation</th>
+                    <th>Court</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Paid At</th>
+                    <th class="text-end">Amount</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var payment in Model)
+                {
+                    <tr>
+                        <td class="small">@(payment.PaymentReference ?? "—")</td>
+                        <td>
+                            @if (payment.Reservation != null)
+                            {
+                                <a asp-controller="Reservations" asp-action="Details" asp-route-id="@payment.Reservation.Id">@payment.Reservation.ReservationReference</a>
+                            }
+                            else
+                            {
+                                <span>—</span>
+                            }
+                        </td>
+                        <td>@(payment.Reservation?.Court?.CourtNumber ?? "—")</td>
+                        <td>@payment.Method</td>
+                        <td><span class="badge badge-status badge-@payment.Status.ToString().ToLowerInvariant()">@payment.Status</span></td>
+                        <td>@(payment.PaidAt?.ToString("dd MMM yyyy HH:mm") ?? "—")</td>
+                        <td class="text-end fw-semibold">RM @payment.Amount.ToString("0.00")</td>
+                        <td class="text-end">
+                            @if (payment.Reservation != null && payment.Status is PaymentStatus.Paid or PaymentStatus.Refunded)
+                            {
+                                <a class="btn btn-sm btn-outline-success"
+                                   asp-controller="Reservations" asp-action="Receipt" asp-route-id="@payment.Reservation.Id">🧾 Receipt</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

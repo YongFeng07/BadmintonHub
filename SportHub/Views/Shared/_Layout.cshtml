@@ -1,0 +1,232 @@
+@inject IViewLocalizer Localizer
+@inject ApplicationDbContext Db
+@{
+    var currentCulture = CultureInfo.CurrentUICulture.Name;
+    // Site-wide settings (SuperAdmin-editable) drive the title, brand and announcement
+    // banner. Read directly so the values are available for both the <head> and the page.
+    var siteSettings = await Db.SystemSettings
+        .Where(s => s.Key == "SiteName" || s.Key == "SiteAnnouncement")
+        .ToListAsync();
+    var siteName = siteSettings.FirstOrDefault(s => s.Key == "SiteName")?.Value ?? "SportHub";
+    var announcement = siteSettings.FirstOrDefault(s => s.Key == "SiteAnnouncement")?.Value;
+
+    // Current user's profile photo (P2): read fresh from the database so the
+    // navbar avatar updates immediately after an upload or an admin-side edit.
+    string? currentPhotoUrl = null;
+    var currentUserName = User.Identity?.IsAuthenticated == true ? User.Identity!.Name : null;
+    var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (int.TryParse(idClaim, out var currentUserId))
+        currentPhotoUrl = await Db.Users.Where(u => u.Id == currentUserId).Select(u => u.PhotoUrl).FirstOrDefaultAsync();
+    // Cart / wishlist navbar badge counts (revised spec) — read fresh per render.
+    var cartCount = 0;
+    var wishlistCount = 0;
+    if (int.TryParse(idClaim, out var layoutUserId) && User.Identity?.IsAuthenticated == true)
+    {
+        cartCount = await Db.CartItems.CountAsync(i => i.UserId == layoutUserId);
+        wishlistCount = await Db.WishlistItems.CountAsync(w => w.UserId == layoutUserId);
+    }
+    var currentInitials = string.Concat((currentUserName ?? "?")
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Select(w => char.ToUpperInvariant(w[0]))
+        .Take(2));
+
+    // Active-state highlight for the main nav.
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @siteName</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-dark sh-navbar">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                    <span class="sh-brand-icon">🏸</span>
+                    <span class="sh-brand-text">@siteName</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-controller="Home" asp-action="Index">@Localizer["NavHome"]</a></li>
+                        <li class="nav-item"><a class="nav-link @(currentController == "Courts" ? "active" : "")" asp-controller="Courts" asp-action="Index">@Localizer["NavCourts"]</a></li>
+                        <li class="nav-item"><a class="nav-link @(currentController == "Catalog" ? "active" : "")" asp-controller="Catalog" asp-action="Index">@Localizer["NavCatalog"]</a></li>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item"><a class="nav-link @(currentController == "Reservations" && currentAction == "MyReservations" ? "active" : "")" asp-controller="Reservations" asp-action="MyReservations">@Localizer["NavMyReservations"]</a></li>
+                        }
+                    </ul>
+                    <ul class="navbar-nav align-items-lg-center">
+                        <li class="nav-item me-lg-2 mt-1 mt-lg-0">
+                            <form asp-controller="Culture" asp-action="SetLanguage" method="post" class="d-flex">
+                                <input type="hidden" name="returnUrl" value="@Context.Request.GetEncodedPathAndQuery()" />
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Language">
+                                    <button type="submit" name="culture" value="en-US" title="English"
+                                            class="btn btn-outline-light btn-sm @(currentCulture == "en-US" ? "active" : "")">EN</button>
+                                    <button type="submit" name="culture" value="zh-CN" title="中文"
+                                            class="btn btn-outline-light btn-sm @(currentCulture == "zh-CN" ? "active" : "")">中文</button>
+                                    <button type="submit" name="culture" value="ms-MY" title="Bahasa Melayu"
+                                            class="btn btn-outline-light btn-sm @(currentCulture == "ms-MY" ? "active" : "")">BM</button>
+                                </div>
+                            </form>
+                        </li>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item me-lg-2 mt-1 mt-lg-0">
+                                <a class="btn btn-sh-amber btn-sm px-3" asp-controller="Reservations" asp-action="Create">@Localizer["NavBook"]</a>
+                            </li>
+                            <li class="nav-item me-lg-2 mt-1 mt-lg-0">
+                                <a class="nav-link position-relative py-lg-0" asp-controller="Cart" asp-action="Index" title="Cart">
+                                    @Localizer["NavCart"]
+                                    @if (cartCount > 0)
+                                    {
+                                        <span class="badge rounded-pill bg-warning text-dark position-absolute top-0 start-100 translate-middle">@cartCount</span>
+                                    }
+                                </a>
+                            </li>
+                            <li class="nav-item me-lg-2 mt-1 mt-lg-0">
+                                <a class="nav-link position-relative py-lg-0" asp-controller="Wishlist" asp-action="Index" title="Wishlist">
+                                    @Localizer["NavWishlist"]
+                                    @if (wishlistCount > 0)
+                                    {
+                                        <span class="badge rounded-pill bg-warning text-dark position-absolute top-0 start-100 translate-middle">@wishlistCount</span>
+                                    }
+                                </a>
+                            </li>
+                            <li class="nav-item me-lg-2 mt-1 mt-lg-0">
+                                @await Component.InvokeAsync("NotificationBell")
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    @if (currentPhotoUrl != null)
+                                    {
+                                        <img src="@currentPhotoUrl" alt="" class="sh-avatar-sm" />
+                                    }
+                                    else
+                                    {
+                                        <span class="sh-avatar-sm sh-avatar-initials">@currentInitials</span>
+                                    }
+                                    <span>@currentUserName</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end sh-dropdown">
+                                    <li><a class="dropdown-item" asp-controller="Reservations" asp-action="MyReservations">@Localizer["DropMyReservations"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Cart" asp-action="Index">@Localizer["DropCart"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Wishlist" asp-action="Index">@Localizer["DropWishlist"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Payments" asp-action="Index">@Localizer["DropPayments"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Notifications" asp-action="Index">@Localizer["DropNotifications"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">@Localizer["DropProfile"]</a></li>
+                                    @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+                                    {
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminDashboard" asp-action="Index">@Localizer["DropDashboard"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminReservations" asp-action="Index">@Localizer["DropManageReservations"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminCourts" asp-action="Index">@Localizer["DropManageCourts"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminAvailability" asp-action="Index">@Localizer["DropManageAvailability"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminReports" asp-action="Index">@Localizer["DropReports"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminVouchers" asp-action="Index">@Localizer["DropVouchers"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminFacility" asp-action="Index">@Localizer["DropFacilitySettings"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminUsers" asp-action="Index">@Localizer["DropUserAccounts"]</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminEmails" asp-action="Index">@Localizer["DropDemoMail"]</a></li>
+                                        @if (User.IsInRole("SuperAdmin"))
+                                        {
+                                            <li><a class="dropdown-item" asp-controller="AdminAccounts" asp-action="Index">@Localizer["DropAdminAccounts"]</a></li>
+                                            <li><a class="dropdown-item" asp-controller="AdminSettings" asp-action="Index">@Localizer["DropSystemSettings"]</a></li>
+                                        }
+                                    }
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                            <button type="submit" class="dropdown-item">@Localizer["DropLogout"]</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">@Localizer["NavLogin"]</a></li>
+                            <li class="nav-item ms-lg-2 mt-1 mt-lg-0">
+                                <a class="btn btn-sh-amber btn-sm px-3" asp-controller="Account" asp-action="Register">@Localizer["NavRegister"]</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        @if (!string.IsNullOrWhiteSpace(announcement))
+        {
+            <div class="sh-announcement">
+                <div class="container">📢 @announcement</div>
+            </div>
+        }
+    </header>
+
+    <main role="main" class="pb-5">
+        <div class="container">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["InfoMessage"] != null)
+            {
+                <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+                    @TempData["InfoMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="sh-footer mt-auto">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <h6>🏸 @siteName</h6>
+                    <p class="mb-1">@Localizer["FooterTagline"]</p>
+                    <p class="mb-0 small">@Localizer["FooterDemo"]</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>@Localizer["FooterQuickLinks"]</h6>
+                    <a asp-controller="Courts" asp-action="Index" class="d-block">@Localizer["FooterBrowse"]</a>
+                    <a asp-controller="Catalog" asp-action="Index" class="d-block">@Localizer["FooterAbout"]</a>
+                </div>
+                <div class="col-md-3">
+                    <h6>@Localizer["FooterContact"]</h6>
+                    <span class="d-block">03-4142 8899</span>
+                    <span class="d-block">info@sporthub.my</span>
+                    <span class="d-block">12, Jalan Sukan 1, 53300 Kuala Lumpur</span>
+                </div>
+            </div>
+            <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between gap-2">
+                <span>© 2026 @siteName — @Localizer["FooterDemo"]</span>
+                <span>AMIT2014 · ASP.NET Core MVC · .NET 10</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/ajax-list.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

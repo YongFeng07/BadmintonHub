@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="HeroTitle1" xml:space="preserve"><value>Tempah Gelanggang Anda.</value></data>
+  <data name="HeroTitle2" xml:space="preserve"><value>Mainkan Permainan Anda.</value></data>
+  <data name="HeroLead" xml:space="preserve"><value>{0} — pusat pelbagai sukan dengan tempahan dalam talian yang mudah. Pilih kemudahan, pilih masa anda, dan mainkan permainan anda.</value></data>
+  <data name="HeroFacilities" xml:space="preserve"><value>Layari Kemudahan</value></data>
+  <data name="HeroBrowse" xml:space="preserve"><value>Lihat Gelanggang</value></data>
+  <data name="HeroCheck" xml:space="preserve"><value>Semak Ketersediaan</value></data>
+  <data name="HeroLogin" xml:space="preserve"><value>Log Masuk untuk Tempah</value></data>
+  <data name="StatCourts" xml:space="preserve"><value>Gelanggang Tertutup</value></data>
+  <data name="StatMembers" xml:space="preserve"><value>Ahli</value></data>
+  <data name="StatToday" xml:space="preserve"><value>Tempahan Hari Ini</value></data>
+  <data name="StatHours" xml:space="preserve"><value>Buka Setiap Hari (Jam)</value></data>
+  <data name="OurCourts" xml:space="preserve"><value>Gelanggang Kami</value></data>
+  <data name="ViewAll" xml:space="preserve"><value>Lihat Semua →</value></data>
+  <data name="PerHour" xml:space="preserve"><value>/ jam</value></data>
+  <data name="ViewCourt" xml:space="preserve"><value>Lihat Gelanggang</value></data>
+  <data name="AboutFacility" xml:space="preserve"><value>Tentang Kemudahan</value></data>
+  <data name="CourtDefault" xml:space="preserve"><value>Gelanggang badminton tertutup.</value></data>
+  <data name="OpenDaily" xml:space="preserve"><value>Buka setiap hari</value></data>
+  <data name="HeroBadge" xml:space="preserve"><value>Pusat Tempahan Pelbagai Sukan Dalam Talian</value></data>
+  <data name="StatSports" xml:space="preserve"><value>Jenis Sukan</value></data>
+  <data name="HowItWorks" xml:space="preserve"><value>Cara ia berfungsi</value></data>
+  <data name="HowItWorksSub" xml:space="preserve"><value>Dari servis pertama hingga wisel penamat — ditempah dalam tiga langkah.</value></data>
+  <data name="Step1Title" xml:space="preserve"><value>Pilih sukan &amp; gelanggang</value></data>
+  <data name="Step1Text" xml:space="preserve"><value>Enam sukan, 24 gelanggang — layari foto sebenar, kadar sejam dan ketersediaan dalam satu katalog.</value></data>
+  <data name="Step2Title" xml:space="preserve"><value>Pilih tarikh &amp; slot</value></data>
+  <data name="Step2Text" xml:space="preserve"><value>Pilih tarikh, ambil jam yang kosong, dan tambah ke troli dalam beberapa klik.</value></data>
+  <data name="Step3Title" xml:space="preserve"><value>Bayar dalam talian, main dengan tenang</value></data>
+  <data name="Step3Text" xml:space="preserve"><value>Pembayaran selamat dengan diskaun baucar, resit PDF dan QR tempahan — serta-merta.</value></data>
+</root>

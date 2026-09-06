@@ -1,0 +1,71 @@
+@model SportHub.Models.Voucher
+
+<div class="mb-3">
+    <label asp-for="Code" class="form-label"></label>
+    <input asp-for="Code" class="form-control text-uppercase" placeholder="e.g. WELCOME10" />
+    <span asp-validation-for="Code" class="text-danger small"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="Description" class="form-label"></label>
+    <input asp-for="Description" class="form-control" placeholder="e.g. 10% off your first checkout" />
+    <span asp-validation-for="Description" class="text-danger small"></span>
+</div>
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="DiscountType" class="form-label"></label>
+        <select asp-for="DiscountType" class="form-select"
+                asp-items="Html.GetEnumSelectList<SportHub.Models.DiscountType>()"></select>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="DiscountValue" class="form-label"></label>
+        <input asp-for="DiscountValue" class="form-control" type="number" step="0.01" min="0.01" max="100" />
+        <span asp-validation-for="DiscountValue" class="text-danger small"></span>
+        <div class="form-text">Percentage (1–100) or ringgit amount (max RM 100).</div>
+    </div>
+</div>
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="StartDate" class="form-label"></label>
+        <input asp-for="StartDate" class="form-control" type="date" />
+        <span asp-validation-for="StartDate" class="text-danger small"></span>
+        <div class="form-text">Leave empty for immediate validity.</div>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="ExpiryDate" class="form-label"></label>
+        <input asp-for="ExpiryDate" class="form-control" type="date" />
+        <span asp-validation-for="ExpiryDate" class="text-danger small"></span>
+    </div>
+</div>
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="MinSpend" class="form-label"></label>
+        <input asp-for="MinSpend" class="form-control" type="number" step="0.01" min="0" />
+        <span asp-validation-for="MinSpend" class="text-danger small"></span>
+        <div class="form-text">Cart subtotal must reach this to redeem (0 = none).</div>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="MaxDiscount" class="form-label"></label>
+        <input asp-for="MaxDiscount" class="form-control" type="number" step="0.01" min="0" />
+        <span asp-validation-for="MaxDiscount" class="text-danger small"></span>
+        <div class="form-text">Caps percentage discounts (leave empty for no cap).</div>
+    </div>
+</div>
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="UsageLimit" class="form-label"></label>
+        <input asp-for="UsageLimit" class="form-control" type="number" min="1" />
+        <span asp-validation-for="UsageLimit" class="text-danger small"></span>
+        <div class="form-text">Leave empty for unlimited redemptions.</div>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="PerUserLimit" class="form-label"></label>
+        <input asp-for="PerUserLimit" class="form-control" type="number" min="1" />
+        <span asp-validation-for="PerUserLimit" class="text-danger small"></span>
+        <div class="form-text">Times each member may redeem it (leave empty for unlimited).</div>
+    </div>
+</div>
+<div class="mb-3">
+    <label asp-for="Status" class="form-label"></label>
+    <select asp-for="Status" class="form-select"
+            asp-items="Html.GetEnumSelectList<SportHub.Models.VoucherStatus>()"></select>
+</div>

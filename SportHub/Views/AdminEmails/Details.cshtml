@@ -1,0 +1,31 @@
+@model SportHub.Models.DemoEmail
+@{
+    ViewData["Title"] = "Demo Mail";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1 class="h4 mb-0">📧 @Model.Subject</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-action="Index">← Back to Demo Mail</a>
+</div>
+
+<div class="sh-card mt-3 overflow-hidden">
+    <div class="bg-light border-bottom px-4 py-2 small text-muted">
+        To: <strong>@Model.To</strong> &nbsp;·&nbsp; @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")
+    </div>
+    @if (Model.Attachments.Count > 0)
+    {
+        <div class="bg-light border-bottom px-4 py-2 small">
+            📎 @Model.Attachments.Count attachment(s):
+            @foreach (var attachment in Model.Attachments)
+            {
+                <a class="btn btn-outline-secondary btn-sm py-0 ms-1" asp-action="Attachment" asp-route-id="@attachment.Id">
+                    ⬇ @attachment.FileName
+                </a>
+            }
+        </div>
+    }
+    <div class="p-4 sh-mail-body">
+        @Html.Raw(Model.BodyHtml)
+    </div>
+</div>

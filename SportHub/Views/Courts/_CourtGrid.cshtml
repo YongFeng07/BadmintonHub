@@ -1,0 +1,77 @@
+@model SportHub.ViewModels.AjaxListPage<SportHub.Models.Court>
+@{
+    // G-M6 AJAX list region for the public catalog: sortable header row, card
+    // grid and the shared pager. Returned as a partial for XHR requests and
+    // rendered inline on the initial page load.
+    var pager = Model.Pager;
+}
+
+@if (Model.Items.Count == 0)
+{
+    <div class="sh-empty">
+        <span class="emoji">🔍</span>
+        No courts match your search.
+    </div>
+}
+else
+{
+    <div class="d-flex flex-wrap align-items-center gap-3 border-bottom pb-2 mb-3">
+        <span class="small text-muted fw-semibold text-uppercase">Sort by</span>
+        <a class="sh-sort-link small" data-ajax-sort href="@pager.SortLink("number")"
+           aria-sort="@pager.AriaSortFor("number")">Court No. <span class="sh-sort-arrow">@pager.ArrowFor("number")</span></a>
+        <a class="sh-sort-link small" data-ajax-sort href="@pager.SortLink("type")"
+           aria-sort="@pager.AriaSortFor("type")">Type <span class="sh-sort-arrow">@pager.ArrowFor("type")</span></a>
+        <a class="sh-sort-link small" data-ajax-sort href="@pager.SortLink("rate")"
+           aria-sort="@pager.AriaSortFor("rate")">Hourly Rate <span class="sh-sort-arrow">@pager.ArrowFor("rate")</span></a>
+        <a class="sh-sort-link small" data-ajax-sort href="@pager.SortLink("facility")"
+           aria-sort="@pager.AriaSortFor("facility")">Facility <span class="sh-sort-arrow">@pager.ArrowFor("facility")</span></a>
+        <span class="ms-auto small text-muted">@pager.From–@pager.To of @pager.TotalCount court(s)</span>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var court in Model.Items)
+        {
+            var primaryPhoto = court.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault();
+            <div class="col-md-6 col-lg-4">
+                <div class="card sh-card sh-court-card h-100">
+                    @if (primaryPhoto != null)
+                    {
+                        <img src="@primaryPhoto.FilePath" class="card-img-top" alt="Court @court.CourtNumber" loading="lazy" />
+                    }
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">Court @court.CourtNumber</h5>
+                            <span class="badge badge-status" style="background:#eef3f8;color:#3c5670;">@court.CourtType</span>
+                        </div>
+                        <p class="text-muted small mb-1">
+                            <span class="me-2">📍 @court.Facility?.Name</span>
+                        </p>
+                        <p class="text-muted small mb-3 flex-grow-1">
+                            @(string.IsNullOrEmpty(court.Description) ? "Indoor badminton court." : court.Description.Length > 90 ? court.Description[..90] + "…" : court.Description)
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-sh-green">RM @court.HourlyRate.ToString("0.00") <span class="text-muted fw-normal">/ hour</span></span>
+                            <div>
+                                @if (court.Status == CourtStatus.Available)
+                                {
+                                    <span class="badge badge-status badge-open">Available</span>
+                                }
+                                else if (court.Status == CourtStatus.Maintenance)
+                                {
+                                    <span class="badge badge-status badge-maintenance">Maintenance</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-status badge-unavailable">Unavailable</span>
+                                }
+                                <a asp-action="Details" asp-route-id="@court.Id" class="btn btn-sh btn-sm ms-2">Details</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <partial name="_AjaxPager" model="pager" />
+}

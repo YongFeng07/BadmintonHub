@@ -1,0 +1,35 @@
+@model SportHub.ViewModels.CourtIndexViewModel
+@{
+    ViewData["Title"] = "Courts";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 my-4">
+    <div>
+        <h1 class="sh-page-title mb-0">Our Courts</h1>
+        <p class="sh-page-sub mb-0">Browse, filter and check availability before booking.</p>
+    </div>
+</div>
+
+<div data-ajax-list data-url="@Url.Action("Index")">
+    <form method="get" asp-action="Index" class="sh-form-section d-flex flex-wrap gap-2 align-items-center mb-4" data-ajax-filter>
+        <div class="flex-grow-1" style="min-width: 220px;">
+            <label class="form-label visually-hidden" for="search">Search</label>
+            <input type="text" id="search" name="search" class="form-control" placeholder="Search court number, facility or description…" value="@Model.Search" />
+        </div>
+        <div>
+            <label class="form-label visually-hidden" for="type">Court type</label>
+            <select id="type" name="type" class="form-select">
+                <option value="">All Types</option>
+                @foreach (var t in Enum.GetValues<CourtType>())
+                {
+                    <option value="@t" selected="@(Model.Type == t)">@t</option>
+                }
+            </select>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </form>
+
+    <div data-ajax-target>
+        <partial name="_CourtGrid" model="Model.Page" />
+    </div>
+</div>

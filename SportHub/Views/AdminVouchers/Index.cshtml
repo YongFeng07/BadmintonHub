@@ -1,0 +1,85 @@
+@model SportHub.ViewModels.AdminVoucherIndexViewModel
+@{
+    ViewData["Title"] = "Discount Vouchers";
+    Layout = "_AdminLayout";
+    var today = DateOnly.FromDateTime(DateTime.Today);
+}
+
+<div class="sh-admin-topbar">
+    <div>
+        <h2 class="sh-page-title mb-0">Discount Vouchers</h2>
+        <p class="sh-page-sub mb-0">Applied by members at cart checkout.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-sh">+ Add Voucher</a>
+</div>
+
+<div data-ajax-list data-url="@Url.Action("Index")">
+    <form method="get" asp-action="Index" class="sh-form-section d-flex flex-wrap gap-2 align-items-center mb-3" data-ajax-filter>
+        <div class="flex-grow-1" style="min-width: 200px;">
+            <input type="text" name="search" class="form-control" placeholder="Search code or description…" value="@Model.Page.Pager.Search" />
+        </div>
+        <div>
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                @foreach (var s in Enum.GetValues<SportHub.Models.VoucherStatus>())
+                {
+                    <option value="@s" selected="@(Model.StatusFilter == s.ToString() ? "selected" : null)">@s</option>
+                }
+            </select>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </form>
+
+    <div data-ajax-target>
+        <partial name="_VoucherTable" model="Model" />
+    </div>
+</div>
+
+<div class="sh-form-section mt-4">
+    <h3 class="h6 fw-bold mb-1">🎟️ Bulk Generate</h3>
+    <p class="small text-muted mb-3">
+        Create a batch of vouchers sharing one discount template. Codes are generated
+        automatically from an unambiguous alphabet (no I/O/0/1), e.g. <code>EVENT-3K7P2M9X</code>.
+    </p>
+    <form asp-action="BulkGenerate" method="post" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkCount">Quantity</label>
+            <input id="bulkCount" name="count" type="number" min="1" max="200" value="10" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkPrefix">Code prefix (optional)</label>
+            <input id="bulkPrefix" name="prefix" class="form-control text-uppercase" placeholder="e.g. EVENT" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkType">Discount type</label>
+            <select id="bulkType" name="template.DiscountType" class="form-select">
+                <option value="Percentage">Percentage</option>
+                <option value="FixedAmount">Fixed amount</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkValue">Value</label>
+            <input id="bulkValue" name="template.DiscountValue" type="number" step="0.01" min="0.01" max="100" value="10" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkExpiry">Expiry date</label>
+            <input id="bulkExpiry" name="template.ExpiryDate" type="date"
+                   value="@today.AddDays(30).ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkDesc">Description</label>
+            <input id="bulkDesc" name="template.Description" class="form-control" placeholder="e.g. Event campaign" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkMin">Min spend (RM)</label>
+            <input id="bulkMin" name="template.MinSpend" type="number" step="0.01" min="0" value="0" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkUsage">Usage limit (optional)</label>
+            <input id="bulkUsage" name="template.UsageLimit" type="number" min="1" class="form-control" />
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-sh-amber px-4">Generate Vouchers</button>
+        </div>
+    </form>
+</div>

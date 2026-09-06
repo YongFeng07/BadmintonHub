@@ -1,6 +1,6 @@
-# BadmintonHub — Badminton Sport Facility Reservation System
+# SportHub — Multi-Sport Facility Reservation System
 
-A web-based badminton court booking system built for the **AMIT2014 Web and
+A web-based multi-sport facility booking system built for the **AMIT2014 Web and
 Mobile Systems** assignment. Members browse courts, book hourly slots, pay and
 cancel with refunds; admins run the counter and administer reservations; admins
 manage facilities, courts, availability, users and business reports, while the
@@ -12,7 +12,7 @@ developed and run **the Visual Studio way**.
 | Layer | Technology |
 |---|---|
 | Framework | ASP.NET Core MVC on **.NET 10** (C#) |
-| ORM / database | Entity Framework Core 10 **Code First** migrations, **SQL Server LocalDB** (file-based `App_Data/BadmintonHub.mdf`) |
+| ORM / database | Entity Framework Core 10 **Code First** migrations, **SQL Server LocalDB** (file-based `App_Data/SportHub.mdf`) |
 | Authentication | **Manually implemented cookie authentication** (PBKDF2, no ASP.NET Core Identity — assignment requirement) |
 | Validation | Data Annotations (attributes on model classes) |
 | Front-end | Razor Views, HTML/CSS/JS, jQuery, Bootstrap 5, Chart.js |
@@ -27,26 +27,26 @@ developed and run **the Visual Studio way**.
 2. **.NET 10 SDK** (installed with VS 2026; VS 2022 17.14+ supports it).
 3. **SQL Server LocalDB** — included with Visual Studio. No manual database
    setup is needed: on first run the app creates the database at
-   `BadmintonHub\App_Data\BadmintonHub.mdf`, applies EF Core migrations and
+   `SportHub\App_Data\SportHub.mdf`, applies EF Core migrations and
    seeds the demo data automatically.
 
 ## Run it (Visual Studio)
 
-1. Open `BadmintonHub.sln`.
+1. Open `SportHub.sln`.
 2. Build: **Build → Build Solution**.
 3. Press **F5** (default launch profile: HTTPS, `https://localhost:7153`).
 4. Log in with one of the demo accounts below.
 
-Command line equivalent (optional): `dotnet run --project BadmintonHub`.
+Command line equivalent (optional): `dotnet run --project SportHub`.
 
 ## Demo accounts (seeded on first run — demo only, no real credentials)
 
 | Role | Email | Password |
 |---|---|---|
-| Super Admin | `superadmin@badmintonhub.my` | `SuperAdmin@123` |
-| Admin | `admin@badmintonhub.my` | `Admin@123` |
-| Admin | `admin2@badmintonhub.my` | `Admin@123` |
-| Member | `member@badmintonhub.my` | `Member@123` |
+| Super Admin | `superadmin@sporthub.my` | `SuperAdmin@123` |
+| Admin | `admin@sporthub.my` | `Admin@123` |
+| Admin | `admin2@sporthub.my` | `Admin@123` |
+| Member | `member@sporthub.my` | `Member@123` |
 | Member | `aiman@example.com` | `Member@123` |
 | Member | `priya@example.com` | `Member@123` |
 | Member | `john@example.com` | `Member@123` |
@@ -75,11 +75,12 @@ screen has data. It further seeds three demo vouchers (`WELCOME10`,
 | ToyyibPay + booking/revenue reports (P5) | Team | ToyyibPay payment gateway as a third checkout method (batch bill → redirect → server-side re-verification before marking paid; simulated mode with a clearly-labelled demo gateway page when no credentials are configured — no secrets committed); payment-confirmation email; member booking insights (monthly bookings, spend by month, category split, cancellation rate) and admin monthly bookings / revenue-by-month / category / cancellation-rate charts |
 | Shared (P6) | Team | Multi-language (en-US / zh-CN / ms-MY) with cookie-based switcher; Monday-first localized calendars |
 | Revised-spec security & roles (P7) | Team | SuperAdmin / Admin / Member roles (Staff removed, demo account migrated); SuperAdmin-only system settings (site name + announcement banner); image captcha on login/register/reset (DNTCaptcha.Core, toggleable via `Security:EnableCaptcha`); email verification flow with 24h hashed tokens, resend and admin manual verify; Remember Me (30-day persistent cookie); demo mail inbox for verification/reset emails when no SMTP is configured |
+| Professionalisation (Phase G) | Team | SportHub rebrand + token-based UI redesign + 22 attributed real court photos; **six upgraded features**: voucher rules with checkout preview, receipt discount breakdown and bulk generation (G-M2); atomic slot claims — time-boxed cart holds + 30-minute payment timeout (G-M3); wishlist notify-when-available on court reopen, in-app + e-mail (G-M4); lifecycle e-mails with `Receipt-{ref}.pdf` attachments, member resend, 24-hour booking reminders (G-M5); shared AJAX search/sort/paging with batch selection across member and admin lists (G-M6) |
 
 ## Testing
 
 All tests run in **Visual Studio**: open the solution, then **Test → Test
-Explorer → Run All**. The `BadmintonHub.Tests` xUnit project has 193 tests
+Explorer → Run All**. The `SportHub.Tests` xUnit project has 267 tests
 covering password policy, the 3-strike login lockout, email verification
 (register/verify/expiry/anti-enumeration resend), booking/double-booking/
 payment/refund rules, admin status transitions, the culture switcher, QR and
@@ -112,7 +113,9 @@ supplementary end-to-end script (`tests/e2e.sh`).
   `ToyyibPay:UserSecretKey`/`CategoryCode` it falls back to a clearly-labelled
   simulated gateway page. The real-API path needs real credentials and has not
   been exercised against the live gateway.
-- The seeded placeholder court images are generated SVGs.
+- The seeded court photos are real-world photographs from Wikimedia Commons
+  under free licenses (credited in [docs/PHOTO_CREDITS.md](docs/PHOTO_CREDITS.md))
+  — demo content only, no real business is represented.
 
 ## Documentation
 

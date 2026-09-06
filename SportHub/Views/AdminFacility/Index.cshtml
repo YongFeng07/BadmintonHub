@@ -1,0 +1,26 @@
+@model SportHub.ViewModels.AjaxListPage<SportHub.Models.Facility>
+@{
+    ViewData["Title"] = "Facilities";
+    Layout = "_AdminLayout";
+}
+
+<div class="sh-admin-topbar">
+    <div>
+        <h2 class="sh-page-title mb-0">Facilities</h2>
+        <p class="sh-page-sub mb-0">Every venue that hosts courts.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-sh">+ Add Facility</a>
+</div>
+
+<div data-ajax-list data-url="@Url.Action("Index")">
+    <form method="get" asp-action="Index" class="sh-form-section d-flex flex-wrap gap-2 align-items-center mb-3" data-ajax-filter>
+        <div class="flex-grow-1" style="min-width: 220px;">
+            <input type="text" name="search" class="form-control" placeholder="Search facility name or address…" value="@Model.Pager.Search" />
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </form>
+
+    <div data-ajax-target>
+        <partial name="_FacilityTable" model="Model" />
+    </div>
+</div>

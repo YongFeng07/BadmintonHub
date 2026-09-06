@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="HeroTitle1" xml:space="preserve"><value>预订您的球场。</value></data>
+  <data name="HeroTitle2" xml:space="preserve"><value>尽情挥拍。</value></data>
+  <data name="HeroLead" xml:space="preserve"><value>{0} — 综合运动中心，轻松在线预订。选择场馆与时间，尽情运动。</value></data>
+  <data name="HeroFacilities" xml:space="preserve"><value>浏览场馆</value></data>
+  <data name="HeroBrowse" xml:space="preserve"><value>浏览球场</value></data>
+  <data name="HeroCheck" xml:space="preserve"><value>查看空档</value></data>
+  <data name="HeroLogin" xml:space="preserve"><value>登录预订</value></data>
+  <data name="StatCourts" xml:space="preserve"><value>室内球场</value></data>
+  <data name="StatMembers" xml:space="preserve"><value>会员</value></data>
+  <data name="StatToday" xml:space="preserve"><value>今日预订</value></data>
+  <data name="StatHours" xml:space="preserve"><value>每日开放（小时）</value></data>
+  <data name="OurCourts" xml:space="preserve"><value>我们的球场</value></data>
+  <data name="ViewAll" xml:space="preserve"><value>查看全部 →</value></data>
+  <data name="PerHour" xml:space="preserve"><value>/ 小时</value></data>
+  <data name="ViewCourt" xml:space="preserve"><value>查看球场</value></data>
+  <data name="AboutFacility" xml:space="preserve"><value>关于场馆</value></data>
+  <data name="CourtDefault" xml:space="preserve"><value>室内羽毛球场。</value></data>
+  <data name="OpenDaily" xml:space="preserve"><value>每日开放</value></data>
+  <data name="HeroBadge" xml:space="preserve"><value>多运动在线预订中心</value></data>
+  <data name="StatSports" xml:space="preserve"><value>可选运动</value></data>
+  <data name="HowItWorks" xml:space="preserve"><value>使用流程</value></data>
+  <data name="HowItWorksSub" xml:space="preserve"><value>从开球到终场哨响 —— 三步完成预订。</value></data>
+  <data name="Step1Title" xml:space="preserve"><value>选择运动与场地</value></data>
+  <data name="Step1Text" xml:space="preserve"><value>六种运动、24 个场地 —— 在同一个目录里浏览真实照片、时租价格与空档。</value></data>
+  <data name="Step2Title" xml:space="preserve"><value>选择日期与时段</value></data>
+  <data name="Step2Text" xml:space="preserve"><value>选定日期、抢占空档时段，几步即可加入购物车。</value></data>
+  <data name="Step3Title" xml:space="preserve"><value>在线支付，安心运动</value></data>
+  <data name="Step3Text" xml:space="preserve"><value>安全结算，支持优惠券折扣、PDF 电子收据与预订二维码 —— 即时生效。</value></data>
+</root>

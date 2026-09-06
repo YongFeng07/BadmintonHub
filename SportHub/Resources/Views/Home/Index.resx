@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="HeroTitle1" xml:space="preserve"><value>Book Your Court.</value></data>
+  <data name="HeroTitle2" xml:space="preserve"><value>Play Your Game.</value></data>
+  <data name="HeroLead" xml:space="preserve"><value>{0} — a multi-sport centre with easy online booking. Pick a facility, choose your time, and play your game.</value></data>
+  <data name="HeroFacilities" xml:space="preserve"><value>Browse Facilities</value></data>
+  <data name="HeroBrowse" xml:space="preserve"><value>Browse Courts</value></data>
+  <data name="HeroCheck" xml:space="preserve"><value>Check Availability</value></data>
+  <data name="HeroLogin" xml:space="preserve"><value>Login to Book</value></data>
+  <data name="StatCourts" xml:space="preserve"><value>Indoor Courts</value></data>
+  <data name="StatMembers" xml:space="preserve"><value>Members</value></data>
+  <data name="StatToday" xml:space="preserve"><value>Today's Bookings</value></data>
+  <data name="StatHours" xml:space="preserve"><value>Open Daily (Hrs)</value></data>
+  <data name="OurCourts" xml:space="preserve"><value>Our Courts</value></data>
+  <data name="ViewAll" xml:space="preserve"><value>View All →</value></data>
+  <data name="PerHour" xml:space="preserve"><value>/ hour</value></data>
+  <data name="ViewCourt" xml:space="preserve"><value>View Court</value></data>
+  <data name="AboutFacility" xml:space="preserve"><value>About the Facility</value></data>
+  <data name="CourtDefault" xml:space="preserve"><value>Indoor badminton court.</value></data>
+  <data name="OpenDaily" xml:space="preserve"><value>Open daily</value></data>
+  <data name="HeroBadge" xml:space="preserve"><value>Multi-Sport Online Booking Centre</value></data>
+  <data name="StatSports" xml:space="preserve"><value>Sports Available</value></data>
+  <data name="HowItWorks" xml:space="preserve"><value>How it works</value></data>
+  <data name="HowItWorksSub" xml:space="preserve"><value>From the first serve to the final whistle — booked in three steps.</value></data>
+  <data name="Step1Title" xml:space="preserve"><value>Pick your sport &amp; court</value></data>
+  <data name="Step1Text" xml:space="preserve"><value>Six sports, 24 courts — browse real photos, hourly rates and availability in one catalogue.</value></data>
+  <data name="Step2Title" xml:space="preserve"><value>Choose your date &amp; slot</value></data>
+  <data name="Step2Text" xml:space="preserve"><value>Pick a date, grab an open hour, and add it to your cart in a couple of clicks.</value></data>
+  <data name="Step3Title" xml:space="preserve"><value>Pay online, play in peace</value></data>
+  <data name="Step3Text" xml:space="preserve"><value>Secure checkout with voucher discounts, a PDF e-receipt and your booking QR — instantly.</value></data>
+</root>

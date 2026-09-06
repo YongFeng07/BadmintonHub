@@ -1,0 +1,47 @@
+@model AdminUsersIndexViewModel
+@{
+    ViewData["Title"] = "User Accounts";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1 class="h3 mb-0">👥 User Accounts</h1>
+</div>
+
+<div data-ajax-list data-url="@Url.Action("Index")">
+    <div class="sh-form-section mt-3">
+        <form asp-action="Index" method="get" class="row g-2 align-items-end" data-ajax-filter>
+            <div class="col-md-4">
+                <label class="form-label small mb-1">Search</label>
+                <input type="text" name="search" value="@Model.Page.Pager.Search" class="form-control form-control-sm" placeholder="Name or email" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Role</label>
+                <select name="role" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var r in Enum.GetValues<Role>())
+                    {
+                        <option value="@r" selected="@(Model.RoleFilter == r.ToString() ? "selected" : null)">@r</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Status</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var s in Enum.GetValues<UserStatus>())
+                    {
+                        <option value="@s" selected="@(Model.StatusFilter == s.ToString() ? "selected" : null)">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button type="submit" class="btn btn-sh btn-sm">Filter</button>
+            </div>
+        </form>
+    </div>
+
+    <div data-ajax-target>
+        <partial name="_UserTable" model="Model" />
+    </div>
+</div>

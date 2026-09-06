@@ -1,0 +1,190 @@
+@model MyReservationsViewModel
+@inject IViewLocalizer Localizer
+@{
+    ViewData["Title"] = "My Reservations";
+    var monthStart = new DateOnly(Model.Year, Model.Month, 1);
+    var daysInMonth = DateTime.DaysInMonth(Model.Year, Model.Month);
+    var leading = CalendarHelper.MondayFirstOffset(monthStart); // Monday-first calendar
+    var today = DateOnly.FromDateTime(DateTime.Today);
+    var prevMonth = monthStart.AddMonths(-1);
+    var nextMonth = monthStart.AddMonths(1);
+    // Monday-first abbreviated day names in the current UI culture
+    var mondayFirst = CalendarHelper.MondayFirstDayNames(CultureInfo.CurrentCulture);
+}
+<link rel="stylesheet" href="~/css/reservations.css" asp-append-version="true" />
+
+<div class="mt-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h1 class="h3 mb-0">@Localizer["PageTitle"]</h1>
+        <a asp-action="Create" class="btn btn-sh">@Localizer["BookBtn"]</a>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-lg-4">
+            <div class="sh-form-section">
+                <h2 class="h6 text-uppercase text-muted mb-2">@Localizer["CalendarTitle"]</h2>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <a asp-action="MyReservations" asp-route-date="@prevMonth.ToString("yyyy-MM-01")" asp-route-tab="@Model.Tab" class="btn btn-sm btn-outline-secondary">‹</a>
+                    <span class="fw-bold">@monthStart.ToString("MMMM yyyy")</span>
+                    <div class="d-flex align-items-center gap-1">
+                        <a asp-action="MyReservations" asp-route-date="@today.ToString("yyyy-MM-dd")" asp-route-tab="@Model.Tab" class="btn btn-sm btn-outline-success">@Localizer["TodayBtn"]</a>
+                        <a asp-action="MyReservations" asp-route-date="@nextMonth.ToString("yyyy-MM-01")" asp-route-tab="@Model.Tab" class="btn btn-sm btn-outline-secondary">›</a>
+                    </div>
+                </div>
+                <div class="sh-calendar mb-2">
+                    @foreach (var dow in mondayFirst)
+                    {
+                        <div class="sh-cal-dow">@dow</div>
+                    }
+                    @for (var i = 0; i < leading; i++)
+                    {
+                        <div class="sh-cal-day blank"></div>
+                    }
+                    @for (var day = 1; day <= daysInMonth; day++)
+                    {
+                        var cellDate = new DateOnly(Model.Year, Model.Month, day);
+                        var isFilter = Model.FilterDate == cellDate;
+                        var isToday = cellDate == today;
+                        var hasRes = Model.ReservationsPerDay.TryGetValue(day, out var count) && count > 0;
+                        <a asp-action="MyReservations" asp-route-date="@cellDate.ToString("yyyy-MM-dd")" asp-route-tab="@Model.Tab"
+                           class="sh-cal-day @(isFilter ? "selected" : "") @(isToday ? "today" : "") @(hasRes ? "has-res" : "")">
+                            @day
+                            @if (hasRes)
+                            {
+                                <span class="sh-cal-count">@count</span>
+                            }
+                        </a>
+                    }
+                </div>
+                @if (Model.FilterDate.HasValue)
+                {
+                    <div class="small">
+                        @Localizer["Filtering"] <strong>@Model.FilterDate.Value.ToString("dd MMM yyyy")</strong>
+                        <a asp-action="MyReservations" asp-route-tab="@Model.Tab" class="ms-1">@Localizer["ClearFilter"]</a>
+                    </div>
+                }
+                <p class="small text-muted mt-2 mb-0">@Localizer["CalendarHint"]</p>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <ul class="nav nav-pills mb-3">
+                <li class="nav-item">
+                    <a class="nav-link @(Model.Tab == "upcoming" ? "active" : "")" asp-action="MyReservations" asp-route-tab="upcoming">@Localizer["TabUpcoming"] (@Model.Upcoming.Count)</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(Model.Tab == "completed" ? "active" : "")" asp-action="MyReservations" asp-route-tab="completed">@Localizer["TabCompleted"] (@Model.Completed.Count)</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(Model.Tab == "cancelled" ? "active" : "")" asp-action="MyReservations" asp-route-tab="cancelled">@Localizer["TabCancelled"] (@Model.Cancelled.Count)</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(Model.Tab == "insights" ? "active" : "")" asp-action="MyReservations" asp-route-tab="insights">📊 Insights</a>
+                </li>
+            </ul>
+
+            @if (Model.Tab == "insights")
+            {
+                <div class="sh-form-section mb-3">
+                    <h2 class="h6 text-uppercase text-muted mb-2">Monthly bookings — last 6 months</h2>
+                    <canvas id="insightMonthlyChart" height="70"></canvas>
+                </div>
+                <div class="sh-form-section mb-3">
+                    <h2 class="h6 text-uppercase text-muted mb-2">Spend by month — last 6 months</h2>
+                    <canvas id="insightSpendChart" height="70"></canvas>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="sh-form-section h-100">
+                            <h2 class="h6 text-uppercase text-muted mb-2">Bookings by category</h2>
+                            <canvas id="insightCategoryChart" height="110"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="sh-form-section h-100">
+                            <h2 class="h6 text-uppercase text-muted mb-2">Booking outcomes</h2>
+                            <canvas id="insightOutcomeChart" height="110"></canvas>
+                            <p class="small text-muted mt-2 mb-0">
+                                Cancellation rate: <strong>@Model.InsightCancellationRate.ToString("0.0")%</strong>
+                                (@Model.InsightCancelled cancelled of
+                                @(Model.InsightCancelled + Model.InsightCompleted + Model.InsightActive) bookings)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                @* G-M6: the active tab's list is searched/sorted/paged via AJAX without
+                   touching the calendar or the tab counts. *@
+                <div data-ajax-list data-url="@Url.Action("MyReservationsList")">
+                    <form class="mb-3" data-ajax-filter>
+                        <div class="input-group">
+                            <span class="input-group-text">🔍</span>
+                            <input type="search" name="search" class="form-control"
+                                   placeholder="@Localizer["SearchPlaceholder"]"
+                                   value="@Model.ActiveList.Page.Pager.Search" aria-label="@Localizer["SearchPlaceholder"]" />
+                        </div>
+                        <input type="hidden" name="tab" value="@Model.Tab" />
+                        <input type="hidden" name="date" value="@(Model.FilterDate?.ToString("yyyy-MM-dd"))" />
+                    </form>
+                    <div data-ajax-target>
+                        <partial name="_ReservationTable" model="Model.ActiveList" />
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (Model.Tab == "insights")
+    {
+        <script src="~/lib/chartjs/chart.umd.min.js"></script>
+        <script>
+            $(function () {
+                var green = '#0b3d2e', amber = '#f0a500', red = '#a94442', blue = '#2b6cb0';
+                var palette = ['#0b3d2e', '#17714f', '#2b9e74', '#f0a500', '#2b6cb0', '#7b4bb7', '#a94442', '#6b7a72'];
+
+                new Chart($('#insightMonthlyChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: @Html.Raw(Json.Serialize(Model.InsightMonthLabels)),
+                        datasets: [{ label: 'Bookings', data: @Html.Raw(Json.Serialize(Model.InsightMonthlyBookings)), backgroundColor: green }]
+                    },
+                    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+                });
+
+                new Chart($('#insightSpendChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: @Html.Raw(Json.Serialize(Model.InsightMonthLabels)),
+                        datasets: [{ label: 'Spend (RM)', data: @Html.Raw(Json.Serialize(Model.InsightMonthlySpend)), backgroundColor: amber }]
+                    },
+                    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+
+                new Chart($('#insightCategoryChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: @Html.Raw(Json.Serialize(Model.InsightCategoryLabels)),
+                        datasets: [{ data: @Html.Raw(Json.Serialize(Model.InsightCategoryCounts)), backgroundColor: palette }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                });
+
+                new Chart($('#insightOutcomeChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Cancelled', 'Completed', 'Upcoming'],
+                        datasets: [{
+                            data: [@Model.InsightCancelled, @Model.InsightCompleted, @Model.InsightActive],
+                            backgroundColor: [red, blue, green]
+                        }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                });
+            });
+        </script>
+    }
+}

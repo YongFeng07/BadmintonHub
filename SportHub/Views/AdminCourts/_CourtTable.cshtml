@@ -1,0 +1,77 @@
+@model SportHub.ViewModels.AjaxListPage<SportHub.Models.Court>
+@{
+    // G-M6 AJAX list region for court management (sortable headers + pager).
+    var pager = Model.Pager;
+}
+
+@if (Model.Items.Count == 0)
+{
+    <div class="sh-empty"><span class="emoji">🔍</span>No courts match your filters.</div>
+}
+else
+{
+    <div class="table-responsive sh-table">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("number")"
+                           aria-sort="@pager.AriaSortFor("number")">Court <span class="sh-sort-arrow">@pager.ArrowFor("number")</span></a>
+                    </th>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("facility")"
+                           aria-sort="@pager.AriaSortFor("facility")">Facility <span class="sh-sort-arrow">@pager.ArrowFor("facility")</span></a>
+                    </th>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("type")"
+                           aria-sort="@pager.AriaSortFor("type")">Type <span class="sh-sort-arrow">@pager.ArrowFor("type")</span></a>
+                    </th>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("rate")"
+                           aria-sort="@pager.AriaSortFor("rate")">Hourly Rate <span class="sh-sort-arrow">@pager.ArrowFor("rate")</span></a>
+                    </th>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("status")"
+                           aria-sort="@pager.AriaSortFor("status")">Status <span class="sh-sort-arrow">@pager.ArrowFor("status")</span></a>
+                    </th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var court in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <strong>Court @court.CourtNumber</strong>
+                        </td>
+                        <td>@court.Facility?.Name</td>
+                        <td><span class="badge badge-status" style="background:#eef3f8;color:#3c5670;">@court.CourtType</span></td>
+                        <td>RM @court.HourlyRate.ToString("0.00")</td>
+                        <td>
+                            @if (court.Status == SportHub.Models.CourtStatus.Available)
+                            {
+                                <span class="badge badge-status badge-open">Available</span>
+                            }
+                            else if (court.Status == SportHub.Models.CourtStatus.Maintenance)
+                            {
+                                <span class="badge badge-status badge-maintenance">Maintenance</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-status badge-unavailable">Unavailable</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Details" asp-route-id="@court.Id" class="btn btn-sm btn-outline-success">View</a>
+                            <a asp-action="Edit" asp-route-id="@court.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a asp-action="ManagePhotos" asp-route-id="@court.Id" class="btn btn-sm btn-outline-info">Photos</a>
+                            <a asp-action="Delete" asp-route-id="@court.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<partial name="_AjaxPager" model="pager" />

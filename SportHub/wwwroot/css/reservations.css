@@ -1,0 +1,168 @@
+/* Reservation module styles (booking slot grid, my-reservations calendar). */
+
+/* --- Booking slot chips -------------------------------------------------- */
+.slot-chip {
+    min-width: 76px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: .9rem;
+    padding: .45rem .6rem;
+}
+
+.slot-chip-open {
+    background: #e8f5ee;
+    color: #0b3d2e;
+    border: 1px solid #a3d9bd;
+}
+
+.slot-chip-open:hover {
+    background: #0b3d2e;
+    color: #ffffff;
+}
+
+.slot-chip-open.selected {
+    background: #f0a500;
+    border-color: #f0a500;
+    color: #ffffff;
+}
+
+.slot-chip-booked {
+    background: #fdeaea;
+    color: #a94442;
+    border: 1px solid #f1b6b6;
+    opacity: .9;
+}
+
+.slot-chip-maintenance,
+.slot-chip-blocked {
+    background: #fff4e5;
+    color: #a86a00;
+    border: 1px solid #f0d3a0;
+    opacity: .9;
+}
+
+/* G-M3: held by another member's cart — soft-locked for up to 15 minutes. */
+.slot-chip-held {
+    background: #eef2ff;
+    color: #3f4f9e;
+    border: 1px solid #c3cdf5;
+    opacity: .9;
+}
+
+/* G-M3: "Held until …" indicator on a cart row (same indigo as the held chip). */
+.cart-hold {
+    color: #3f4f9e;
+    font-weight: 500;
+}
+
+.slot-chip-closed,
+.slot-chip-unavailable,
+.slot-chip-past {
+    background: #eceff1;
+    color: #8a9298;
+    border: 1px solid #d5dbe0;
+}
+
+/* --- My reservations calendar ------------------------------------------- */
+.sh-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.sh-cal-dow {
+    text-align: center;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6c757d;
+    padding-bottom: 2px;
+}
+
+.sh-cal-day {
+    text-align: center;
+    padding: 8px 2px;
+    border-radius: 8px;
+    font-size: .85rem;
+    background: #f7f9f8;
+    color: #343a40;
+    position: relative;
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+
+.sh-cal-day:hover {
+    background: #e8f5ee;
+    color: #0b3d2e;
+}
+
+.sh-cal-day.blank {
+    background: transparent;
+}
+
+.sh-cal-day.today {
+    border-color: #0b3d2e;
+}
+
+.sh-cal-day.selected {
+    background: #0b3d2e;
+    color: #ffffff;
+}
+
+.sh-cal-day.has-res {
+    font-weight: 700;
+}
+
+.sh-cal-count {
+    font-size: .68rem;
+    background: #f0a500;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 0 6px;
+    margin-left: 2px;
+}
+
+/* --- Status timeline on reservation details ------------------------------- */
+.sh-timeline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.sh-timeline-step {
+    padding: .35rem .8rem;
+    border-radius: 20px;
+    font-size: .82rem;
+    font-weight: 600;
+    background: #eceff1;
+    color: #6c757d;
+}
+
+.sh-timeline-step.done {
+    background: #0b3d2e;
+    color: #ffffff;
+}
+
+.sh-timeline-step.cancelled {
+    background: #a94442;
+    color: #ffffff;
+}
+
+.sh-timeline-arrow {
+    color: #adb5bd;
+    font-size: .8rem;
+}
+
+/* --- QR panel ------------------------------------------------------------- */
+.sh-qr-panel {
+    text-align: center;
+    padding: 1rem;
+}
+
+.sh-qr-panel img {
+    max-width: 220px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    background: #ffffff;
+}

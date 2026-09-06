@@ -1,0 +1,124 @@
+@model SportHub.ViewModels.HomeViewModel
+@inject IViewLocalizer Localizer
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="sh-hero">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7 sh-fade-up">
+            <span class="badge rounded-pill mb-3 px-3 py-2 sh-hero-badge">🏸 @Localizer["HeroBadge"]</span>
+            <h1 class="display-4 fw-bold mb-3">@Localizer["HeroTitle1"]<br /><span class="sh-hero-accent">@Localizer["HeroTitle2"]</span></h1>
+            <p class="lead mb-4">@Localizer["HeroLead", Model.Facility?.Name ?? "SportHub"]</p>
+            <div class="sh-hero-actions">
+                <a asp-controller="Courts" asp-action="Index" class="btn btn-sh-amber btn-lg px-4">@Localizer["HeroBrowse"]</a>
+                <a asp-controller="Catalog" asp-action="Index" class="btn btn-outline-light btn-lg px-4">@Localizer["HeroFacilities"]</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-controller="Courts" asp-action="Index" class="btn btn-outline-light btn-lg px-4">@Localizer["HeroCheck"]</a>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-outline-light btn-lg px-4">@Localizer["HeroLogin"]</a>
+                }
+            </div>
+        </div>
+        <div class="col-lg-5 d-none d-lg-block sh-fade-up-2">
+            <div class="position-relative sh-hero-collage">
+                <img src="~/images/courts/badminton-01.jpg" alt="Badminton court" class="sh-hero-photo sh-hero-photo-1" />
+                <img src="~/images/courts/futsal-unit.jpg" alt="Futsal pitch" class="sh-hero-photo sh-hero-photo-2" />
+                <img src="~/images/courts/pool-view.jpg" alt="Swimming pool" class="sh-hero-photo sh-hero-photo-3" />
+            </div>
+        </div>
+    </div>
+    <div class="row g-3 mt-4 sh-fade-up-3">
+        <div class="col-6 col-md-3">
+            <div class="sh-stat"><span class="number">@Model.CourtCount</span><span class="label">@Localizer["StatCourts"]</span></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="sh-stat"><span class="number">@Model.MemberCount</span><span class="label">@Localizer["StatMembers"]</span></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="sh-stat"><span class="number">@Model.TodayReservations</span><span class="label">@Localizer["StatToday"]</span></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="sh-stat"><span class="number">6</span><span class="label">@Localizer["StatSports"]</span></div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-5">
+    <h2 class="sh-page-title text-center mb-1">@Localizer["HowItWorks"]</h2>
+    <p class="sh-page-sub text-center mb-4">@Localizer["HowItWorksSub"]</p>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="sh-card sh-card-hover-lift p-4 h-100 text-center">
+                <span class="sh-step-num">1</span>
+                <h5 class="fw-bold">@Localizer["Step1Title"]</h5>
+                <p class="text-muted mb-0 small">@Localizer["Step1Text"]</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="sh-card sh-card-hover-lift p-4 h-100 text-center">
+                <span class="sh-step-num">2</span>
+                <h5 class="fw-bold">@Localizer["Step2Title"]</h5>
+                <p class="text-muted mb-0 small">@Localizer["Step2Text"]</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="sh-card sh-card-hover-lift p-4 h-100 text-center">
+                <span class="sh-step-num">3</span>
+                <h5 class="fw-bold">@Localizer["Step3Title"]</h5>
+                <p class="text-muted mb-0 small">@Localizer["Step3Text"]</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="sh-page-title mb-0">@Localizer["OurCourts"]</h2>
+        <a asp-controller="Courts" asp-action="Index" class="btn btn-outline-sh btn-sm">@Localizer["ViewAll"]</a>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var court in Model.FeaturedCourts)
+        {
+            var primaryPhoto = court.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault();
+            <div class="col-md-6 col-lg-4">
+                <div class="card sh-card sh-court-card h-100">
+                    <div class="sh-media">
+                        @if (primaryPhoto != null)
+                        {
+                            <img src="@primaryPhoto.FilePath" class="card-img-top" alt="Court @court.CourtNumber" loading="lazy" />
+                        }
+                        <span class="sh-media-price">RM @court.HourlyRate.ToString("0.00") <span class="fw-normal opacity-75">@Localizer["PerHour"]</span></span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">Court @court.CourtNumber</h5>
+                            <span class="badge badge-status badge-@court.CourtType.ToString().ToLower()" style="background:#eef3f8;color:#3c5670;">@court.CourtType</span>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            @(string.IsNullOrEmpty(court.Description) ? Localizer["CourtDefault"] : court.Description.Length > 90 ? court.Description[..90] + "…" : court.Description)
+                        </p>
+                        <a asp-controller="Courts" asp-action="Details" asp-route-id="@court.Id" class="btn btn-sh btn-sm mt-auto align-self-start">@Localizer["ViewCourt"]</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.Facility != null)
+{
+    <div class="mt-5">
+        <div class="sh-form-section d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <h4 class="mb-1">📍 @Model.Facility.Name</h4>
+                <p class="mb-0 text-muted">@Model.Facility.Address · @Localizer["OpenDaily"] @Model.Facility.OpeningTime.ToString(@"hh\:mm") – @Model.Facility.ClosingTime.ToString(@"hh\:mm")</p>
+            </div>
+            <a asp-controller="Facility" asp-action="Index" class="btn btn-outline-success flex-shrink-0">@Localizer["AboutFacility"]</a>
+        </div>
+    </div>
+}

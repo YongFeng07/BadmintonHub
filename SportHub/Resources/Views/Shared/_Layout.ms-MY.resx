@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="NavHome" xml:space="preserve"><value>Utama</value></data>
+  <data name="NavCourts" xml:space="preserve"><value>Gelanggang</value></data>
+  <data name="NavCatalog" xml:space="preserve"><value>Kemudahan</value></data>
+  <data name="NavMyReservations" xml:space="preserve"><value>Tempahan Saya</value></data>
+  <data name="NavBook" xml:space="preserve"><value>+ Tempah Gelanggang</value></data>
+  <data name="NavLogin" xml:space="preserve"><value>Log Masuk</value></data>
+  <data name="NavRegister" xml:space="preserve"><value>Daftar</value></data>
+  <data name="DropMyReservations" xml:space="preserve"><value>📋 Tempahan Saya</value></data>
+  <data name="DropPayments" xml:space="preserve"><value>💳 Bayaran Saya</value></data>
+  <data name="DropNotifications" xml:space="preserve"><value>🔔 Notifikasi</value></data>
+  <data name="DropProfile" xml:space="preserve"><value>👤 Profil &amp; Kata Laluan</value></data>
+  <data name="DropDashboard" xml:space="preserve"><value>📊 Papan Pemuka</value></data>
+  <data name="DropManageReservations" xml:space="preserve"><value>📋 Urus Tempahan</value></data>
+  <data name="DropManageCourts" xml:space="preserve"><value>🏸 Urus Gelanggang</value></data>
+  <data name="DropManageAvailability" xml:space="preserve"><value>🗓️ Urus Ketersediaan</value></data>
+  <data name="DropReports" xml:space="preserve"><value>📈 Laporan</value></data>
+  <data name="DropFacilitySettings" xml:space="preserve"><value>🏛️ Tetapan Kemudahan</value></data>
+  <data name="DropUserAccounts" xml:space="preserve"><value>👥 Akaun Pengguna</value></data>
+  <data name="DropLogout" xml:space="preserve"><value>🚪 Log Keluar</value></data>
+  <data name="FooterTagline" xml:space="preserve"><value>Sistem Tempahan Kemudahan Sukan &amp; Pengurusan Venue</value></data>
+  <data name="FooterDemo" xml:space="preserve"><value>AMIT2014 Web and Mobile Systems — sistem demo tugasan.</value></data>
+  <data name="FooterQuickLinks" xml:space="preserve"><value>Pautan Pantas</value></data>
+  <data name="FooterBrowse" xml:space="preserve"><value>Lihat Gelanggang</value></data>
+  <data name="FooterAbout" xml:space="preserve"><value>Tentang Kemudahan</value></data>
+  <data name="FooterContact" xml:space="preserve"><value>Hubungi</value></data>
+  <data name="DropDemoMail" xml:space="preserve"><value>📮 Mel Demo</value></data>
+  <data name="DropAdminAccounts" xml:space="preserve"><value>⚙️ Akaun Admin</value></data>
+  <data name="DropSystemSettings" xml:space="preserve"><value>⚙️ Tetapan Sistem</value></data>
+  <data name="NavCart" xml:space="preserve"><value>🛒 Troli</value></data>
+  <data name="NavWishlist" xml:space="preserve"><value>❤️ Senarai Hajat</value></data>
+  <data name="DropCart" xml:space="preserve"><value>🛒 Troli Saya</value></data>
+  <data name="DropWishlist" xml:space="preserve"><value>❤️ Senarai Hajat Saya</value></data>
+  <data name="DropVouchers" xml:space="preserve"><value>🎟️ Baucar</value></data>
+</root>
