@@ -48,8 +48,12 @@ public class AdminVouchersController : Controller
             Description = model.Description,
             DiscountType = model.DiscountType,
             DiscountValue = model.DiscountValue,
+            StartDate = model.StartDate,
             ExpiryDate = model.ExpiryDate,
+            MinSpend = model.MinSpend,
+            MaxDiscount = model.MaxDiscount,
             UsageLimit = model.UsageLimit,
+            PerUserLimit = model.PerUserLimit,
             Status = model.Status
         });
 
@@ -92,8 +96,12 @@ public class AdminVouchersController : Controller
         voucher.Description = model.Description;
         voucher.DiscountType = model.DiscountType;
         voucher.DiscountValue = model.DiscountValue;
+        voucher.StartDate = model.StartDate;
         voucher.ExpiryDate = model.ExpiryDate;
+        voucher.MinSpend = model.MinSpend;
+        voucher.MaxDiscount = model.MaxDiscount;
         voucher.UsageLimit = model.UsageLimit;
+        voucher.PerUserLimit = model.PerUserLimit;
         voucher.Status = model.Status;
 
         var (success, error) = await _voucherService.UpdateAsync(voucher);
@@ -104,6 +112,35 @@ public class AdminVouchersController : Controller
         }
 
         TempData["SuccessMessage"] = $"Voucher \"{voucher.Code}\" updated.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ---------- Bulk generate ----------
+
+    /// <summary>
+    /// Creates a batch of vouchers from a shared template with generated unique codes
+    /// (G-M2). Codes use an unambiguous alphabet and take the form PREFIX-XXXXXX.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BulkGenerate(int count, string? prefix, Voucher template)
+    {
+        // Sensible defaults so the form can stay short.
+        if (template.DiscountValue <= 0) template.DiscountValue = 10;
+        if (template.ExpiryDate == default) template.ExpiryDate = DateOnly.FromDateTime(DateTime.Today).AddDays(30);
+        if (string.IsNullOrWhiteSpace(template.Description)) template.Description = "Bulk-generated voucher";
+
+        var (success, error, created, codes) = await _voucherService.BulkGenerateAsync(template, count, prefix);
+        if (!success)
+            TempData["ErrorMessage"] = error;
+        else if (created == 0)
+            TempData["ErrorMessage"] = "Could not generate any unique codes — try a different prefix.";
+        else
+        {
+            var sample = string.Join(", ", codes.Take(5)) + (codes.Count > 5 ? ", …" : string.Empty);
+            TempData["SuccessMessage"] = $"{created} voucher(s) generated: {sample}";
+        }
+
         return RedirectToAction(nameof(Index));
     }
 

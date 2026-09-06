@@ -594,19 +594,25 @@ public static class DbSeeder
 
     /// <summary>
     /// Checkout discount vouchers for the revised spec. Idempotent by code so pre-P4
-    /// databases converge on every start. EXPIRED exists on purpose: it demonstrates
-    /// the expiry validation in the checkout flow.
+    /// databases converge on every start. Each demo voucher demonstrates one G-M2 rule:
+    /// STUDENT5 the per-user limit (2 per member), MINSPEND50 the minimum-spend rule,
+    /// CAPPED20 the discount cap, EXPIRED the expiry path (lazily flipped to Expired
+    /// by validation and by VoucherExpiryWorker).
     /// </summary>
     private static void EnsureVouchers(ApplicationDbContext db)
     {
-        var specs = new (string Code, string Desc, DiscountType Type, decimal Value, int DaysValid, int? Limit)[]
+        var specs = new (string Code, string Desc, DiscountType Type, decimal Value, int DaysValid,
+            int? Limit, int? PerUser, decimal MinSpend, decimal? MaxDiscount)[]
         {
-            ("WELCOME10", "10% off your first checkout (demo voucher)", DiscountType.Percentage, 10m, 60, null),
-            ("STUDENT5", "RM 5 off any booking cart (demo voucher, 50 redemptions)", DiscountType.FixedAmount, 5m, 30, 50),
-            ("EXPIRED", "Expired demo voucher — used to demonstrate expiry validation", DiscountType.Percentage, 20m, -1, null)
+            ("WELCOME10", "10% off your first checkout (demo voucher)", DiscountType.Percentage, 10m, 60, null, null, 0, null),
+            ("STUDENT5", "RM 5 off any booking cart (demo voucher, 50 redemptions, 2 per member)",
+                DiscountType.FixedAmount, 5m, 30, 50, 2, 0, null),
+            ("MINSPEND50", "RM 8 off when you spend RM 50 or more (demo voucher)", DiscountType.FixedAmount, 8m, 45, null, null, 50, null),
+            ("CAPPED20", "20% off, capped at RM 10 (demo voucher)", DiscountType.Percentage, 20m, 30, null, null, 0, 10m),
+            ("EXPIRED", "Expired demo voucher — used to demonstrate expiry validation", DiscountType.Percentage, 20m, -1, null, null, 0, null)
         };
 
-        foreach (var (code, desc, type, value, daysValid, limit) in specs)
+        foreach (var (code, desc, type, value, daysValid, limit, perUser, minSpend, maxDiscount) in specs)
         {
             if (db.Vouchers.Any(v => v.Code == code)) continue;
             db.Vouchers.Add(new Voucher
@@ -616,7 +622,10 @@ public static class DbSeeder
                 DiscountType = type,
                 DiscountValue = value,
                 ExpiryDate = DateOnly.FromDateTime(DateTime.Today).AddDays(daysValid),
+                MinSpend = minSpend,
+                MaxDiscount = maxDiscount,
                 UsageLimit = limit,
+                PerUserLimit = perUser,
                 Status = VoucherStatus.Active
             });
         }

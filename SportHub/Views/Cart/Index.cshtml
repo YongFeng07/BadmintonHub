@@ -97,9 +97,11 @@
         <form id="cartForm" asp-action="Checkout" method="post" class="sh-form-section mt-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-5">
-                    <label class="form-label small mb-1">Discount voucher (optional)</label>
-                    <input name="voucherCode" class="form-control text-uppercase" placeholder="e.g. WELCOME10"
-                           aria-describedby="voucherHelp" />
+                    <label class="form-label small mb-1" for="voucherCode">Discount voucher (optional)</label>
+                    <input name="voucherCode" id="voucherCode" class="form-control text-uppercase"
+                           placeholder="e.g. WELCOME10" autocomplete="off"
+                           aria-describedby="voucherHelp voucherPreview" />
+                    <div id="voucherPreview" class="form-text mt-2" aria-live="polite"></div>
                     <div id="voucherHelp" class="form-text">Applied and validated at checkout — try WELCOME10 (demo).</div>
                 </div>
                 <div class="col-md-7 d-flex gap-2 justify-content-md-end flex-wrap">
@@ -122,7 +124,51 @@
         $(function () {
             $('#selectAll').on('change', function () {
                 $('input[name="itemIds"][form="cartForm"]').prop('checked', this.checked);
+                refreshVoucherPreview();
             });
+
+            // Live voucher preview (G-M2): debounced AJAX validation of the typed code
+            // against the currently checked cart lines. Read-only — the real usage
+            // count is only bumped inside the checkout transaction.
+            var previewTimer = null;
+            function fmt(amount) { return 'RM ' + Number(amount).toFixed(2); }
+
+            function refreshVoucherPreview() {
+                var code = $.trim($('#voucherCode').val());
+                var box = $('#voucherPreview');
+                if (code === '') { box.removeClass('voucher-ok voucher-bad').text(''); return; }
+
+                var itemIds = $('input[name="itemIds"][form="cartForm"]:checked')
+                    .map(function () { return $(this).val(); }).get();
+                var token = $('#cartForm input[name="__RequestVerificationToken"]').val();
+                box.removeClass('voucher-ok voucher-bad').text('Checking…');
+
+                $.post('@Url.Action("VoucherPreview")', {
+                    itemIds: itemIds,
+                    voucherCode: code,
+                    __RequestVerificationToken: token
+                })
+                .done(function (data) {
+                    if (data.success) {
+                        var text = '✓ ' + code.toUpperCase() + ' saves ' + fmt(data.discount)
+                            + ' — you pay ' + fmt(data.netTotal);
+                        if (data.warning) text += ' ' + data.warning;
+                        box.addClass('voucher-ok').removeClass('voucher-bad').text(text);
+                    } else {
+                        box.addClass('voucher-bad').removeClass('voucher-ok').text('✕ ' + data.error);
+                    }
+                })
+                .fail(function () {
+                    box.addClass('voucher-bad').removeClass('voucher-ok')
+                        .text('✕ Could not check the voucher — please retry.');
+                });
+            }
+
+            $('#voucherCode').on('input', function () {
+                clearTimeout(previewTimer);
+                previewTimer = setTimeout(refreshVoucherPreview, 400);
+            });
+            $('input[name="itemIds"][form="cartForm"]').on('change', refreshVoucherPreview);
         });
     </script>
 }

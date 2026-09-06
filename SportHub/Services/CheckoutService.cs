@@ -33,28 +33,28 @@ public class CheckoutService : ICheckoutService
         _emails = emails;
     }
 
-    public async Task<(bool Success, string? Error, List<CartItem> Items, decimal Subtotal, decimal Discount, decimal NetTotal)> PreviewAsync(
+    public async Task<(bool Success, string? Error, List<CartItem> Items, decimal Subtotal, decimal Discount, decimal NetTotal, string? Warning)> PreviewAsync(
         int userId, IEnumerable<int> cartItemIds, string? voucherCode)
     {
         var items = await LoadItemsAsync(userId, cartItemIds);
         if (items == null || items.Count == 0)
-            return (false, "Select at least one item to check out.", new List<CartItem>(), 0, 0, 0);
+            return (false, "Select at least one item to check out.", new List<CartItem>(), 0, 0, 0, null);
 
         var subtotal = items.Sum(i => i.Court!.HourlyRate * i.DurationHours);
 
         if (!string.IsNullOrWhiteSpace(voucherCode))
         {
-            var (ok, error, discount, _) = await _vouchers.ValidateAsync(voucherCode, subtotal);
+            var (ok, error, discount, _, warning) = await _vouchers.ValidateAsync(voucherCode, subtotal, userId);
             if (!ok)
-                return (false, error, items, subtotal, 0, subtotal);
+                return (false, error, items, subtotal, 0, subtotal, null);
 
-            return (true, null, items, subtotal, discount, subtotal - discount);
+            return (true, null, items, subtotal, discount, subtotal - discount, warning);
         }
 
-        return (true, null, items, subtotal, 0, subtotal);
+        return (true, null, items, subtotal, 0, subtotal, null);
     }
 
-    public async Task<(bool Success, string? Error, List<Reservation> Reservations)> CheckoutAsync(
+    public async Task<(bool Success, string? Error, List<Reservation> Reservations, string? Warning)> CheckoutAsync(
         int userId, IEnumerable<int> cartItemIds, string? voucherCode)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync();
@@ -64,7 +64,7 @@ public class CheckoutService : ICheckoutService
             if (items == null || items.Count == 0)
             {
                 await transaction.RollbackAsync();
-                return (false, "Select at least one item to check out.", new List<Reservation>());
+                return (false, "Select at least one item to check out.", new List<Reservation>(), null);
             }
 
             // Re-validate every line server-side — the cart is never trusted. Windows
@@ -80,7 +80,7 @@ public class CheckoutService : ICheckoutService
                     await transaction.RollbackAsync();
                     return (false,
                         $"{item.Court?.CourtNumber} on {item.Date:dd MMM yyyy} at {item.StartTime.ToString("HH:mm")}: {error}",
-                        new List<Reservation>());
+                        new List<Reservation>(), null);
                 }
                 windows.Add((item.CourtId, item.Date, item.StartTime, item.StartTime.AddHours(item.DurationHours)));
             }
@@ -90,16 +90,38 @@ public class CheckoutService : ICheckoutService
             // code index guarantees no other inconsistency can slip through.
             var subtotal = items.Sum(i => i.Court!.HourlyRate * i.DurationHours);
             var discount = 0m;
+            var warning = (string?)null;
             if (!string.IsNullOrWhiteSpace(voucherCode))
             {
-                var (ok, error, amount, voucher) = await _vouchers.ValidateAsync(voucherCode, subtotal);
+                var (ok, error, amount, voucher, voucherWarning) = await _vouchers.ValidateAsync(voucherCode, subtotal, userId);
                 if (!ok)
                 {
                     await transaction.RollbackAsync();
-                    return (false, error, new List<Reservation>());
+                    return (false, error, new List<Reservation>(), null);
                 }
                 discount = amount;
+                warning = voucherWarning;
                 voucher!.UsageCount++;
+
+                // Per-user redemption counter, upserted in the same transaction so the
+                // PerUserLimit can never be overshot by concurrent checkouts.
+                var redemption = await _db.VoucherRedemptions
+                    .FirstOrDefaultAsync(r => r.VoucherId == voucher.Id && r.UserId == userId);
+                if (redemption == null)
+                {
+                    _db.VoucherRedemptions.Add(new VoucherRedemption
+                    {
+                        VoucherId = voucher.Id,
+                        UserId = userId,
+                        Count = 1,
+                        LastUsedAt = DateTime.Now
+                    });
+                }
+                else
+                {
+                    redemption.Count++;
+                    redemption.LastUsedAt = DateTime.Now;
+                }
             }
 
             var maxId = await _db.Reservations.MaxAsync(r => (int?)r.Id) ?? 0;
@@ -160,13 +182,13 @@ public class CheckoutService : ICheckoutService
 
             await _db.SaveChangesAsync();
             await transaction.CommitAsync();
-            return (true, null, reservations);
+            return (true, null, reservations, warning);
         }
         catch
         {
             await transaction.RollbackAsync();
             return (false, "Checkout failed. Your cart has not been changed. Please try again.",
-                new List<Reservation>());
+                new List<Reservation>(), null);
         }
     }
 

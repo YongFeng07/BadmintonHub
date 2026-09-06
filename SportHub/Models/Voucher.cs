@@ -30,13 +30,33 @@ public class Voucher
     [Display(Name = "Discount")]
     public decimal DiscountValue { get; set; }
 
+    /// <summary>First day the code can be redeemed; null = valid immediately.</summary>
+    [Display(Name = "Valid From")]
+    public DateOnly? StartDate { get; set; }
+
     /// <summary>Valid through this date (inclusive).</summary>
     [Display(Name = "Expiry Date")]
     public DateOnly ExpiryDate { get; set; }
 
+    /// <summary>Cart subtotal must be at least this to redeem; 0 = no minimum.</summary>
+    [Column(TypeName = "decimal(10,2)")]
+    [Range(0, 100000)]
+    [Display(Name = "Minimum Spend (RM)")]
+    public decimal MinSpend { get; set; }
+
+    /// <summary>Upper bound on the discount amount (percentage vouchers); null = uncapped.</summary>
+    [Column(TypeName = "decimal(10,2)")]
+    [Range(0, 100000)]
+    [Display(Name = "Maximum Discount (RM)")]
+    public decimal? MaxDiscount { get; set; }
+
     /// <summary>Maximum total redemptions; null = unlimited.</summary>
     [Display(Name = "Usage Limit")]
     public int? UsageLimit { get; set; }
+
+    /// <summary>Maximum redemptions per member; null = unlimited. Counted in VoucherRedemption.</summary>
+    [Display(Name = "Per-User Limit")]
+    public int? PerUserLimit { get; set; }
 
     [Display(Name = "Times Used")]
     public int UsageCount { get; set; }
@@ -44,4 +64,7 @@ public class Voucher
     public VoucherStatus Status { get; set; } = VoucherStatus.Active;
 
     public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+    /// <summary>Per-member redemption counters (upserted inside the checkout transaction).</summary>
+    public ICollection<VoucherRedemption> Redemptions { get; set; } = new List<VoucherRedemption>();
 }

@@ -29,6 +29,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
     public DbSet<Voucher> Vouchers => Set<Voucher>();
+    public DbSet<VoucherRedemption> VoucherRedemptions => Set<VoucherRedemption>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -114,5 +115,18 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(i => i.CourtId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Per-member voucher redemption counters die with the voucher or the member.
+        modelBuilder.Entity<VoucherRedemption>()
+            .HasOne(r => r.Voucher)
+            .WithMany(v => v.Redemptions)
+            .HasForeignKey(r => r.VoucherId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<VoucherRedemption>()
+            .HasOne(r => r.User)
+            .WithMany()
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

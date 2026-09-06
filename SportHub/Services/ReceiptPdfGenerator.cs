@@ -73,8 +73,17 @@ public static class ReceiptPdfGenerator
                         });
                         row.RelativeItem().AlignRight().Column(c =>
                         {
-                            c.Item().Text("Amount Paid").FontSize(9).FontColor(Colors.Grey.Darken1);
-                            c.Item().Text($"RM {r.TotalAmount:0.00}").FontSize(18).SemiBold().FontColor(Colors.Green.Darken3);
+                            if (r.DiscountAmount > 0)
+                            {
+                                c.Item().Text("Booking Total").FontSize(9).FontColor(Colors.Grey.Darken1);
+                                c.Item().Text($"RM {r.TotalAmount:0.00}").FontSize(11);
+                                c.Item().PaddingTop(2)
+                                    .Text($"Voucher discount ({r.VoucherCode})").FontSize(9).FontColor(Colors.Grey.Darken1);
+                                c.Item().Text($"− RM {r.DiscountAmount:0.00}").FontSize(11).FontColor(Colors.Red.Medium);
+                            }
+                            c.Item().PaddingTop(4).Text("Amount Paid").FontSize(9).FontColor(Colors.Grey.Darken1);
+                            c.Item().Text($"RM {r.TotalAmount - r.DiscountAmount:0.00}")
+                                .FontSize(18).SemiBold().FontColor(Colors.Green.Darken3);
                         });
                     });
 

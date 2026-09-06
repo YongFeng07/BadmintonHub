@@ -100,6 +100,9 @@ builder.Services.AddScoped<IEmailService>(sp =>
 // M2 additional feature: automatic reservation status updates.
 builder.Services.AddHostedService<ReservationStatusUpdaterService>();
 
+// G-M2: overdue vouchers flip to Expired automatically (startup + every 6 hours).
+builder.Services.AddHostedService<VoucherExpiryWorker>();
+
 var app = builder.Build();
 
 // Apply pending migrations and seed demo data when the database is empty.

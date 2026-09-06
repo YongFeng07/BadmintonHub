@@ -52,7 +52,7 @@ public class CheckoutServiceTests
     {
         var (checkout, _, _, _, memberId, _, _) = Create();
 
-        var (success, error, items, _, _, _) = await checkout.PreviewAsync(memberId, new List<int>(), null);
+        var (success, error, items, _, _, _, _) = await checkout.PreviewAsync(memberId, new List<int>(), null);
 
         Assert.False(success);
         Assert.Equal("Select at least one item to check out.", error);
@@ -67,7 +67,7 @@ public class CheckoutServiceTests
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(11, 0), 2); // 50
         var ids = await cart.GetItemsAsync(memberId);
 
-        var (success, error, items, subtotal, discount, net) =
+        var (success, error, items, subtotal, discount, net, warning) =
             await checkout.PreviewAsync(memberId, ids.Select(i => i.Id), null);
 
         Assert.True(success, error);
@@ -75,6 +75,7 @@ public class CheckoutServiceTests
         Assert.Equal(75m, subtotal);
         Assert.Equal(0m, discount);
         Assert.Equal(75m, net);
+        Assert.Null(warning);
     }
 
     [Fact]
@@ -86,7 +87,7 @@ public class CheckoutServiceTests
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(11, 0), 2); // 50
         var ids = await cart.GetItemsAsync(memberId);
 
-        var (success, error, _, subtotal, discount, net) =
+        var (success, error, _, subtotal, discount, net, _) =
             await checkout.PreviewAsync(memberId, ids.Select(i => i.Id), "WELCOME10");
 
         Assert.True(success, error);
@@ -101,7 +102,7 @@ public class CheckoutServiceTests
         var (checkout, cart, _, _, memberId, _, courtId) = Create();
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
 
-        var (success, error, _, _, _, _) = await checkout.PreviewAsync(memberId, new[] { 9999 }, null);
+        var (success, error, _, _, _, _, _) = await checkout.PreviewAsync(memberId, new[] { 9999 }, null);
 
         Assert.False(success);
         Assert.Equal("Select at least one item to check out.", error);
@@ -118,7 +119,7 @@ public class CheckoutServiceTests
         await cart.AddAsync(memberId, courtId, date, new TimeOnly(11, 0), 2);
         var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
 
-        var (success, error, reservations) = await checkout.CheckoutAsync(memberId, ids, null);
+        var (success, error, reservations, _) = await checkout.CheckoutAsync(memberId, ids, null);
 
         Assert.True(success, error);
         Assert.Equal(2, reservations.Count);
@@ -140,7 +141,7 @@ public class CheckoutServiceTests
         await cart.AddAsync(memberId, courtId, date, new TimeOnly(11, 0), 2); // gross 50
         var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
 
-        var (success, error, reservations) = await checkout.CheckoutAsync(memberId, ids, "WELCOME10");
+        var (success, error, reservations, _) = await checkout.CheckoutAsync(memberId, ids, "WELCOME10");
 
         Assert.True(success, error);
         Assert.Equal(2, reservations.Count);
@@ -159,7 +160,7 @@ public class CheckoutServiceTests
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
         var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
 
-        var (success, error, reservations) = await checkout.CheckoutAsync(memberId, ids, "NOPE99");
+        var (success, error, reservations, _) = await checkout.CheckoutAsync(memberId, ids, "NOPE99");
 
         Assert.False(success);
         Assert.Equal("Voucher code not found.", error);
@@ -178,7 +179,7 @@ public class CheckoutServiceTests
         // Someone else books the same window directly after the line was added to the cart.
         await reservations.CreateAsync(memberId, courtId, date, new TimeOnly(10, 0), 1, null);
 
-        var (success, error, created) = await checkout.CheckoutAsync(memberId, ids, null);
+        var (success, error, created, _) = await checkout.CheckoutAsync(memberId, ids, null);
 
         Assert.False(success);
         Assert.Contains("has just been booked", error);
@@ -198,7 +199,7 @@ public class CheckoutServiceTests
             new CartItem { UserId = memberId, CourtId = courtId, Date = date, StartTime = new TimeOnly(10, 0), DurationHours = 2 });
         await db.SaveChangesAsync();
 
-        var (success, error, created) = await checkout.CheckoutAsync(memberId, db.CartItems.Select(i => i.Id), null);
+        var (success, error, created, _) = await checkout.CheckoutAsync(memberId, db.CartItems.Select(i => i.Id), null);
 
         Assert.False(success);
         Assert.Contains("overlaps another item", error);
@@ -214,7 +215,7 @@ public class CheckoutServiceTests
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
         var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
 
-        var (success, error, _) = await checkout.CheckoutAsync(otherUserId, ids, null);
+        var (success, error, _, _) = await checkout.CheckoutAsync(otherUserId, ids, null);
 
         Assert.False(success); // a missing id never checks out a partial cart
         Assert.Equal("Select at least one item to check out.", error);
@@ -244,6 +245,47 @@ public class CheckoutServiceTests
         Assert.Equal(1, await db.CartItems.CountAsync());    // cart kept for retry
     }
 
+    [Fact]
+    public async Task Checkout_UpsertsPerUserRedemptionCounter()
+    {
+        var (checkout, cart, _, db, memberId, _, courtId) = Create();
+        AddVoucher(db, "PERSONAL", 10m);
+        var voucher = db.Vouchers.Single(v => v.Code == "PERSONAL");
+        voucher.PerUserLimit = 2;
+        await db.SaveChangesAsync();
+
+        await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
+        var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
+        var (success, error, _, _) = await checkout.CheckoutAsync(memberId, ids, "PERSONAL");
+
+        Assert.True(success, error);
+        var redemption = db.VoucherRedemptions.Single(r => r.VoucherId == voucher.Id && r.UserId == memberId);
+        Assert.Equal(1, redemption.Count);
+        Assert.NotNull(redemption.LastUsedAt);
+    }
+
+    [Fact]
+    public async Task Checkout_PerUserLimitBlocksSecondRedemptionBeyondCap()
+    {
+        var (checkout, cart, _, db, memberId, _, courtId) = Create();
+        AddVoucher(db, "PERSONAL", 10m);
+        var voucher = db.Vouchers.Single(v => v.Code == "PERSONAL");
+        voucher.PerUserLimit = 1;
+        await db.SaveChangesAsync();
+
+        await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
+        var firstIds = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
+        Assert.True((await checkout.CheckoutAsync(memberId, firstIds, "PERSONAL")).Success);
+
+        await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(11, 0), 1);
+        var secondIds = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
+        var (success, error, _, _) = await checkout.CheckoutAsync(memberId, secondIds, "PERSONAL");
+
+        Assert.False(success);
+        Assert.Equal("You have already used this voucher the maximum 1 time(s).", error);
+        Assert.Equal(1, await db.Reservations.CountAsync()); // first checkout only
+    }
+
     // ---------- Batch payment ----------
 
     [Fact]
@@ -253,7 +295,7 @@ public class CheckoutServiceTests
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(11, 0), 1);
         var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
-        var (_, _, reservations) = await checkout.CheckoutAsync(memberId, ids, null);
+        var (_, _, reservations, _) = await checkout.CheckoutAsync(memberId, ids, null);
 
         var (success, error, paid) = await checkout.MarkBatchPaidAsync(
             memberId, reservations.Select(r => r.Id), PaymentMethod.Card);
@@ -271,7 +313,7 @@ public class CheckoutServiceTests
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
         await cart.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(11, 0), 1);
         var ids = (await cart.GetItemsAsync(memberId)).Select(i => i.Id);
-        var (_, _, created) = await checkout.CheckoutAsync(memberId, ids, null);
+        var (_, _, created, _) = await checkout.CheckoutAsync(memberId, ids, null);
         await reservations.MarkPaidAsync(created[0].Id, memberId, PaymentMethod.Cash, null);
 
         var (success, error, paid) = await checkout.MarkBatchPaidAsync(

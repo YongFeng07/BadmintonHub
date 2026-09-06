@@ -99,5 +99,7 @@ public enum DiscountType
 public enum VoucherStatus
 {
     Active,
-    Inactive
+    Inactive,
+    /// <summary>Set automatically once the expiry date has passed (G-M2).</summary>
+    Expired
 }

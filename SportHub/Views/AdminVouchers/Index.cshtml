@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Discount Vouchers";
     Layout = "_AdminLayout";
+    var today = DateOnly.FromDateTime(DateTime.Today);
 }
 
 <div class="sh-admin-topbar">
@@ -19,6 +20,7 @@
                 <th>Code</th>
                 <th>Description</th>
                 <th>Discount</th>
+                <th>Rules</th>
                 <th>Expiry</th>
                 <th>Used</th>
                 <th>Status</th>
@@ -28,8 +30,9 @@
         <tbody>
             @foreach (var voucher in Model)
             {
-                var expired = voucher.ExpiryDate < DateOnly.FromDateTime(DateTime.Today);
+                var expired = voucher.ExpiryDate < today;
                 var limitReached = voucher.UsageLimit.HasValue && voucher.UsageCount >= voucher.UsageLimit.Value;
+                var notStarted = voucher.StartDate.HasValue && voucher.StartDate.Value > today;
                 <tr>
                     <td><strong class="font-monospace">@voucher.Code</strong></td>
                     <td>@voucher.Description</td>
@@ -45,6 +48,29 @@
                             <span class="badge badge-status" style="background:#eef3f8;color:#3c5670;">
                                 RM @voucher.DiscountValue.ToString("0.00") off
                             </span>
+                        }
+                    </td>
+                    <td>
+                        @if (voucher.MinSpend > 0)
+                        {
+                            <div class="small">Min spend RM @voucher.MinSpend.ToString("0.00")</div>
+                        }
+                        @if (voucher.MaxDiscount.HasValue)
+                        {
+                            <div class="small">Cap RM @voucher.MaxDiscount.Value.ToString("0.00")</div>
+                        }
+                        @if (voucher.PerUserLimit.HasValue)
+                        {
+                            <div class="small">@voucher.PerUserLimit× per member</div>
+                        }
+                        @if (notStarted)
+                        {
+                            <div class="small">Starts @voucher.StartDate!.Value.ToString("dd MMM yyyy")</div>
+                        }
+                        @if (voucher.MinSpend <= 0 && !voucher.MaxDiscount.HasValue
+                             && !voucher.PerUserLimit.HasValue && !notStarted)
+                        {
+                            <span class="text-muted small">—</span>
                         }
                     </td>
                     <td class="text-nowrap">
@@ -66,6 +92,10 @@
                         {
                             <span class="badge bg-success">Active</span>
                         }
+                        else if (voucher.Status == SportHub.Models.VoucherStatus.Expired)
+                        {
+                            <span class="badge bg-danger">Expired</span>
+                        }
                         else
                         {
                             <span class="badge bg-secondary">Inactive</span>
@@ -79,4 +109,53 @@
             }
         </tbody>
     </table>
+</div>
+
+<div class="sh-form-section mt-4">
+    <h3 class="h6 fw-bold mb-1">🎟️ Bulk Generate</h3>
+    <p class="small text-muted mb-3">
+        Create a batch of vouchers sharing one discount template. Codes are generated
+        automatically from an unambiguous alphabet (no I/O/0/1), e.g. <code>EVENT-3K7P2M9X</code>.
+    </p>
+    <form asp-action="BulkGenerate" method="post" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkCount">Quantity</label>
+            <input id="bulkCount" name="count" type="number" min="1" max="200" value="10" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkPrefix">Code prefix (optional)</label>
+            <input id="bulkPrefix" name="prefix" class="form-control text-uppercase" placeholder="e.g. EVENT" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkType">Discount type</label>
+            <select id="bulkType" name="template.DiscountType" class="form-select">
+                <option value="Percentage">Percentage</option>
+                <option value="FixedAmount">Fixed amount</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkValue">Value</label>
+            <input id="bulkValue" name="template.DiscountValue" type="number" step="0.01" min="0.01" max="100" value="10" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkExpiry">Expiry date</label>
+            <input id="bulkExpiry" name="template.ExpiryDate" type="date"
+                   value="@today.AddDays(30).ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkDesc">Description</label>
+            <input id="bulkDesc" name="template.Description" class="form-control" placeholder="e.g. Event campaign" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkMin">Min spend (RM)</label>
+            <input id="bulkMin" name="template.MinSpend" type="number" step="0.01" min="0" value="0" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1" for="bulkUsage">Usage limit (optional)</label>
+            <input id="bulkUsage" name="template.UsageLimit" type="number" min="1" class="form-control" />
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-sh-amber px-4">Generate Vouchers</button>
+        </div>
+    </form>
 </div>

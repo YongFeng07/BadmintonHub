@@ -111,7 +111,8 @@ public class CartController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Checkout(List<int> itemIds, string? voucherCode)
     {
-        var (success, error, reservations) = await _checkoutService.CheckoutAsync(CurrentUserId, itemIds, voucherCode);
+        var (success, error, reservations, warning) =
+            await _checkoutService.CheckoutAsync(CurrentUserId, itemIds, voucherCode);
         if (!success)
         {
             TempData["ErrorMessage"] = error;
@@ -119,11 +120,27 @@ public class CartController : Controller
         }
 
         var discount = reservations.Sum(r => r.DiscountAmount);
-        TempData["SuccessMessage"] = discount > 0
+        var message = discount > 0
             ? $"Checkout created {reservations.Count} booking(s); voucher {voucherCode!.Trim().ToUpperInvariant()} saved you RM {discount:0.00}."
             : $"Checkout created {reservations.Count} booking(s). Complete the payment to confirm them.";
+        if (!string.IsNullOrWhiteSpace(warning))
+            message += $" {warning}";
+        TempData["SuccessMessage"] = message;
         return RedirectToAction(nameof(CheckoutComplete),
             new { reservationIds = reservations.Select(r => r.Id).ToList() });
+    }
+
+    /// <summary>
+    /// AJAX endpoint (G-M2): live preview of a voucher code against the currently
+    /// checked cart lines. Read-only — usage counting only happens at checkout.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> VoucherPreview(List<int> itemIds, string? voucherCode)
+    {
+        var (success, error, _, subtotal, discount, netTotal, warning) =
+            await _checkoutService.PreviewAsync(CurrentUserId, itemIds, voucherCode);
+        return Json(new { success, error, subtotal, discount, netTotal, warning });
     }
 
     public async Task<IActionResult> CheckoutComplete(List<int> reservationIds)

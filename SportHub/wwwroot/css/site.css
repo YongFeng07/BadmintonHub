@@ -519,6 +519,10 @@ a { text-decoration-thickness: 1px; text-underline-offset: 2px; }
 .sh-captcha .validation-message, .sh-captcha .dnt-validation-message,
 .sh-captcha [class*="validation"] { color: var(--sh-danger); font-size: .8rem; flex-basis: 100%; }
 
+/* Voucher live preview (cart checkout, G-M2) */
+.voucher-ok { color: var(--sh-green-600); font-weight: 500; }
+.voucher-bad { color: var(--sh-danger); font-weight: 500; }
+
 /* ============================================================
    Tables
    ============================================================ */
