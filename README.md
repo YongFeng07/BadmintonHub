@@ -75,11 +75,12 @@ screen has data. It further seeds three demo vouchers (`WELCOME10`,
 | ToyyibPay + booking/revenue reports (P5) | Team | ToyyibPay payment gateway as a third checkout method (batch bill → redirect → server-side re-verification before marking paid; simulated mode with a clearly-labelled demo gateway page when no credentials are configured — no secrets committed); payment-confirmation email; member booking insights (monthly bookings, spend by month, category split, cancellation rate) and admin monthly bookings / revenue-by-month / category / cancellation-rate charts |
 | Shared (P6) | Team | Multi-language (en-US / zh-CN / ms-MY) with cookie-based switcher; Monday-first localized calendars |
 | Revised-spec security & roles (P7) | Team | SuperAdmin / Admin / Member roles (Staff removed, demo account migrated); SuperAdmin-only system settings (site name + announcement banner); image captcha on login/register/reset (DNTCaptcha.Core, toggleable via `Security:EnableCaptcha`); email verification flow with 24h hashed tokens, resend and admin manual verify; Remember Me (30-day persistent cookie); demo mail inbox for verification/reset emails when no SMTP is configured |
+| Professionalisation (Phase G) | Team | SportHub rebrand + token-based UI redesign + 22 attributed real court photos; **six upgraded features**: voucher rules with checkout preview, receipt discount breakdown and bulk generation (G-M2); atomic slot claims — time-boxed cart holds + 30-minute payment timeout (G-M3); wishlist notify-when-available on court reopen, in-app + e-mail (G-M4); lifecycle e-mails with `Receipt-{ref}.pdf` attachments, member resend, 24-hour booking reminders (G-M5); shared AJAX search/sort/paging with batch selection across member and admin lists (G-M6) |
 
 ## Testing
 
 All tests run in **Visual Studio**: open the solution, then **Test → Test
-Explorer → Run All**. The `SportHub.Tests` xUnit project has 193 tests
+Explorer → Run All**. The `SportHub.Tests` xUnit project has 267 tests
 covering password policy, the 3-strike login lockout, email verification
 (register/verify/expiry/anti-enumeration resend), booking/double-booking/
 payment/refund rules, admin status transitions, the culture switcher, QR and

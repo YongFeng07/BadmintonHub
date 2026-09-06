@@ -172,6 +172,8 @@ public class AdminCourtsController : Controller
         if (court.Status == CourtStatus.Available && vm.Status != CourtStatus.Available)
             await _wishlistService.ResetNotifiedForCourtAsync(court.Id);
 
+        var reopening = court.Status != CourtStatus.Available && vm.Status == CourtStatus.Available;
+
         court.FacilityId = vm.FacilityId;
         court.CourtNumber = vm.CourtNumber.Trim();
         court.CourtType = vm.CourtType;
@@ -181,6 +183,12 @@ public class AdminCourtsController : Controller
         court.UpdatedAt = DateTime.Now;
 
         await _db.SaveChangesAsync();
+
+        // G-M4: reopening a court tells the waiting members immediately (one-shot
+        // via NotifiedAt); the 15-minute worker stays as the safety net.
+        if (reopening)
+            await _wishlistService.NotifyForAvailableCourtsAsync();
+
         TempData["SuccessMessage"] = $"Court {vm.CourtNumber} updated successfully.";
         return RedirectToAction(nameof(Index));
     }
