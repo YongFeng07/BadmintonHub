@@ -4,9 +4,9 @@
     Layout = "_AdminLayout";
 }
 
-<div class="bh-form-section" style="max-width: 720px;">
-    <h2 class="bh-page-title mb-1">Edit Voucher</h2>
-    <p class="bh-page-sub">Update the voucher rules; redemptions stay counted.</p>
+<div class="sh-form-section" style="max-width: 720px;">
+    <h2 class="sh-page-title mb-1">Edit Voucher</h2>
+    <p class="sh-page-sub">Update the voucher rules; redemptions stay counted.</p>
 
     @if (Model.Id > 0)
     {
@@ -21,7 +21,7 @@
         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
         <input type="hidden" asp-for="Id" />
         <partial name="_Form" model="Model" />
-        <button type="submit" class="btn btn-bh">Save Changes</button>
+        <button type="submit" class="btn btn-sh">Save Changes</button>
         <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
     </form>
 </div>

@@ -10,44 +10,44 @@
 
 <div class="row g-3 mt-1">
     <div class="col-6 col-lg-3">
-        <div class="bh-kpi">
-            <div class="bh-kpi-label">Total Revenue</div>
-            <div class="bh-kpi-value">RM @Model.TotalRevenue.ToString("N2")</div>
-            <div class="bh-kpi-sub">all paid bookings</div>
+        <div class="sh-kpi">
+            <div class="sh-kpi-label">Total Revenue</div>
+            <div class="sh-kpi-value">RM @Model.TotalRevenue.ToString("N2")</div>
+            <div class="sh-kpi-sub">all paid bookings</div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="bh-kpi">
-            <div class="bh-kpi-label">Today's Reservations</div>
-            <div class="bh-kpi-value">@Model.TodayReservations</div>
-            <div class="bh-kpi-sub">pending + confirmed</div>
+        <div class="sh-kpi">
+            <div class="sh-kpi-label">Today's Reservations</div>
+            <div class="sh-kpi-value">@Model.TodayReservations</div>
+            <div class="sh-kpi-sub">pending + confirmed</div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="bh-kpi">
-            <div class="bh-kpi-label">Upcoming</div>
-            <div class="bh-kpi-value">@Model.UpcomingReservations</div>
-            <div class="bh-kpi-sub">from today onward</div>
+        <div class="sh-kpi">
+            <div class="sh-kpi-label">Upcoming</div>
+            <div class="sh-kpi-value">@Model.UpcomingReservations</div>
+            <div class="sh-kpi-sub">from today onward</div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="bh-kpi">
-            <div class="bh-kpi-label">Today's Utilisation</div>
-            <div class="bh-kpi-value">@Model.TodayUtilizationPercent%</div>
-            <div class="bh-kpi-sub">booked / open slots</div>
+        <div class="sh-kpi">
+            <div class="sh-kpi-label">Today's Utilisation</div>
+            <div class="sh-kpi-value">@Model.TodayUtilizationPercent%</div>
+            <div class="sh-kpi-sub">booked / open slots</div>
         </div>
     </div>
 </div>
 
 <div class="row g-3 mt-0">
     <div class="col-lg-7">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Revenue — last 7 days</h2>
             <canvas id="revenueChart" height="90"></canvas>
         </div>
     </div>
     <div class="col-lg-5">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Bookings per court (30 days)</h2>
             <canvas id="courtChart" height="90"></canvas>
         </div>
@@ -56,16 +56,16 @@
 
 <div class="row g-3">
     <div class="col-lg-5">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Peak hours (30 days)</h2>
             <canvas id="peakChart" height="90"></canvas>
         </div>
     </div>
     <div class="col-lg-7">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Recent reservations</h2>
             <div class="table-responsive">
-                <table class="table table-sm table-hover align-middle bh-table mb-0">
+                <table class="table table-sm table-hover align-middle sh-table mb-0">
                     <thead><tr><th>Reference</th><th>Member</th><th>Court</th><th>Date</th><th>Status</th></tr></thead>
                     <tbody>
                         @foreach (var r in Model.RecentReservations)

@@ -22,4 +22,14 @@
   <data name="AboutFacility" xml:space="preserve"><value>About the Facility</value></data>
   <data name="CourtDefault" xml:space="preserve"><value>Indoor badminton court.</value></data>
   <data name="OpenDaily" xml:space="preserve"><value>Open daily</value></data>
+  <data name="HeroBadge" xml:space="preserve"><value>Multi-Sport Online Booking Centre</value></data>
+  <data name="StatSports" xml:space="preserve"><value>Sports Available</value></data>
+  <data name="HowItWorks" xml:space="preserve"><value>How it works</value></data>
+  <data name="HowItWorksSub" xml:space="preserve"><value>From the first serve to the final whistle — booked in three steps.</value></data>
+  <data name="Step1Title" xml:space="preserve"><value>Pick your sport &amp; court</value></data>
+  <data name="Step1Text" xml:space="preserve"><value>Six sports, 24 courts — browse real photos, hourly rates and availability in one catalogue.</value></data>
+  <data name="Step2Title" xml:space="preserve"><value>Choose your date &amp; slot</value></data>
+  <data name="Step2Text" xml:space="preserve"><value>Pick a date, grab an open hour, and add it to your cart in a couple of clicks.</value></data>
+  <data name="Step3Title" xml:space="preserve"><value>Pay online, play in peace</value></data>
+  <data name="Step3Text" xml:space="preserve"><value>Secure checkout with voucher discounts, a PDF e-receipt and your booking QR — instantly.</value></data>
 </root>

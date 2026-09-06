@@ -17,7 +17,7 @@
 
 <div class="row g-4">
     <div class="col-lg-8">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                 <h1 class="h3 mb-0">@Model.ReservationReference</h1>
                 <span class="badge badge-status badge-@Model.Status.ToString().ToLowerInvariant()">@Model.Status</span>
@@ -25,21 +25,21 @@
             <hr />
 
             <h2 class="h6 text-uppercase text-muted mb-3">Reservation timeline</h2>
-            <div class="bh-timeline mb-4">
-                <span class="bh-timeline-step done">Created</span>
-                <span class="bh-timeline-arrow">→</span>
+            <div class="sh-timeline mb-4">
+                <span class="sh-timeline-step done">Created</span>
+                <span class="sh-timeline-arrow">→</span>
                 @if (Model.Status == ReservationStatus.Cancelled || Model.Status == ReservationStatus.Rejected)
                 {
-                    <span class="bh-timeline-step cancelled">@Model.Status</span>
+                    <span class="sh-timeline-step cancelled">@Model.Status</span>
                 }
                 else
                 {
                     var paid = Model.Payment?.Status == PaymentStatus.Paid || Model.Payment?.Status == PaymentStatus.Refunded;
-                    <span class="bh-timeline-step @(paid ? "done" : "")">Paid</span>
-                    <span class="bh-timeline-arrow">→</span>
-                    <span class="bh-timeline-step @(Model.Status == ReservationStatus.Confirmed || Model.Status == ReservationStatus.Completed ? "done" : "")">Confirmed</span>
-                    <span class="bh-timeline-arrow">→</span>
-                    <span class="bh-timeline-step @(Model.Status == ReservationStatus.Completed ? "done" : "")">Completed</span>
+                    <span class="sh-timeline-step @(paid ? "done" : "")">Paid</span>
+                    <span class="sh-timeline-arrow">→</span>
+                    <span class="sh-timeline-step @(Model.Status == ReservationStatus.Confirmed || Model.Status == ReservationStatus.Completed ? "done" : "")">Confirmed</span>
+                    <span class="sh-timeline-arrow">→</span>
+                    <span class="sh-timeline-step @(Model.Status == ReservationStatus.Completed ? "done" : "")">Completed</span>
                 }
             </div>
 
@@ -54,7 +54,7 @@
                 <dt class="col-sm-4">Time</dt>
                 <dd class="col-sm-8">@Model.StartTime.ToString("HH:mm") – @Model.EndTime.ToString("HH:mm") (@Model.DurationHours.ToString("0.#") h)</dd>
                 <dt class="col-sm-4">Total Amount</dt>
-                <dd class="col-sm-8 fw-bold text-bh-green">RM @Model.TotalAmount.ToString("0.00")</dd>
+                <dd class="col-sm-8 fw-bold text-sh-green">RM @Model.TotalAmount.ToString("0.00")</dd>
                 @if (!string.IsNullOrEmpty(Model.Notes))
                 {
                     <dt class="col-sm-4">Notes</dt>
@@ -101,7 +101,7 @@
                 <div class="d-flex gap-2 mt-4 flex-wrap">
                     @if (canPay)
                     {
-                        <a asp-action="Pay" asp-route-id="@Model.Id" class="btn btn-bh-amber">💳 Complete Payment</a>
+                        <a asp-action="Pay" asp-route-id="@Model.Id" class="btn btn-sh-amber">💳 Complete Payment</a>
                     }
                     @if (canCancel)
                     {
@@ -128,9 +128,9 @@
     <div class="col-lg-4">
         @if (ViewBag.QrDataUri != null)
         {
-            <div class="bh-form-section">
+            <div class="sh-form-section">
                 <h2 class="h6 text-uppercase text-muted mb-2">Booking confirmation (QR)</h2>
-                <div class="bh-qr-panel">
+                <div class="sh-qr-panel">
                     <img src="@ViewBag.QrDataUri" alt="QR confirmation for @Model.ReservationReference" />
                     <p class="small text-muted mt-2 mb-0">
                         Scan to verify this booking. The QR only contains the public reservation
@@ -139,7 +139,7 @@
                 </div>
             </div>
         }
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Member</h2>
             @if (isPrivileged)
             {

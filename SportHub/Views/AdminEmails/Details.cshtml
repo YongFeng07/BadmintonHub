@@ -9,11 +9,11 @@
     <a class="btn btn-outline-secondary btn-sm" asp-action="Index">← Back to Demo Mail</a>
 </div>
 
-<div class="bh-card mt-3 overflow-hidden">
+<div class="sh-card mt-3 overflow-hidden">
     <div class="bg-light border-bottom px-4 py-2 small text-muted">
         To: <strong>@Model.To</strong> &nbsp;·&nbsp; @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")
     </div>
-    <div class="p-4 bh-mail-body">
+    <div class="p-4 sh-mail-body">
         @Html.Raw(Model.BodyHtml)
     </div>
 </div>

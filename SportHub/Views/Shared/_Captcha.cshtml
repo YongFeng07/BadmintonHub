@@ -2,7 +2,7 @@
 @* DNTCaptcha.Core image captcha (revised spec). Rendered as img + text box + refresh link.
    Validation happens in ValidateCaptchaAttribute on the POST action; the asp-validation-error-message
    shows whenever ModelState["CaptchaInputText"] has an error. *@
-<div class="mb-3 bh-captcha-field">
+<div class="mb-3 sh-captcha-field">
     <label class="form-label">@Localizer["CaptchaLbl"]</label>
     <dnt-captcha asp-captcha-generator-max="999999"
                  asp-captcha-generator-min="100000"
@@ -18,5 +18,5 @@
                  asp-text-box-class="form-control"
                  asp-show-refresh-button="true"
                  asp-refresh-button-class="btn btn-sm btn-outline-secondary"
-                 class="bh-captcha d-flex flex-wrap align-items-center gap-2" />
+                 class="sh-captcha d-flex flex-wrap align-items-center gap-2" />
 </div>

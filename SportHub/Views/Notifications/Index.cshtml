@@ -21,14 +21,14 @@
 
     @if (!Model.Any())
     {
-        <div class="bh-empty">
+        <div class="sh-empty">
             <span class="emoji">🔔</span>
             <p class="mb-0">No notifications yet.</p>
         </div>
     }
     else
     {
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <ul class="list-group list-group-flush">
                 @foreach (var n in Model)
                 {

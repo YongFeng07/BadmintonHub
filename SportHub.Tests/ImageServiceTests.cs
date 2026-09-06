@@ -30,7 +30,7 @@ public class ImageServiceTests : IDisposable
 
     public ImageServiceTests()
     {
-        _tempDir = Path.Combine(Path.GetTempPath(), "bh-imgsvc-" + Guid.NewGuid().ToString("N"));
+        _tempDir = Path.Combine(Path.GetTempPath(), "sh-imgsvc-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_tempDir);
     }
 

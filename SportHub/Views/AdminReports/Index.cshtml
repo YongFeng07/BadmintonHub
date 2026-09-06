@@ -14,7 +14,7 @@
             <label class="form-label small mb-1">To</label>
             <input type="date" name="to" class="form-control form-control-sm" value="@Model.ToDate.ToString("yyyy-MM-dd")" />
         </div>
-        <button type="submit" class="btn btn-bh btn-sm">Apply</button>
+        <button type="submit" class="btn btn-sh btn-sm">Apply</button>
         <a class="btn btn-outline-secondary btn-sm" asp-action="ExportCsv" asp-route-from="@Model.FromDate.ToString("yyyy-MM-dd")" asp-route-to="@Model.ToDate.ToString("yyyy-MM-dd")">⬇ CSV</a>
     </form>
 </div>
@@ -22,44 +22,44 @@
 
 <div class="row g-3">
     <div class="col-6 col-lg-3">
-        <div class="bh-kpi">
-            <div class="bh-kpi-label">Revenue</div>
-            <div class="bh-kpi-value">RM @Model.Revenue.ToString("N2")</div>
-            <div class="bh-kpi-sub">paid in range</div>
+        <div class="sh-kpi">
+            <div class="sh-kpi-label">Revenue</div>
+            <div class="sh-kpi-value">RM @Model.Revenue.ToString("N2")</div>
+            <div class="sh-kpi-sub">paid in range</div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="bh-kpi">
-            <div class="bh-kpi-label">Bookings</div>
-            <div class="bh-kpi-value">@Model.BookingCount</div>
-            <div class="bh-kpi-sub">all statuses</div>
+        <div class="sh-kpi">
+            <div class="sh-kpi-label">Bookings</div>
+            <div class="sh-kpi-value">@Model.BookingCount</div>
+            <div class="sh-kpi-sub">all statuses</div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="bh-kpi">
-            <div class="bh-kpi-label">Avg Booking Value</div>
-            <div class="bh-kpi-value">RM @Model.AverageBookingValue.ToString("0.00")</div>
-            <div class="bh-kpi-sub">per reservation</div>
+        <div class="sh-kpi">
+            <div class="sh-kpi-label">Avg Booking Value</div>
+            <div class="sh-kpi-value">RM @Model.AverageBookingValue.ToString("0.00")</div>
+            <div class="sh-kpi-sub">per reservation</div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="bh-kpi">
-            <div class="bh-kpi-label">Cancellations</div>
-            <div class="bh-kpi-value">@Model.CancellationCount</div>
-            <div class="bh-kpi-sub">in range</div>
+        <div class="sh-kpi">
+            <div class="sh-kpi-label">Cancellations</div>
+            <div class="sh-kpi-value">@Model.CancellationCount</div>
+            <div class="sh-kpi-sub">in range</div>
         </div>
     </div>
 </div>
 
 <div class="row g-3 mt-0">
     <div class="col-lg-7">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Daily revenue</h2>
             <canvas id="revByDayChart" height="80"></canvas>
         </div>
     </div>
     <div class="col-lg-5">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Court utilisation (%)</h2>
             <canvas id="utilChart" height="80"></canvas>
         </div>
@@ -68,13 +68,13 @@
 
 <div class="row g-3">
     <div class="col-lg-5">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Popular courts (bookings)</h2>
             <canvas id="popularChart" height="80"></canvas>
         </div>
     </div>
     <div class="col-lg-7">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Peak hours (bookings by start time)</h2>
             <canvas id="peakReportChart" height="80"></canvas>
         </div>
@@ -83,13 +83,13 @@
 
 <div class="row g-3">
     <div class="col-lg-6">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Monthly bookings — last 12 months</h2>
             <canvas id="monthlyBookingChart" height="80"></canvas>
         </div>
     </div>
     <div class="col-lg-6">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Revenue by month — last 12 months</h2>
             <canvas id="monthlyRevenueChart" height="80"></canvas>
         </div>
@@ -98,13 +98,13 @@
 
 <div class="row g-3">
     <div class="col-lg-6">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Bookings by category (in range)</h2>
             <canvas id="categoryChart" height="110"></canvas>
         </div>
     </div>
     <div class="col-lg-6">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 text-uppercase text-muted mb-2">Booking outcomes (in range)</h2>
             <canvas id="outcomeChart" height="110"></canvas>
             <p class="small text-muted mt-2 mb-0">
@@ -115,7 +115,7 @@
     </div>
 </div>
 
-<div class="bh-form-section mt-3">
+<div class="sh-form-section mt-3">
     <h2 class="h6 text-uppercase text-muted mb-2">Paid bookings in range (top 20)</h2>
     @if (!Model.RevenueRows.Any())
     {
@@ -124,7 +124,7 @@
     else
     {
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle bh-table mb-0">
+            <table class="table table-sm table-hover align-middle sh-table mb-0">
                 <thead><tr><th>Reference</th><th>Member</th><th>Court</th><th>Date</th><th>Paid At</th><th class="text-end">Amount</th></tr></thead>
                 <tbody>
                     @foreach (var r in Model.RevenueRows)

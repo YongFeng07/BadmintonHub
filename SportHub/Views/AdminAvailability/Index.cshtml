@@ -8,15 +8,15 @@
     var token = Antiforgery.GetAndStoreTokens(Context).RequestToken;
 }
 
-<div class="bh-admin-topbar">
+<div class="sh-admin-topbar">
     <div>
-        <h2 class="bh-page-title mb-0">Court Availability</h2>
-        <p class="bh-page-sub mb-0">Click a slot to cycle: Open → Maintenance → Blocked → Open. Booked slots are protected.</p>
+        <h2 class="sh-page-title mb-0">Court Availability</h2>
+        <p class="sh-page-sub mb-0">Click a slot to cycle: Open → Maintenance → Blocked → Open. Booked slots are protected.</p>
     </div>
-    <a asp-action="Generate" class="btn btn-bh btn-sm">+ Generate Slots</a>
+    <a asp-action="Generate" class="btn btn-sh btn-sm">+ Generate Slots</a>
 </div>
 
-<div class="bh-form-section">
+<div class="sh-form-section">
     <div class="d-flex flex-wrap gap-2 align-items-center">
         <form method="get" asp-action="Index" class="d-flex flex-wrap gap-2 align-items-center mb-0">
             <label for="avFacility" class="form-label mb-0 fw-bold">Facility:</label>
@@ -41,7 +41,7 @@
 
 <input type="hidden" id="avToken" value="@token" />
 
-<div class="table-responsive bh-table">
+<div class="table-responsive sh-table">
     <table class="table mb-0 align-middle" id="slotGrid">
         <thead>
             <tr>
@@ -82,7 +82,7 @@
     </table>
 </div>
 
-<div class="bh-form-section mt-3">
+<div class="sh-form-section mt-3">
     <h5 class="mb-3">Maintenance / Block a Date Range</h5>
     <p class="text-muted small">Applies a status to every existing slot of one court between two dates. Slots with bookings are left untouched.</p>
     <form id="rangeForm" class="d-flex flex-wrap gap-2 align-items-end">
@@ -112,7 +112,7 @@
                 <option value="Open">Open</option>
             </select>
         </div>
-        <button type="submit" class="btn btn-bh">Apply Range</button>
+        <button type="submit" class="btn btn-sh">Apply Range</button>
     </form>
     <div id="rangeResult" class="mt-2 small"></div>
 </div>

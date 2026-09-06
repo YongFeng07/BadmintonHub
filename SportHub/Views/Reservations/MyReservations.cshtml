@@ -16,12 +16,12 @@
 <div class="mt-3">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h1 class="h3 mb-0">@Localizer["PageTitle"]</h1>
-        <a asp-action="Create" class="btn btn-bh">@Localizer["BookBtn"]</a>
+        <a asp-action="Create" class="btn btn-sh">@Localizer["BookBtn"]</a>
     </div>
 
     <div class="row g-4 mt-1">
         <div class="col-lg-4">
-            <div class="bh-form-section">
+            <div class="sh-form-section">
                 <h2 class="h6 text-uppercase text-muted mb-2">@Localizer["CalendarTitle"]</h2>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <a asp-action="MyReservations" asp-route-date="@prevMonth.ToString("yyyy-MM-01")" asp-route-tab="@Model.Tab" class="btn btn-sm btn-outline-secondary">‹</a>
@@ -31,14 +31,14 @@
                         <a asp-action="MyReservations" asp-route-date="@nextMonth.ToString("yyyy-MM-01")" asp-route-tab="@Model.Tab" class="btn btn-sm btn-outline-secondary">›</a>
                     </div>
                 </div>
-                <div class="bh-calendar mb-2">
+                <div class="sh-calendar mb-2">
                     @foreach (var dow in mondayFirst)
                     {
-                        <div class="bh-cal-dow">@dow</div>
+                        <div class="sh-cal-dow">@dow</div>
                     }
                     @for (var i = 0; i < leading; i++)
                     {
-                        <div class="bh-cal-day blank"></div>
+                        <div class="sh-cal-day blank"></div>
                     }
                     @for (var day = 1; day <= daysInMonth; day++)
                     {
@@ -47,11 +47,11 @@
                         var isToday = cellDate == today;
                         var hasRes = Model.ReservationsPerDay.TryGetValue(day, out var count) && count > 0;
                         <a asp-action="MyReservations" asp-route-date="@cellDate.ToString("yyyy-MM-dd")" asp-route-tab="@Model.Tab"
-                           class="bh-cal-day @(isFilter ? "selected" : "") @(isToday ? "today" : "") @(hasRes ? "has-res" : "")">
+                           class="sh-cal-day @(isFilter ? "selected" : "") @(isToday ? "today" : "") @(hasRes ? "has-res" : "")">
                             @day
                             @if (hasRes)
                             {
-                                <span class="bh-cal-count">@count</span>
+                                <span class="sh-cal-count">@count</span>
                             }
                         </a>
                     }
@@ -92,23 +92,23 @@
                     @await Html.PartialAsync("_ReservationTable", new Tuple<string, List<Reservation>>("cancelled", Model.Cancelled))
                     break;
                 case "insights":
-                    <div class="bh-form-section mb-3">
+                    <div class="sh-form-section mb-3">
                         <h2 class="h6 text-uppercase text-muted mb-2">Monthly bookings — last 6 months</h2>
                         <canvas id="insightMonthlyChart" height="70"></canvas>
                     </div>
-                    <div class="bh-form-section mb-3">
+                    <div class="sh-form-section mb-3">
                         <h2 class="h6 text-uppercase text-muted mb-2">Spend by month — last 6 months</h2>
                         <canvas id="insightSpendChart" height="70"></canvas>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <div class="bh-form-section h-100">
+                            <div class="sh-form-section h-100">
                                 <h2 class="h6 text-uppercase text-muted mb-2">Bookings by category</h2>
                                 <canvas id="insightCategoryChart" height="110"></canvas>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="bh-form-section h-100">
+                            <div class="sh-form-section h-100">
                                 <h2 class="h6 text-uppercase text-muted mb-2">Booking outcomes</h2>
                                 <canvas id="insightOutcomeChart" height="110"></canvas>
                                 <p class="small text-muted mt-2 mb-0">

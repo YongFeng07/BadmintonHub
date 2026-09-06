@@ -5,14 +5,14 @@
 
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
-        <div class="bh-card p-4 p-md-5 text-center mt-5">
-            <div class="bh-verify-icon">📬</div>
+        <div class="sh-card p-4 p-md-5 text-center mt-5">
+            <div class="sh-verify-icon">📬</div>
 
             @if (Model.AlreadyVerified)
             {
                 <h1 class="h4 mb-2">Email already verified</h1>
                 <p class="text-muted">Your email address is already verified. You can sign in now.</p>
-                <a asp-action="Login" class="btn btn-bh mt-2">Back to login</a>
+                <a asp-action="Login" class="btn btn-sh mt-2">Back to login</a>
             }
             else
             {
@@ -36,7 +36,7 @@
                     Did not receive the email?
                     <a asp-action="ResendVerification" asp-route-email="@Model.Email">Resend it</a>
                 </p>
-                <a asp-action="Login" class="btn btn-bh">Back to login</a>
+                <a asp-action="Login" class="btn btn-sh">Back to login</a>
             }
         </div>
     </div>

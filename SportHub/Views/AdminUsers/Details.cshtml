@@ -10,24 +10,24 @@
     var isLocked = user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.Now;
 }
 
-<div class="bh-admin-topbar">
+<div class="sh-admin-topbar">
     <h1 class="h3 mb-0">👁 User Details</h1>
     <div>
-        <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-bh btn-sm">✏️ Edit Profile</a>
+        <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-sh btn-sm">✏️ Edit Profile</a>
         <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Back</a>
     </div>
 </div>
 
 <div class="row">
     <div class="col-lg-5">
-        <div class="bh-form-section text-center">
+        <div class="sh-form-section text-center">
             @if (user.PhotoUrl != null)
             {
-                <img src="@user.PhotoUrl" alt="Profile photo" class="bh-avatar-lg mb-3" />
+                <img src="@user.PhotoUrl" alt="Profile photo" class="sh-avatar-lg mb-3" />
             }
             else
             {
-                <span class="bh-avatar-lg bh-avatar-initials mb-3">@initials</span>
+                <span class="sh-avatar-lg sh-avatar-initials mb-3">@initials</span>
             }
             <h2 class="h5 mb-1">@user.FullName</h2>
             <div class="text-muted">@user.Email</div>
@@ -67,30 +67,30 @@
         </div>
     </div>
     <div class="col-lg-7">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 mb-3">Activity</h2>
             <div class="row g-3">
                 <div class="col-6 col-md-3">
                     <div class="border rounded-3 p-3 text-center">
-                        <div class="fs-3 fw-bold text-bh-green">@Model.ReservationCount</div>
+                        <div class="fs-3 fw-bold text-sh-green">@Model.ReservationCount</div>
                         <div class="small text-muted">Reservations</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="border rounded-3 p-3 text-center">
-                        <div class="fs-3 fw-bold text-bh-green">@Model.ConfirmedCount</div>
+                        <div class="fs-3 fw-bold text-sh-green">@Model.ConfirmedCount</div>
                         <div class="small text-muted">Confirmed</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="border rounded-3 p-3 text-center">
-                        <div class="fs-3 fw-bold text-bh-green">@Model.CancelledCount</div>
+                        <div class="fs-3 fw-bold text-sh-green">@Model.CancelledCount</div>
                         <div class="small text-muted">Cancelled</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="border rounded-3 p-3 text-center">
-                        <div class="fs-3 fw-bold text-bh-green">RM @Model.TotalPaid.ToString("0.00")</div>
+                        <div class="fs-3 fw-bold text-sh-green">RM @Model.TotalPaid.ToString("0.00")</div>
                         <div class="small text-muted">Total Paid</div>
                     </div>
                 </div>

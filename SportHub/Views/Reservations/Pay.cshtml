@@ -11,7 +11,7 @@
 
     <div class="row g-4">
         <div class="col-lg-5">
-            <div class="bh-form-section">
+            <div class="sh-form-section">
                 <h2 class="h6 text-uppercase text-muted mb-3">Booking summary</h2>
                 @if (r != null)
                 {
@@ -20,7 +20,7 @@
                         <dt class="col-5">Court</dt><dd class="col-7">Court @r.Court?.CourtNumber</dd>
                         <dt class="col-5">Date</dt><dd class="col-7">@r.ReservationDate.ToString("dd MMM yyyy")</dd>
                         <dt class="col-5">Time</dt><dd class="col-7">@r.StartTime.ToString("HH:mm") – @r.EndTime.ToString("HH:mm")</dd>
-                        <dt class="col-5 fw-bold">Total Due</dt><dd class="col-7 fw-bold text-bh-green">RM @r.TotalAmount.ToString("0.00")</dd>
+                        <dt class="col-5 fw-bold">Total Due</dt><dd class="col-7 fw-bold text-sh-green">RM @r.TotalAmount.ToString("0.00")</dd>
                     </dl>
                 }
             </div>
@@ -31,7 +31,7 @@
         </div>
 
         <div class="col-lg-7">
-            <div class="bh-form-section">
+            <div class="sh-form-section">
                 <form asp-action="Pay" method="post">
                     <input type="hidden" asp-for="ReservationId" />
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
@@ -62,7 +62,7 @@
                         <span asp-validation-for="PaymentReference" class="text-danger small"></span>
                     </div>
 
-                    <button type="submit" class="btn btn-bh">Confirm Payment — RM @(r?.TotalAmount.ToString("0.00") ?? "0.00")</button>
+                    <button type="submit" class="btn btn-sh">Confirm Payment — RM @(r?.TotalAmount.ToString("0.00") ?? "0.00")</button>
                     <a asp-action="Details" asp-route-id="@Model.ReservationId" class="btn btn-outline-secondary ms-1">Back to Reservation</a>
                 </form>
             </div>

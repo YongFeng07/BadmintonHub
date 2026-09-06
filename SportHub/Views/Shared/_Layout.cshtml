@@ -29,6 +29,10 @@
         .Split(' ', StringSplitOptions.RemoveEmptyEntries)
         .Select(w => char.ToUpperInvariant(w[0]))
         .Take(2));
+
+    // Active-state highlight for the main nav.
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -41,23 +45,23 @@
 </head>
 <body>
     <header class="sticky-top">
-        <nav class="navbar navbar-expand-lg navbar-dark bh-navbar">
+        <nav class="navbar navbar-expand-lg navbar-dark sh-navbar">
             <div class="container">
                 <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
-                    <span class="bh-brand-icon">🏸</span>
-                    <span class="bh-brand-text">@siteName</span>
+                    <span class="sh-brand-icon">🏸</span>
+                    <span class="sh-brand-text">@siteName</span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="mainNav">
                     <ul class="navbar-nav me-auto">
-                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">@Localizer["NavHome"]</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Courts" asp-action="Index">@Localizer["NavCourts"]</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Catalog" asp-action="Index">@Localizer["NavCatalog"]</a></li>
+                        <li class="nav-item"><a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-controller="Home" asp-action="Index">@Localizer["NavHome"]</a></li>
+                        <li class="nav-item"><a class="nav-link @(currentController == "Courts" ? "active" : "")" asp-controller="Courts" asp-action="Index">@Localizer["NavCourts"]</a></li>
+                        <li class="nav-item"><a class="nav-link @(currentController == "Catalog" ? "active" : "")" asp-controller="Catalog" asp-action="Index">@Localizer["NavCatalog"]</a></li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item"><a class="nav-link" asp-controller="Reservations" asp-action="MyReservations">@Localizer["NavMyReservations"]</a></li>
+                            <li class="nav-item"><a class="nav-link @(currentController == "Reservations" && currentAction == "MyReservations" ? "active" : "")" asp-controller="Reservations" asp-action="MyReservations">@Localizer["NavMyReservations"]</a></li>
                         }
                     </ul>
                     <ul class="navbar-nav align-items-lg-center">
@@ -77,7 +81,7 @@
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item me-lg-2 mt-1 mt-lg-0">
-                                <a class="btn btn-bh-amber btn-sm px-3" asp-controller="Reservations" asp-action="Create">@Localizer["NavBook"]</a>
+                                <a class="btn btn-sh-amber btn-sm px-3" asp-controller="Reservations" asp-action="Create">@Localizer["NavBook"]</a>
                             </li>
                             <li class="nav-item me-lg-2 mt-1 mt-lg-0">
                                 <a class="nav-link position-relative py-lg-0" asp-controller="Cart" asp-action="Index" title="Cart">
@@ -104,15 +108,15 @@
                                 <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     @if (currentPhotoUrl != null)
                                     {
-                                        <img src="@currentPhotoUrl" alt="" class="bh-avatar-sm" />
+                                        <img src="@currentPhotoUrl" alt="" class="sh-avatar-sm" />
                                     }
                                     else
                                     {
-                                        <span class="bh-avatar-sm bh-avatar-initials">@currentInitials</span>
+                                        <span class="sh-avatar-sm sh-avatar-initials">@currentInitials</span>
                                     }
                                     <span>@currentUserName</span>
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end bh-dropdown">
+                                <ul class="dropdown-menu dropdown-menu-end sh-dropdown">
                                     <li><a class="dropdown-item" asp-controller="Reservations" asp-action="MyReservations">@Localizer["DropMyReservations"]</a></li>
                                     <li><a class="dropdown-item" asp-controller="Cart" asp-action="Index">@Localizer["DropCart"]</a></li>
                                     <li><a class="dropdown-item" asp-controller="Wishlist" asp-action="Index">@Localizer["DropWishlist"]</a></li>
@@ -150,7 +154,7 @@
                         {
                             <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">@Localizer["NavLogin"]</a></li>
                             <li class="nav-item ms-lg-2 mt-1 mt-lg-0">
-                                <a class="btn btn-bh-amber btn-sm px-3" asp-controller="Account" asp-action="Register">@Localizer["NavRegister"]</a>
+                                <a class="btn btn-sh-amber btn-sm px-3" asp-controller="Account" asp-action="Register">@Localizer["NavRegister"]</a>
                             </li>
                         }
                     </ul>
@@ -159,7 +163,7 @@
         </nav>
         @if (!string.IsNullOrWhiteSpace(announcement))
         {
-            <div class="bh-announcement">
+            <div class="sh-announcement">
                 <div class="container">📢 @announcement</div>
             </div>
         }
@@ -192,7 +196,7 @@
         </div>
     </main>
 
-    <footer class="bh-footer mt-auto">
+    <footer class="sh-footer mt-auto">
         <div class="container">
             <div class="row g-4">
                 <div class="col-md-6">
@@ -209,7 +213,12 @@
                     <h6>@Localizer["FooterContact"]</h6>
                     <span class="d-block">03-4142 8899</span>
                     <span class="d-block">info@sporthub.my</span>
+                    <span class="d-block">12, Jalan Sukan 1, 53300 Kuala Lumpur</span>
                 </div>
+            </div>
+            <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between gap-2">
+                <span>© 2026 @siteName — @Localizer["FooterDemo"]</span>
+                <span>AMIT2014 · ASP.NET Core MVC · .NET 10</span>
             </div>
         </div>
     </footer>

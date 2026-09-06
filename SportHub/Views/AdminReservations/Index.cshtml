@@ -8,7 +8,7 @@
     <span class="text-muted">@Model.TotalCount reservation(s)</span>
 </div>
 
-<div class="bh-form-section mt-3">
+<div class="sh-form-section mt-3">
     <form id="filterForm" asp-action="Table" method="get" class="row g-2 align-items-end">
         <div class="col-md-3">
             <label class="form-label small mb-1">Search</label>
@@ -48,7 +48,7 @@
             </select>
         </div>
         <div class="col-md-1 d-grid">
-            <button type="submit" class="btn btn-bh btn-sm">Filter</button>
+            <button type="submit" class="btn btn-sh btn-sm">Filter</button>
         </div>
     </form>
     @if (Model.HasFilter)

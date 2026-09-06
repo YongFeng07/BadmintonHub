@@ -6,10 +6,10 @@
     var today = DateOnly.FromDateTime(DateTime.Today);
 }
 
-<div class="bh-admin-topbar">
+<div class="sh-admin-topbar">
     <div>
-        <h2 class="bh-page-title mb-0">Generate Availability Slots</h2>
-        <p class="bh-page-sub mb-0">Bulk-create hourly slots for selected courts across a date range.</p>
+        <h2 class="sh-page-title mb-0">Generate Availability Slots</h2>
+        <p class="sh-page-sub mb-0">Bulk-create hourly slots for selected courts across a date range.</p>
     </div>
     <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Back to Availability</a>
 </div>
@@ -17,7 +17,7 @@
 <form asp-action="Generate" method="post">
     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
 
-    <div class="bh-form-section">
+    <div class="sh-form-section">
         <h5 class="mb-3">Courts</h5>
         @foreach (var group in courts.GroupBy(c => c.Facility!.Name))
         {
@@ -37,7 +37,7 @@
         <span asp-validation-for="CourtIds" class="text-danger small"></span>
     </div>
 
-    <div class="bh-form-section">
+    <div class="sh-form-section">
         <h5 class="mb-3">Date Range &amp; Status</h5>
         <div class="row g-3">
             <div class="col-md-3">
@@ -58,7 +58,7 @@
         <div class="form-text mt-2">Existing slots are skipped. Days outside the facility's operating days are skipped.</div>
     </div>
 
-    <button type="submit" class="btn btn-bh px-4">Generate</button>
+    <button type="submit" class="btn btn-sh px-4">Generate</button>
 </form>
 
 @section Scripts {

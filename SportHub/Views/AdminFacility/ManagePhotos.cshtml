@@ -5,15 +5,15 @@
     var photos = Model.Photos.OrderBy(p => p.DisplayOrder).ToList();
 }
 
-<div class="bh-admin-topbar">
+<div class="sh-admin-topbar">
     <div>
-        <h2 class="bh-page-title mb-0">Photos — @Model.Name</h2>
-        <p class="bh-page-sub mb-0">@photos.Count photo(s). The cover image is shown on the facility catalog. Uploads are cropped to 800×450.</p>
+        <h2 class="sh-page-title mb-0">Photos — @Model.Name</h2>
+        <p class="sh-page-sub mb-0">@photos.Count photo(s). The cover image is shown on the facility catalog. Uploads are cropped to 800×450.</p>
     </div>
     <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Back to Facilities</a>
 </div>
 
-<div class="bh-form-section">
+<div class="sh-form-section">
     <h5 class="mb-3">Upload New Photos</h5>
     <form asp-action="UploadPhotos" method="post" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
@@ -22,13 +22,13 @@
             <input type="file" name="photos" class="form-control" accept=".jpg,.jpeg,.png,.webp" multiple required />
             <div class="form-text">JPG, PNG or WebP — up to 5 MB each. You can select several files at once.</div>
         </div>
-        <button type="submit" class="btn btn-bh">Upload</button>
+        <button type="submit" class="btn btn-sh">Upload</button>
     </form>
 </div>
 
 @if (photos.Count == 0)
 {
-    <div class="bh-empty"><span class="emoji">🖼️</span>No photos yet — upload the first one above.</div>
+    <div class="sh-empty"><span class="emoji">🖼️</span>No photos yet — upload the first one above.</div>
 }
 else
 {
@@ -36,7 +36,7 @@ else
         @foreach (var photo in photos)
         {
             <div class="col-md-4 col-lg-3">
-                <div class="card bh-card h-100">
+                <div class="card sh-card h-100">
                     <img src="@photo.FilePath" class="card-img-top" style="height: 140px;" alt="@photo.Caption" />
                     <div class="card-body p-2">
                         <div class="d-flex justify-content-between align-items-center">

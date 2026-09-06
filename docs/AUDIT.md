@@ -168,5 +168,10 @@ README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.
    public reference and shows status; it is not a cryptographic gatekeeper.
 6. **Demo data only** — the seeded facility/rates/reservations are fictional
    demo content.
-7. `SportHub/wwwroot/images/` is intentionally not committed — the seeder
-   regenerates the placeholder SVGs at first run.
+7. ~~`SportHub/wwwroot/images/` is intentionally not committed — the seeder
+   regenerates the placeholder SVGs at first run.~~ Done 2026-09-06: real-world
+   photographs from Wikimedia Commons are now committed under
+   `SportHub/wwwroot/images/courts/` with an attribution file
+   (docs/PHOTO_CREDITS.md, regenerable via `tools/fetch-photos.ps1`); the seeder
+   seeds the jpg photos with graceful fallbacks and no longer generates
+   placeholder SVGs (only legacy `*.svg` files stay gitignored).

@@ -7,12 +7,12 @@
 
 @if (!Model.Reservations.Any())
 {
-    <div class="bh-empty"><span class="emoji">🔍</span><p class="mb-0">No reservations match the current filters.</p></div>
+    <div class="sh-empty"><span class="emoji">🔍</span><p class="mb-0">No reservations match the current filters.</p></div>
 }
 else
 {
-    <div class="table-responsive bh-form-section">
-        <table class="table table-hover align-middle bh-table mb-0">
+    <div class="table-responsive sh-form-section">
+        <table class="table table-hover align-middle sh-table mb-0">
             <thead>
                 <tr>
                     <th>Reference</th>
@@ -103,7 +103,7 @@ else
                                         }
                                     </select>
                                     <input type="text" name="reference" class="form-control form-control-sm" style="width: 110px;" placeholder="Ref (optional)" />
-                                    <button type="submit" class="btn btn-sm btn-bh-amber" title="Record payment received">💳 Paid</button>
+                                    <button type="submit" class="btn btn-sm btn-sh-amber" title="Record payment received">💳 Paid</button>
                                 </form>
                             }
                         </td>

@@ -8,9 +8,9 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-    <div class="bh-admin">
-        <aside class="bh-admin-sidebar">
-            <div class="bh-admin-brand">
+    <div class="sh-admin">
+        <aside class="sh-admin-sidebar">
+            <div class="sh-admin-brand">
                 🏸 SportHub
                 <small>@(User.IsInRole("SuperAdmin") ? "Super Admin" : "Administrator")</small>
             </div>
@@ -34,14 +34,14 @@
                     <a asp-controller="AdminSettings" asp-action="Index">System Settings</a>
                 }
             </nav>
-            <div class="bh-admin-sidebar-footer">
+            <div class="sh-admin-sidebar-footer">
                 <a asp-controller="Home" asp-action="Index">← Back to site</a>
                 <form asp-controller="Account" asp-action="Logout" method="post">
                     <button type="submit">🚪 Logout (@User.Identity?.Name)</button>
                 </form>
             </div>
         </aside>
-        <main class="bh-admin-main">
+        <main class="sh-admin-main">
             @if (TempData["SuccessMessage"] != null)
             {
                 <div class="alert alert-success alert-dismissible fade show" role="alert">

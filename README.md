@@ -112,7 +112,9 @@ supplementary end-to-end script (`tests/e2e.sh`).
   `ToyyibPay:UserSecretKey`/`CategoryCode` it falls back to a clearly-labelled
   simulated gateway page. The real-API path needs real credentials and has not
   been exercised against the live gateway.
-- The seeded placeholder court images are generated SVGs.
+- The seeded court photos are real-world photographs from Wikimedia Commons
+  under free licenses (credited in [docs/PHOTO_CREDITS.md](docs/PHOTO_CREDITS.md))
+  — demo content only, no real business is represented.
 
 ## Documentation
 

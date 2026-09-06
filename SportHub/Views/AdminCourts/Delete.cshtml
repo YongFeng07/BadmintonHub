@@ -5,8 +5,8 @@
     var reservationCount = (int)(ViewBag.ReservationCount ?? 0);
 }
 
-<div class="bh-form-section" style="max-width: 640px;">
-    <h2 class="bh-page-title mb-3">Delete Court @Model.CourtNumber?</h2>
+<div class="sh-form-section" style="max-width: 640px;">
+    <h2 class="sh-page-title mb-3">Delete Court @Model.CourtNumber?</h2>
 
     @if (reservationCount > 0)
     {
@@ -15,7 +15,7 @@
             Reservation history must be kept for audit, so courts with bookings cannot be deleted.
             Set the court status to <em>Unavailable</em> instead.
         </div>
-        <a asp-action="Index" class="btn btn-bh">Back to Courts</a>
+        <a asp-action="Index" class="btn btn-sh">Back to Courts</a>
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit Court Status</a>
     }
     else

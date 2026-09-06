@@ -158,38 +158,81 @@ public static class DbSeeder
                 ("02", CourtType.VIP, 120.00m, "VIP pitch with camera gantry and premium turf.")
             });
 
-        // ---------- 2. Court photos (demo placeholder images generated into wwwroot) ----------
-        EnsurePlaceholderImages(webRootPath);
+        // ---------- 2. Court & facility photos ----------
+        // Real-world photographs from Wikimedia Commons, committed under
+        // wwwroot/images/courts/ (see docs/PHOTO_CREDITS.md for author/license).
+        // One photo set per sport; if a file is missing the seeder falls back to
+        // the next photo of the same sport, then to the badminton default, so
+        // seeding never breaks over a deleted file.
+        var photoSets = new Dictionary<string, string[]>
+        {
+            ["court"]  = new[] { "badminton-01", "badminton-02", "badminton-03", "badminton-04", "badminton-05", "badminton-06", "badminton-hall" },
+            ["pool"]   = new[] { "pool-unit", "pool-facility", "pool-view" },
+            ["gym"]    = new[] { "gym-unit", "gym-facility", "gym-view" },
+            ["squash"] = new[] { "squash-unit", "squash-facility", "squash-view" },
+            ["table"]  = new[] { "table-unit", "table-facility", "table-view" },
+            ["futsal"] = new[] { "futsal-unit", "futsal-facility", "futsal-view" }
+        };
+
+        var photoBaseDir = Path.Combine(webRootPath ?? "", "images", "courts");
+        string PhotoUrl(string kind, int preferredIndex)
+        {
+            var set = photoSets.TryGetValue(kind, out var photos) ? photos : photoSets["court"];
+            for (var attempt = 0; attempt < set.Length; attempt++)
+            {
+                var file = set[(preferredIndex + attempt) % set.Length];
+                if (File.Exists(Path.Combine(photoBaseDir, file + ".jpg")))
+                    return $"/images/courts/{file}.jpg";
+            }
+            // Nothing of this sport exists on disk yet — fall back to the first
+            // committed photo (or the legacy placeholder while it still exists).
+            return File.Exists(Path.Combine(photoBaseDir, "badminton-01.jpg"))
+                ? "/images/courts/badminton-01.jpg"
+                : "/images/courts/court-01.svg";
+        }
+
+        string NamedPhoto(string kind, string name)
+        {
+            return File.Exists(Path.Combine(photoBaseDir, name + ".jpg"))
+                ? $"/images/courts/{name}.jpg"
+                : PhotoUrl(kind, 1);
+        }
+
         var categoryNameOf = facilities.ToDictionary(f => f.Id,
             f => categories.First(kv => kv.Value.Id == f.CategoryId).Key);
-        foreach (var court in courts)
+        foreach (var facility in facilities)
         {
-            var kind = court.FacilityId switch
+            var kind = facility.Id == badminton.Id ? "court"
+                : facility.Id == pool.Id ? "pool"
+                : facility.Id == gym.Id ? "gym"
+                : facility.Id == squash.Id ? "squash"
+                : facility.Id == tableTennis.Id ? "table"
+                : "futsal";
+            var facilityCourts = courts.Where(c => c.FacilityId == facility.Id).ToList();
+            for (var i = 0; i < facilityCourts.Count; i++)
             {
-                _ when court.FacilityId == badminton.Id => "court",
-                _ when court.FacilityId == pool.Id => "pool",
-                _ when court.FacilityId == gym.Id => "gym",
-                _ when court.FacilityId == squash.Id => "squash",
-                _ when court.FacilityId == tableTennis.Id => "table",
-                _ => "futsal"
-            };
-            var photoPath = kind == "court" ? $"/images/courts/court-{court.CourtNumber}.svg" : $"/images/courts/unit-{kind}.svg";
+                var court = facilityCourts[i];
+                // Badminton courts get one numbered photo each; the other sports
+                // share their unit photo, with a second view as the gallery image.
+                var primary = kind == "court" ? PhotoUrl("court", i) : PhotoUrl(kind, 0);
+                var secondary = kind == "court" ? NamedPhoto("court", "badminton-hall") : PhotoUrl(kind, 1);
 
-            db.CourtPhotos.Add(new CourtPhoto
-            {
-                CourtId = court.Id,
-                FilePath = photoPath,
-                Caption = $"{categoryNameOf[court.FacilityId]} {court.CourtNumber}",
-                DisplayOrder = 1,
-                IsPrimary = true
-            });
-            db.CourtPhotos.Add(new CourtPhoto
-            {
-                CourtId = court.Id,
-                FilePath = $"/images/courts/facility-{kind}.svg",
-                Caption = "Facility view",
-                DisplayOrder = 2
-            });
+                db.CourtPhotos.Add(new CourtPhoto
+                {
+                    CourtId = court.Id,
+                    FilePath = primary,
+                    Caption = $"{categoryNameOf[facility.Id]} {court.CourtNumber}",
+                    DisplayOrder = 1,
+                    IsPrimary = true
+                });
+                db.CourtPhotos.Add(new CourtPhoto
+                {
+                    CourtId = court.Id,
+                    FilePath = secondary,
+                    Caption = "Facility view",
+                    DisplayOrder = 2
+                });
+            }
         }
 
         // ---------- 3. Facility photos ----------
@@ -212,12 +255,12 @@ public static class DbSeeder
             });
         }
 
-        AddFacilityPhotos(badminton, "/images/courts/facility.svg", "/images/courts/court-01.svg");
-        AddFacilityPhotos(pool, "/images/courts/facility-pool.svg", "/images/courts/unit-pool.svg");
-        AddFacilityPhotos(gym, "/images/courts/facility-gym.svg", "/images/courts/unit-gym.svg");
-        AddFacilityPhotos(squash, "/images/courts/facility-squash.svg", "/images/courts/unit-squash.svg");
-        AddFacilityPhotos(tableTennis, "/images/courts/facility-table.svg", "/images/courts/unit-table.svg");
-        AddFacilityPhotos(futsal, "/images/courts/facility-futsal.svg", "/images/courts/unit-futsal.svg");
+        AddFacilityPhotos(badminton, NamedPhoto("court", "badminton-hall"), PhotoUrl("court", 1));
+        AddFacilityPhotos(pool, NamedPhoto("pool", "pool-facility"), PhotoUrl("pool", 2));
+        AddFacilityPhotos(gym, NamedPhoto("gym", "gym-facility"), PhotoUrl("gym", 2));
+        AddFacilityPhotos(squash, NamedPhoto("squash", "squash-facility"), PhotoUrl("squash", 2));
+        AddFacilityPhotos(tableTennis, NamedPhoto("table", "table-facility"), PhotoUrl("table", 2));
+        AddFacilityPhotos(futsal, NamedPhoto("futsal", "futsal-facility"), PhotoUrl("futsal", 2));
 
         // ---------- 4. Availability: next 14 days, hourly slots per facility hours ----------
         foreach (var facility in facilities)
@@ -579,84 +622,4 @@ public static class DbSeeder
         }
         db.SaveChanges();
     }
-
-    // ---------- Placeholder demo images ----------
-
-    private static void EnsurePlaceholderImages(string? webRootPath)
-    {
-        if (string.IsNullOrEmpty(webRootPath)) return;
-        var dir = Path.Combine(webRootPath, "images", "courts");
-        Directory.CreateDirectory(dir);
-
-        for (var i = 1; i <= 6; i++)
-        {
-            var path = Path.Combine(dir, $"court-{i:00}.svg");
-            if (!File.Exists(path))
-                File.WriteAllText(path, CourtSvg(i));
-        }
-
-        var facilityPath = Path.Combine(dir, "facility.svg");
-        if (!File.Exists(facilityPath))
-            File.WriteAllText(facilityPath, FacilitySvg);
-
-        // Unit + facility images for the other seeded categories (P3).
-        var kinds = new (string Kind, string Label, string Colour)[]
-        {
-            ("pool", "SWIMMING POOL", "#1f6f8b"),
-            ("gym", "GYMNASIUM", "#7a5c1e"),
-            ("squash", "SQUASH COURT", "#5d3a6b"),
-            ("table", "TABLE TENNIS", "#8b2f2f"),
-            ("futsal", "FUTSAL PITCH", "#2f6b35")
-        };
-        foreach (var (kind, label, colour) in kinds)
-        {
-            var unitPath = Path.Combine(dir, $"unit-{kind}.svg");
-            if (!File.Exists(unitPath))
-                File.WriteAllText(unitPath, UnitSvg(kind, label, colour));
-            var facilityKindPath = Path.Combine(dir, $"facility-{kind}.svg");
-            if (!File.Exists(facilityKindPath))
-                File.WriteAllText(facilityKindPath, FacilityKindSvg(kind, label, colour));
-        }
-    }
-
-    private static string CourtSvg(int number) =>
-        @"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 400' role='img' aria-label='Court " + $"{number:00}" + @"'>
-  <rect width='640' height='400' fill='#0e3a2f'/>
-  <rect x='60' y='40' width='520' height='320' fill='#17714f' stroke='#ffffff' stroke-width='4'/>
-  <line x1='320' y1='40' x2='320' y2='360' stroke='#ffffff' stroke-width='6'/>
-  <rect x='60' y='40' width='260' height='320' fill='none' stroke='#d9e9df' stroke-width='2'/>
-  <rect x='320' y='40' width='260' height='320' fill='none' stroke='#d9e9df' stroke-width='2'/>
-  <rect x='190' y='40' width='130' height='320' fill='none' stroke='#f2d13b' stroke-width='3'/>
-  <rect x='320' y='40' width='130' height='320' fill='none' stroke='#f2d13b' stroke-width='3'/>
-  <text x='320' y='390' text-anchor='middle' font-family='Segoe UI, Arial, sans-serif' font-size='26' font-weight='700' fill='#ffffff'>BADMINTONHUB • COURT " + $"{number:00}" + @"</text>
-</svg>";
-
-    private const string FacilitySvg =
-        @"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 400' role='img' aria-label='SportHub facility'>
-  <rect width='640' height='400' fill='#dcefe6'/>
-  <rect x='80' y='80' width='480' height='240' fill='#e8e2d5' stroke='#8a8a8a' stroke-width='3'/>
-  <polygon points='80,80 320,20 560,80' fill='#b5453a' stroke='#7e2f26' stroke-width='3'/>
-  <rect x='260' y='180' width='120' height='140' fill='#5a4a3a'/>
-  <rect x='120' y='120' width='80' height='60' fill='#9fc5e8' stroke='#5b7d99' stroke-width='2'/>
-  <rect x='440' y='120' width='80' height='60' fill='#9fc5e8' stroke='#5b7d99' stroke-width='2'/>
-  <text x='320' y='365' text-anchor='middle' font-family='Segoe UI, Arial, sans-serif' font-size='26' font-weight='700' fill='#1f4d3a'>BADMINTONHUB MAIN FACILITY</text>
-</svg>";
-
-    private static string UnitSvg(string kind, string label, string colour) =>
-        $@"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 400' role='img' aria-label='{label}'>
-  <rect width='640' height='400' fill='{colour}'/>
-  <rect x='90' y='60' width='460' height='280' fill='#f2efe6' stroke='#ffffff' stroke-width='5'/>
-  <rect x='90' y='60' width='460' height='280' fill='none' stroke='#d9d2c0' stroke-width='2'/>
-  <text x='320' y='385' text-anchor='middle' font-family='Segoe UI, Arial, sans-serif' font-size='24' font-weight='700' fill='#ffffff'>BADMINTONHUB • {label}</text>
-</svg>";
-
-    private static string FacilityKindSvg(string kind, string label, string colour) =>
-        $@"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 400' role='img' aria-label='{label} facility'>
-  <rect width='640' height='400' fill='#eef4f0'/>
-  <rect x='70' y='70' width='500' height='260' fill='{colour}' stroke='#ffffff' stroke-width='5'/>
-  <rect x='250' y='130' width='140' height='200' fill='#ffffff' opacity='0.35'/>
-  <rect x='110' y='110' width='90' height='70' fill='#ffffff' opacity='0.55'/>
-  <rect x='440' y='110' width='90' height='70' fill='#ffffff' opacity='0.55'/>
-  <text x='320' y='370' text-anchor='middle' font-family='Segoe UI, Arial, sans-serif' font-size='26' font-weight='700' fill='{colour}'>{label} FACILITY</text>
-</svg>";
 }

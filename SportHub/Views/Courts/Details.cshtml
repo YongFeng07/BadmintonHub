@@ -47,17 +47,17 @@
         }
         else
         {
-            <div class="bh-empty"><span class="emoji">🏸</span>No photos yet.</div>
+            <div class="sh-empty"><span class="emoji">🏸</span>No photos yet.</div>
         }
 
-        <div class="bh-form-section mt-3">
+        <div class="sh-form-section mt-3">
             <h4 class="mb-3">About this court</h4>
             <p class="text-muted">@(string.IsNullOrEmpty(Model.Description) ? "No description provided." : Model.Description)</p>
         </div>
     </div>
 
     <div class="col-lg-5">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <div class="d-flex justify-content-between align-items-start">
                 <h4 class="mb-0">Court @Model.CourtNumber</h4>
                 @switch (Model.Status)
@@ -78,13 +78,13 @@
                 <dt class="col-5">Court Type</dt>
                 <dd class="col-7">@Model.CourtType</dd>
                 <dt class="col-5">Hourly Rate</dt>
-                <dd class="col-7 fw-bold text-bh-green">RM @Model.HourlyRate.ToString("0.00")</dd>
+                <dd class="col-7 fw-bold text-sh-green">RM @Model.HourlyRate.ToString("0.00")</dd>
                 <dt class="col-5">Facility</dt>
                 <dd class="col-7">@(Model.Facility?.Name ?? "—")</dd>
             </dl>
         </div>
 
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h5 class="mb-3">Check Availability</h5>
             <div class="mb-3">
                 <label for="availabilityDate" class="form-label">Date</label>
@@ -98,7 +98,7 @@
                 @if (Model.Status == CourtStatus.Available)
                 {
                     <a asp-controller="Reservations" asp-action="Create" asp-route-courtId="@Model.Id"
-                       asp-route-date="@today.ToString("yyyy-MM-dd")" class="btn btn-bh w-100">Book This Court</a>
+                       asp-route-date="@today.ToString("yyyy-MM-dd")" class="btn btn-sh w-100">Book This Court</a>
                 }
                 else
                 {
@@ -122,7 +122,7 @@
             }
             else
             {
-                <a asp-controller="Account" asp-action="Login" class="btn btn-bh w-100">Login to Book This Court</a>
+                <a asp-controller="Account" asp-action="Login" class="btn btn-sh w-100">Login to Book This Court</a>
             }
         </div>
     </div>

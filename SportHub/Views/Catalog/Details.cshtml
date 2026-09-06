@@ -8,7 +8,7 @@
 
 <a asp-action="Index" class="btn btn-outline-success btn-sm mt-3 mb-2">← @Localizer["BackToCatalog"]</a>
 
-<div class="bh-hero mt-2">
+<div class="sh-hero mt-2">
     <h1 class="display-5 mb-2">@Model.Category?.Icon @Model.Name</h1>
     <p class="lead mb-3">@Model.Description</p>
     <span class="badge badge-status badge-open me-2">@Model.Category?.Name</span>
@@ -39,7 +39,7 @@
 
 <div class="row g-4 mt-1">
     <div class="col-lg-7">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h4 class="mb-3">🏟️ @Localizer["OurUnits", Model.Category?.UnitLabel ?? "Units"]</h4>
             @if (Model.Courts.Count == 0)
             {
@@ -47,7 +47,7 @@
             }
             else
             {
-                <div class="table-responsive bh-table">
+                <div class="table-responsive sh-table">
                     <table class="table table-hover mb-0 align-middle">
                         <thead>
                             <tr>
@@ -66,7 +66,7 @@
                                     <td>RM @court.HourlyRate.ToString("0.00")<span class="text-muted small">/@Localizer["Hour"]</span></td>
                                     <td class="text-end">
                                         <a asp-controller="Courts" asp-action="Details" asp-route-id="@court.Id"
-                                           class="btn btn-bh btn-sm">@Localizer["ViewBook"]</a>
+                                           class="btn btn-sh btn-sm">@Localizer["ViewBook"]</a>
                                     </td>
                                 </tr>
                             }
@@ -76,7 +76,7 @@
             }
         </div>
 
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h4 class="mb-3">📋 @Localizer["Rules"]</h4>
             @if (string.IsNullOrWhiteSpace(Model.Rules))
             {
@@ -90,7 +90,7 @@
     </div>
 
     <div class="col-lg-5">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h4 class="mb-3">🕗 @Localizer["OpeningInfo"]</h4>
             <dl class="row mb-0">
                 <dt class="col-5">@Localizer["Hours"]</dt>
@@ -111,7 +111,7 @@
             </dl>
         </div>
 
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h4 class="mb-3">📞 @Localizer["Contact"]</h4>
             <dl class="row mb-0">
                 <dt class="col-5">@Localizer["Address"]</dt>

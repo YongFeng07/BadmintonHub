@@ -15,19 +15,19 @@
 
     @if (Model.Items.Count == 0)
     {
-        <div class="bh-form-section">
-            <div class="bh-empty">
+        <div class="sh-form-section">
+            <div class="sh-empty">
                 <span class="emoji">🛒</span>
                 Your cart is empty. Pick an open slot on the booking page and choose “Add to Cart”.
             </div>
             <div class="text-center">
-                <a asp-controller="Reservations" asp-action="Create" class="btn btn-bh">Book a Court</a>
+                <a asp-controller="Reservations" asp-action="Create" class="btn btn-sh">Book a Court</a>
             </div>
         </div>
     }
     else
     {
-        <div class="table-responsive bh-table">
+        <div class="table-responsive sh-table">
             <table class="table align-middle mb-0">
                 <thead>
                     <tr>
@@ -72,7 +72,7 @@
                                     </select>
                                 </form>
                             </td>
-                            <td class="text-end fw-bold text-bh-green">
+                            <td class="text-end fw-bold text-sh-green">
                                 RM @((item.Court!.HourlyRate * item.DurationHours).ToString("0.00"))
                             </td>
                             <td class="text-end">
@@ -87,14 +87,14 @@
                 <tfoot>
                     <tr>
                         <td colspan="4" class="text-end fw-bold">Subtotal</td>
-                        <td class="text-end fw-bold text-bh-green">RM @Model.Subtotal.ToString("0.00")</td>
+                        <td class="text-end fw-bold text-sh-green">RM @Model.Subtotal.ToString("0.00")</td>
                         <td></td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <form id="cartForm" asp-action="Checkout" method="post" class="bh-form-section mt-3">
+        <form id="cartForm" asp-action="Checkout" method="post" class="sh-form-section mt-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-5">
                     <label class="form-label small mb-1">Discount voucher (optional)</label>
@@ -107,7 +107,7 @@
                             formaction="@Url.Action("BatchRemove")">Remove Selected</button>
                     <button type="submit" class="btn btn-outline-secondary"
                             formaction="@Url.Action("Clear")">Empty Cart</button>
-                    <button type="submit" class="btn btn-bh px-4">Proceed to Checkout →</button>
+                    <button type="submit" class="btn btn-sh px-4">Proceed to Checkout →</button>
                 </div>
             </div>
             <div class="small text-muted mt-2">

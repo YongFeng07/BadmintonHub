@@ -4,14 +4,14 @@
     Layout = "_AdminLayout";
 }
 
-<div class="bh-admin-topbar">
+<div class="sh-admin-topbar">
     <h1 class="h3 mb-0">＋ New Admin Account</h1>
     <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Back to admin accounts</a>
 </div>
 
 <div class="row">
     <div class="col-lg-6">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <form asp-action="Create" method="post">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
                 <div class="mb-3">
@@ -48,12 +48,12 @@
                         <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-bh">Create Account</button>
+                <button type="submit" class="btn btn-sh">Create Account</button>
             </form>
         </div>
     </div>
     <div class="col-lg-6">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h2 class="h6 mb-3">Notes</h2>
             <ul class="small text-muted mb-0 ps-3">
                 <li>New admin accounts start <strong>active and email-verified</strong> (provisioned by a SuperAdmin).</li>

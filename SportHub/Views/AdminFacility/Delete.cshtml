@@ -5,8 +5,8 @@
     var courtCount = (int)(ViewBag.CourtCount ?? 0);
 }
 
-<div class="bh-form-section" style="max-width: 640px;">
-    <h2 class="bh-page-title mb-3">Delete @Model.Name?</h2>
+<div class="sh-form-section" style="max-width: 640px;">
+    <h2 class="sh-page-title mb-3">Delete @Model.Name?</h2>
 
     @if (courtCount > 0)
     {
@@ -14,7 +14,7 @@
             <strong>Deletion is blocked.</strong> This facility has @courtCount court(s).
             Delete the courts first (or keep the facility and set it to <em>Closed</em>).
         </div>
-        <a asp-action="Index" class="btn btn-bh">Back to Facilities</a>
+        <a asp-action="Index" class="btn btn-sh">Back to Facilities</a>
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit Facility</a>
     }
     else

@@ -5,10 +5,10 @@
     var upcoming = ViewBag.UpcomingReservations as List<SportHub.Models.Reservation> ?? new List<SportHub.Models.Reservation>();
 }
 
-<div class="bh-admin-topbar">
+<div class="sh-admin-topbar">
     <div>
-        <h2 class="bh-page-title mb-0">Court @Model.CourtNumber</h2>
-        <p class="bh-page-sub mb-0">@Model.CourtType · RM @Model.HourlyRate.ToString("0.00")/hour · @Model.Facility?.Name</p>
+        <h2 class="sh-page-title mb-0">Court @Model.CourtNumber</h2>
+        <p class="sh-page-sub mb-0">@Model.CourtType · RM @Model.HourlyRate.ToString("0.00")/hour · @Model.Facility?.Name</p>
     </div>
     <div>
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">Edit</a>
@@ -19,7 +19,7 @@
 
 <div class="row g-3">
     <div class="col-lg-6">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h5 class="mb-2">Status</h5>
             @if (Model.Status == SportHub.Models.CourtStatus.Available)
             {
@@ -38,7 +38,7 @@
         </div>
     </div>
     <div class="col-lg-6">
-        <div class="bh-form-section">
+        <div class="sh-form-section">
             <h5 class="mb-3">Upcoming Reservations</h5>
             @if (upcoming.Count == 0)
             {

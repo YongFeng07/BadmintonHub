@@ -50,13 +50,13 @@
 }
 
 /* --- My reservations calendar ------------------------------------------- */
-.bh-calendar {
+.sh-calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 4px;
 }
 
-.bh-cal-dow {
+.sh-cal-dow {
     text-align: center;
     font-size: .72rem;
     font-weight: 700;
@@ -65,7 +65,7 @@
     padding-bottom: 2px;
 }
 
-.bh-cal-day {
+.sh-cal-day {
     text-align: center;
     padding: 8px 2px;
     border-radius: 8px;
@@ -77,29 +77,29 @@
     border: 1px solid transparent;
 }
 
-.bh-cal-day:hover {
+.sh-cal-day:hover {
     background: #e8f5ee;
     color: #0b3d2e;
 }
 
-.bh-cal-day.blank {
+.sh-cal-day.blank {
     background: transparent;
 }
 
-.bh-cal-day.today {
+.sh-cal-day.today {
     border-color: #0b3d2e;
 }
 
-.bh-cal-day.selected {
+.sh-cal-day.selected {
     background: #0b3d2e;
     color: #ffffff;
 }
 
-.bh-cal-day.has-res {
+.sh-cal-day.has-res {
     font-weight: 700;
 }
 
-.bh-cal-count {
+.sh-cal-count {
     font-size: .68rem;
     background: #f0a500;
     color: #ffffff;
@@ -109,14 +109,14 @@
 }
 
 /* --- Status timeline on reservation details ------------------------------- */
-.bh-timeline {
+.sh-timeline {
     display: flex;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
 }
 
-.bh-timeline-step {
+.sh-timeline-step {
     padding: .35rem .8rem;
     border-radius: 20px;
     font-size: .82rem;
@@ -125,28 +125,28 @@
     color: #6c757d;
 }
 
-.bh-timeline-step.done {
+.sh-timeline-step.done {
     background: #0b3d2e;
     color: #ffffff;
 }
 
-.bh-timeline-step.cancelled {
+.sh-timeline-step.cancelled {
     background: #a94442;
     color: #ffffff;
 }
 
-.bh-timeline-arrow {
+.sh-timeline-arrow {
     color: #adb5bd;
     font-size: .8rem;
 }
 
 /* --- QR panel ------------------------------------------------------------- */
-.bh-qr-panel {
+.sh-qr-panel {
     text-align: center;
     padding: 1rem;
 }
 
-.bh-qr-panel img {
+.sh-qr-panel img {
     max-width: 220px;
     border-radius: 8px;
     border: 1px solid #dee2e6;

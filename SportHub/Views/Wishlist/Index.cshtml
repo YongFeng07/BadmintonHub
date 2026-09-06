@@ -10,13 +10,13 @@
 
     @if (Model.Count == 0)
     {
-        <div class="bh-form-section">
-            <div class="bh-empty">
+        <div class="sh-form-section">
+            <div class="sh-empty">
                 <span class="emoji">❤️</span>
                 Your wishlist is empty. Unavailable courts offer “Add to Wishlist” on their detail page.
             </div>
             <div class="text-center">
-                <a asp-controller="Courts" asp-action="Index" class="btn btn-bh">Browse Courts</a>
+                <a asp-controller="Courts" asp-action="Index" class="btn btn-sh">Browse Courts</a>
             </div>
         </div>
     }
@@ -27,7 +27,7 @@
             {
                 var court = item.Court!;
                 <div class="col-md-6 col-lg-4">
-                    <div class="bh-form-section h-100 d-flex flex-column">
+                    <div class="sh-form-section h-100 d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <h5 class="mb-0">Court @court.CourtNumber</h5>
@@ -50,7 +50,7 @@
                             @if (court.Status == SportHub.Models.CourtStatus.Available)
                             {
                                 <a asp-controller="Reservations" asp-action="Create" asp-route-courtId="@court.Id"
-                                   class="btn btn-bh btn-sm flex-fill">Book Now</a>
+                                   class="btn btn-sh btn-sm flex-fill">Book Now</a>
                             }
                             else
                             {

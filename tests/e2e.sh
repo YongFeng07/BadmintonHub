@@ -340,7 +340,7 @@ say "T13 category/facility maintenance + public catalog (P3)"
 CAT=$(curl -s "$BASE/Catalog")
 contains "catalog lists seeded facility" "SportHub Main Facility" "$CAT"
 contains "catalog lists aquatics"       "Aquatics Centre" "$CAT"
-contains "catalog shows top-5 badge"    "bh-popular-badge" "$CAT"
+contains "catalog shows top-5 badge"    "sh-popular-badge" "$CAT"
 CAT1=$(printf '%s' "$CAT" | grep -oE 'categoryId=[0-9]+' | head -1)
 [ -n "$CAT1" ] && ok "category chip link captured ($CAT1)" || bad "category chip link captured"
 if [ -n "$CAT1" ]; then
