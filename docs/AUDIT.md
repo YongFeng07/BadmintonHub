@@ -1,4 +1,4 @@
-# BadmintonHub — Final Audit (Section 41)
+# SportHub — Final Audit (Section 41)
 
 PASS/FAIL audit across the twelve rubric areas, with evidence for every
 verdict. **This audit deliberately does not claim a mark.** It records what
@@ -12,10 +12,10 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| ASP.NET Core **MVC** (not Razor Pages / React / other backends) | PASS | `BadmintonHub/` classic MVC layout: Controllers/ Views/ Models/ Services/ Data/; 23 controllers in [Controllers/](BadmintonHub/Controllers/) |
-| .NET 10 | PASS | `BadmintonHub/BadmintonHub.csproj` targets `net10.0` |
-| Layered structure | PASS | Business rules isolated in [Services/](BadmintonHub/Services/) (`ReservationService`, `AuthService`, `CourtService`…), EF in [Data/](BadmintonHub/Data/), presentation in Views + ViewModels |
-| Classic solution, Visual Studio workflow | PASS | [BadmintonHub.sln](BadmintonHub.sln) builds in VS 2022 17.14+/2026; F5 verified (see Build) |
+| ASP.NET Core **MVC** (not Razor Pages / React / other backends) | PASS | `SportHub/` classic MVC layout: Controllers/ Views/ Models/ Services/ Data/; 23 controllers in [Controllers/](SportHub/Controllers/) |
+| .NET 10 | PASS | `SportHub/SportHub.csproj` targets `net10.0` |
+| Layered structure | PASS | Business rules isolated in [Services/](SportHub/Services/) (`ReservationService`, `AuthService`, `CourtService`…), EF in [Data/](SportHub/Data/), presentation in Views + ViewModels |
+| Classic solution, Visual Studio workflow | PASS | [SportHub.sln](SportHub.sln) builds in VS 2022 17.14+/2026; F5 verified (see Build) |
 
 ## 2. Presentation — PASS
 
@@ -32,7 +32,7 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 | EF Core **Code First** | PASS | Entities in `Models/`, context in `Data/ApplicationDbContext.cs` |
 | **Migrations** (not EnsureCreated) | PASS | `Migrations/` folder present; `Database.Migrate()` at startup (`Program.cs`) |
 | **Data Annotations** validation | PASS | `[Required]`, `[StringLength]`, `[Range]`, `[RegularExpression]`, `[EmailAddress]`, `[Phone]` on entities |
-| SQL Server (LocalDB, file-based) | PASS | `Server=(localdb)\MSSQLLocalDB;AttachDbFilename={DbFile}` — DB file pinned to `App_Data/BadmintonHub.mdf` (commit `0a70a7c`) |
+| SQL Server (LocalDB, file-based) | PASS | `Server=(localdb)\MSSQLLocalDB;AttachDbFilename={DbFile}` — DB file pinned to `App_Data/SportHub.mdf` (commit `0a70a7c`) |
 
 ## 4. Security — PASS (with noted demo limitations)
 
@@ -40,22 +40,22 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 |---|---|---|
 | **No ASP.NET Core Identity** — manually implemented cookie auth | PASS | `AuthService`, `AccountController`; `AddAuthentication(CookieAuthenticationDefaults…)` in `Program.cs` |
 | Cookie hardening | PASS | HttpOnly, SameSite=Lax, 8 h sliding expiry |
-| **No plain-text passwords** | PASS | PBKDF2-SHA256, 100k iterations, random 16-byte salt, constant-time compare — [PasswordHelper.cs](BadmintonHub/Services/PasswordHelper.cs); covered by unit tests |
+| **No plain-text passwords** | PASS | PBKDF2-SHA256, 100k iterations, random 16-byte salt, constant-time compare — [PasswordHelper.cs](SportHub/Services/PasswordHelper.cs); covered by unit tests |
 | Authorization at controller/action/resource level | PASS | `[Authorize(Roles = "Admin")]` on admin controllers, `SuperAdmin` on System Settings, `Member` on member areas; resource-level ownership checks in `ReservationService`; verified by e2e T4 |
 | Role model per revised spec | PASS | `SuperAdmin / Admin / Member` (Staff removed); migration converts the seeded staff account to a second admin (`admin2@`); seeded SuperAdmin owns system settings |
 | Image captcha on login/register/reset | PASS | DNTCaptcha.Core rendered on all three forms (partial `_Captcha`); server-side validation via `ValidateCaptchaAttribute`, toggleable with `Security:EnableCaptcha` so the scripted e2e can run |
 | E-mail verification before sign-in | PASS | Registration creates unverified members; sign-in gated until the 24 h hashed-token link is followed; resend flow with anti-enumeration neutral responses; admin manual verify; successful password reset auto-verifies |
 | Remember Me | PASS | Opt-in 30-day persistent cookie via the manual cookie scheme (session cookie otherwise) |
-| **QR code carries only a safe identifier** | PASS | [QrCodeHelper.cs](BadmintonHub/Services/QrCodeHelper.cs) + `ReservationsController` passes only the public `ReservationReference`; e2e T6 asserts the member's e-mail never appears in QR content |
+| **QR code carries only a safe identifier** | PASS | [QrCodeHelper.cs](SportHub/Services/QrCodeHelper.cs) + `ReservationsController` passes only the public `ReservationReference`; e2e T6 asserts the member's e-mail never appears in QR content |
 | **No real credentials / secrets in the repository** | PASS | All credentials are seeded demo accounts; secret scan in §12 found none |
-| Anti-enumeration login | PASS | Generic "Invalid email or password." + attempt logged — [AuthService.cs](BadmintonHub/Services/AuthService.cs); unit-tested |
+| Anti-enumeration login | PASS | Generic "Invalid email or password." + attempt logged — [AuthService.cs](SportHub/Services/AuthService.cs); unit-tested |
 | Failed-login lockout + admin unlock | PASS | 3 attempts → 15-minute `LockoutEnd`; `AdminUsersController.Unlock`; unit + e2e tested |
 | Password reset tokens hashed, single-use, 30 min | PASS | `PasswordResetToken.TokenHash` (raw token never stored); e2e T9 |
 | Antiforgery tokens on all POSTs | PASS | `[ValidateAntiForgeryToken]` on state-changing actions; e2e drives real tokens |
-| Open-redirect guard on language switcher | PASS | `Url.IsLocalUrl` in [CultureController.cs](BadmintonHub/Controllers/CultureController.cs); unit-tested |
+| Open-redirect guard on language switcher | PASS | `Url.IsLocalUrl` in [CultureController.cs](SportHub/Controllers/CultureController.cs); unit-tested |
 | Open-redirect guard on wishlist return URL | PASS | `WishlistController.Add` honours only `Url.IsLocalUrl(returnUrl)` values and falls back to the wishlist index otherwise; unit + e2e tested |
 | Checkout resource ownership | PASS | `CheckoutComplete` refuses reservation ids owned by another user (Forbid); checkout re-validates every line server-side in a transaction; voucher usage is incremented inside the same transaction |
-| Uploaded images validated by decoded format | PASS | [ImageService.cs](BadmintonHub/Services/ImageService.cs) decodes with ImageSharp and trusts the *decoded* format (a renamed executable is rejected), 5 MB cap, re-encoded as 256×256 JPEG so raw uploads are never served; unit-tested |
+| Uploaded images validated by decoded format | PASS | [ImageService.cs](SportHub/Services/ImageService.cs) decodes with ImageSharp and trusts the *decoded* format (a renamed executable is rejected), 5 MB cap, re-encoded as 256×256 JPEG so raw uploads are never served; unit-tested |
 | Profile-photo deletes stay inside `/uploads/profiles` | PASS | `DeleteProfilePhoto` refuses null/foreign/traversal paths; unit-tested |
 | Admin-account guard rails | PASS | Nobody can deactivate their own account; the last active SuperAdmin cannot be deactivated (system stays administrable); unit + e2e tested |
 
@@ -123,15 +123,15 @@ Evidence keys: file paths are repo-relative; commits are on `develop`.
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| Auto-migrate + seed at startup | PASS | `Program.cs`: `Database.Migrate()` + `DbSeeder.Seed()`; first F5 creates `App_Data/BadmintonHub.mdf` |
+| Auto-migrate + seed at startup | PASS | `Program.cs`: `Database.Migrate()` + `DbSeeder.Seed()`; first F5 creates `App_Data/SportHub.mdf` |
 | VS F5 reliability | PASS | LocalDB file pinned to `App_Data` (commit `0a70a7c`) — fixes the "Cannot create file because it already exists" crash |
-| Multiple copies on one machine | PASS | Catalog name derived from the data-file path (SHA-256 prefix, commit `2d8a796`); verified working copy + clean clone running side by side with distinct registrations (`BadmintonHub_d8927285` / `BadmintonHub_54ba4478`) |
+| Multiple copies on one machine | PASS | Catalog name derived from the data-file path (SHA-256 prefix, commit `2d8a796`); verified working copy + clean clone running side by side with distinct registrations (pre-rename `BadmintonHub_d8927285` / `BadmintonHub_54ba4478`; since the SportHub rename the catalog is derived from `SportHub\App_Data\SportHub.mdf` — verify with `SELECT name FROM sys.databases WHERE name LIKE 'SportHub%'` before dropping) |
 
 ## 11. Testing — PASS
 
 | Check | Verdict | Evidence |
 |---|---|---|
-| Test project runs in **Visual Studio Test Explorer** | PASS | `BadmintonHub.Tests` (xUnit) in the solution; 193 tests |
+| Test project runs in **Visual Studio Test Explorer** | PASS | `SportHub.Tests` (xUnit) in the solution; 193 tests |
 | Unit coverage of business rules | PASS | [docs/TESTING.md](docs/TESTING.md) §2 — passwords, 3-strike lockout, e-mail verification, booking/double-booking/payment/refund, admin transitions, culture switcher, QR, PDF, calendar, photo pipeline, admin-account guard rails, catalog service (filters/top-5/low-availability), category + facility maintenance CRUD with delete guards, cart service (overlap/owner scoping), checkout (transaction, proportional discount split, batch payment, re-validation rollback), voucher validation + limits, wishlist (open-redirect guard, owner scoping) |
 | Latest run | PASS | `Passed! Failed: 0, Passed: 193` (2026-09-06) |
 | End-to-end evidence | PASS | `tests/e2e.sh` (T1–T17) — HTTP-level checks incl. role matrix, register → verify flow, lockout, antiforgery, receipts, admin-account CRUD, photo upload, catalog filters + Top-5 badge + low-availability alert, category/facility CRUD + delete guards, cart arithmetic + batch remove, checkout with WELCOME10 + batch payment, voucher admin CRUD + single-use limits, wishlist round trip |
@@ -168,5 +168,5 @@ README (setup, F5, demo accounts, PIC, limitations), TESTING.md, ENTITY_DIAGRAM.
    public reference and shows status; it is not a cryptographic gatekeeper.
 6. **Demo data only** — the seeded facility/rates/reservations are fictional
    demo content.
-7. `BadmintonHub/wwwroot/images/` is intentionally not committed — the seeder
+7. `SportHub/wwwroot/images/` is intentionally not committed — the seeder
    regenerates the placeholder SVGs at first run.

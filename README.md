@@ -1,6 +1,6 @@
-# BadmintonHub — Badminton Sport Facility Reservation System
+# SportHub — Multi-Sport Facility Reservation System
 
-A web-based badminton court booking system built for the **AMIT2014 Web and
+A web-based multi-sport facility booking system built for the **AMIT2014 Web and
 Mobile Systems** assignment. Members browse courts, book hourly slots, pay and
 cancel with refunds; admins run the counter and administer reservations; admins
 manage facilities, courts, availability, users and business reports, while the
@@ -12,7 +12,7 @@ developed and run **the Visual Studio way**.
 | Layer | Technology |
 |---|---|
 | Framework | ASP.NET Core MVC on **.NET 10** (C#) |
-| ORM / database | Entity Framework Core 10 **Code First** migrations, **SQL Server LocalDB** (file-based `App_Data/BadmintonHub.mdf`) |
+| ORM / database | Entity Framework Core 10 **Code First** migrations, **SQL Server LocalDB** (file-based `App_Data/SportHub.mdf`) |
 | Authentication | **Manually implemented cookie authentication** (PBKDF2, no ASP.NET Core Identity — assignment requirement) |
 | Validation | Data Annotations (attributes on model classes) |
 | Front-end | Razor Views, HTML/CSS/JS, jQuery, Bootstrap 5, Chart.js |
@@ -27,26 +27,26 @@ developed and run **the Visual Studio way**.
 2. **.NET 10 SDK** (installed with VS 2026; VS 2022 17.14+ supports it).
 3. **SQL Server LocalDB** — included with Visual Studio. No manual database
    setup is needed: on first run the app creates the database at
-   `BadmintonHub\App_Data\BadmintonHub.mdf`, applies EF Core migrations and
+   `SportHub\App_Data\SportHub.mdf`, applies EF Core migrations and
    seeds the demo data automatically.
 
 ## Run it (Visual Studio)
 
-1. Open `BadmintonHub.sln`.
+1. Open `SportHub.sln`.
 2. Build: **Build → Build Solution**.
 3. Press **F5** (default launch profile: HTTPS, `https://localhost:7153`).
 4. Log in with one of the demo accounts below.
 
-Command line equivalent (optional): `dotnet run --project BadmintonHub`.
+Command line equivalent (optional): `dotnet run --project SportHub`.
 
 ## Demo accounts (seeded on first run — demo only, no real credentials)
 
 | Role | Email | Password |
 |---|---|---|
-| Super Admin | `superadmin@badmintonhub.my` | `SuperAdmin@123` |
-| Admin | `admin@badmintonhub.my` | `Admin@123` |
-| Admin | `admin2@badmintonhub.my` | `Admin@123` |
-| Member | `member@badmintonhub.my` | `Member@123` |
+| Super Admin | `superadmin@sporthub.my` | `SuperAdmin@123` |
+| Admin | `admin@sporthub.my` | `Admin@123` |
+| Admin | `admin2@sporthub.my` | `Admin@123` |
+| Member | `member@sporthub.my` | `Member@123` |
 | Member | `aiman@example.com` | `Member@123` |
 | Member | `priya@example.com` | `Member@123` |
 | Member | `john@example.com` | `Member@123` |
@@ -79,7 +79,7 @@ screen has data. It further seeds three demo vouchers (`WELCOME10`,
 ## Testing
 
 All tests run in **Visual Studio**: open the solution, then **Test → Test
-Explorer → Run All**. The `BadmintonHub.Tests` xUnit project has 193 tests
+Explorer → Run All**. The `SportHub.Tests` xUnit project has 193 tests
 covering password policy, the 3-strike login lockout, email verification
 (register/verify/expiry/anti-enumeration resend), booking/double-booking/
 payment/refund rules, admin status transitions, the culture switcher, QR and

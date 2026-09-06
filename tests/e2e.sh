@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # =============================================================================
-# BadmintonHub end-to-end test suite (curl-based — no browser required).
+# SportHub end-to-end test suite (curl-based — no browser required).
 #
 # Usage:   ./tests/e2e.sh [BASE_URL]      (default: http://localhost:5080)
-# Requires: bash, curl, a running BadmintonHub instance on BASE_URL, and a
-#           freshly seeded database (delete BadmintonHub/App_Data/*.mdf to
+# Requires: bash, curl, a running SportHub instance on BASE_URL, and a
+#           freshly seeded database (delete SportHub/App_Data/*.mdf to
 #           reset — the seeder recreates everything on startup).
 #
 # IMPORTANT: the revised-spec captcha is enabled by default in the UI. Start
 # the app with Security__EnableCaptcha=false for this suite, e.g.
-#   Security__EnableCaptcha=false dotnet run --project BadmintonHub
+#   Security__EnableCaptcha=false dotnet run --project SportHub
 # (see docs/TESTING.md — the captcha UI itself is exercised manually).
 #
 # Covers:  public pages, multi-language, switcher cookie, auth (manual cookie
@@ -113,11 +113,11 @@ contains "invalid culture rejected" "Book Your Court" "$(curl -s -b "$WORK/lang2
 
 say "T3 authentication (manual cookie scheme)"
 contains "bad login generic error" "Invalid email or password" \
-  "$(login_body "$WORK/x.jar" "member@badmintonhub.my" "WrongPass1")"
-check "admin login 302"          302 "$(login "$WORK/admin.jar" "admin@badmintonhub.my" "Admin@123")"
-check "admin2 login 302"         302 "$(login "$WORK/admin2.jar" "admin2@badmintonhub.my" "Admin@123")"
-check "superadmin login 302"     302 "$(login "$WORK/sa.jar" "superadmin@badmintonhub.my" "SuperAdmin@123")"
-check "member login 302"         302 "$(login "$WORK/mem.jar" "member@badmintonhub.my" "Member@123")"
+  "$(login_body "$WORK/x.jar" "member@sporthub.my" "WrongPass1")"
+check "admin login 302"          302 "$(login "$WORK/admin.jar" "admin@sporthub.my" "Admin@123")"
+check "admin2 login 302"         302 "$(login "$WORK/admin2.jar" "admin2@sporthub.my" "Admin@123")"
+check "superadmin login 302"     302 "$(login "$WORK/sa.jar" "superadmin@sporthub.my" "SuperAdmin@123")"
+check "member login 302"         302 "$(login "$WORK/mem.jar" "member@sporthub.my" "Member@123")"
 check "admin sees dashboard"     200 "$(code -b "$WORK/admin.jar" "$BASE/AdminDashboard")"
 
 say "T4 role-based authorization (controller level)"
@@ -162,7 +162,7 @@ PAY=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code}' \
 check "pay -> redirect" "302" "$PAY"
 DETAILS=$(get_page "$JAR" "$BASE/Reservations/Details/$RID")
 contains "details shows confirmed" "Confirmed" "$DETAILS"
-REF=$(printf '%s' "$DETAILS" | grep -oE 'BH-[0-9]{4}-[0-9]{6}' | head -1)
+REF=$(printf '%s' "$DETAILS" | grep -oE 'SH-[0-9]{4}-[0-9]{6}' | head -1)
 [ -n "$REF" ] && ok "reference captured ($REF)" || bad "reference captured (empty)"
 check "receipt pdf 200" 200 "$(code -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/Reservations/Receipt/$RID")"
 CTYPE=$(curl -s -b "$JAR" -o /dev/null -w '%{content_type}' "$BASE/Reservations/Receipt/$RID")
@@ -180,7 +180,7 @@ say "T7 admin modules"
 AD="$WORK/admin.jar"
 contains "dashboard charts" "canvas" "$(get_page "$AD" "$BASE/AdminDashboard")"
 TABLE=$(get_page "$AD" "$BASE/AdminReservations/Table")
-contains "ajax table has reservations" "BH-" "$TABLE"
+contains "ajax table has reservations" "SH-" "$TABLE"
 check "ajax table 200" "200" "$(code -b "$AD" "$BASE/AdminReservations/Table")"
 FROM=$(date -d '-14 days' +%F)
 CSV=$(get_page "$AD" "$BASE/AdminReports/ExportCsv?from=$FROM&to=$TODAY")
@@ -291,13 +291,13 @@ check "new admin sees user admin"         200  "$(code -b "$WORK/newadmin.jar" "
 check "new admin blocked from admin accounts" 302 "$(code -b "$WORK/newadmin.jar" "$BASE/AdminAccounts")"
 
 # guard rail: a SuperAdmin cannot deactivate their own account
-ACCT_PAGE=$(get_page "$WORK/sa.jar" "$BASE/AdminAccounts?search=superadmin@badmintonhub.my")
+ACCT_PAGE=$(get_page "$WORK/sa.jar" "$BASE/AdminAccounts?search=superadmin@sporthub.my")
 SA_ID=$(printf '%s' "$ACCT_PAGE" | grep -oE 'SetStatus/[0-9]+' | head -1 | cut -d/ -f2)
 t=$(printf '%s' "$ACCT_PAGE" | last_token)
 curl -s -b "$WORK/sa.jar" -c "$WORK/sa.jar" -o /dev/null -X POST "$BASE/AdminAccounts/SetStatus/$SA_ID" \
   --data-urlencode "__RequestVerificationToken=$t" --data-urlencode "status=Deactivated"
 check "superadmin self-deactivation refused (still logs in)" "302" \
-  "$(login "$WORK/sa2.jar" "superadmin@badmintonhub.my" "SuperAdmin@123")"
+  "$(login "$WORK/sa2.jar" "superadmin@sporthub.my" "SuperAdmin@123")"
 
 # member maintenance: admin renames the disposable member from T8/T9
 t=$(get_page "$AD" "$BASE/AdminUsers/Edit/$UID_TMP" | last_token)
@@ -338,14 +338,14 @@ say "T13 category/facility maintenance + public catalog (P3)"
 
 # --- public catalog: seeded facilities, category chips, search, details, top-5 ---
 CAT=$(curl -s "$BASE/Catalog")
-contains "catalog lists seeded facility" "BadmintonHub Main Facility" "$CAT"
+contains "catalog lists seeded facility" "SportHub Main Facility" "$CAT"
 contains "catalog lists aquatics"       "Aquatics Centre" "$CAT"
 contains "catalog shows top-5 badge"    "bh-popular-badge" "$CAT"
 CAT1=$(printf '%s' "$CAT" | grep -oE 'categoryId=[0-9]+' | head -1)
 [ -n "$CAT1" ] && ok "category chip link captured ($CAT1)" || bad "category chip link captured"
 if [ -n "$CAT1" ]; then
   FILTERED=$(curl -s "$BASE/Catalog?$CAT1")
-  contains "category filter keeps match"  "BadmintonHub Main Facility" "$FILTERED"
+  contains "category filter keeps match"  "SportHub Main Facility" "$FILTERED"
   case "$FILTERED" in
     *"Aquatics Centre"*) bad "category filter hides other categories" ;;
     *) ok "category filter hides other categories" ;;
@@ -354,7 +354,7 @@ fi
 SEARCHED=$(curl -s "$BASE/Catalog?search=Aquatics")
 contains "name search keeps match" "Aquatics Centre" "$SEARCHED"
 case "$SEARCHED" in
-  *"BadmintonHub Main Facility"*) bad "name search hides non-matches" ;;
+  *"SportHub Main Facility"*) bad "name search hides non-matches" ;;
   *) ok "name search hides non-matches" ;;
 esac
 FD=$(printf '%s' "$CAT" | grep -oE 'Catalog/Details/[0-9]+' | head -1 | cut -d/ -f3)
@@ -362,7 +362,7 @@ FD=$(printf '%s' "$CAT" | grep -oE 'Catalog/Details/[0-9]+' | head -1 | cut -d/ 
 if [ -n "$FD" ]; then
   check "catalog details 200" 200 "$(code "$BASE/Catalog/Details/$FD")"
   DETAIL=$(curl -s "$BASE/Catalog/Details/$FD")
-  contains "details shows facility" "BadmintonHub Main Facility" "$DETAIL"
+  contains "details shows facility" "SportHub Main Facility" "$DETAIL"
   contains "details links units"    "Courts/Details/" "$DETAIL"
   contains "details shows photos"   "/images/courts/facility.svg" "$DETAIL"
 fi
@@ -389,7 +389,7 @@ check "member -> admin categories 302" 302 "$(code -b "$WORK/mem.jar" "$BASE/Adm
 check "admin -> admin categories 200"  200 "$(code -b "$AD" "$BASE/AdminCategories")"
 check "admin -> admin facility 200"    200 "$(code -b "$AD" "$BASE/AdminFacility")"
 contains "seeded categories listed" "Swimming Pool" "$(get_page "$AD" "$BASE/AdminCategories")"
-contains "seeded facilities listed" "BadmintonHub Main Facility" "$(get_page "$AD" "$BASE/AdminFacility")"
+contains "seeded facilities listed" "SportHub Main Facility" "$(get_page "$AD" "$BASE/AdminFacility")"
 
 CATNAME="e2eCat$(date +%s)"
 t=$(get_page "$AD" "$BASE/AdminCategories/Create" | last_token)
@@ -600,7 +600,7 @@ check "batch payment -> redirect" "302" "${PAY%% *}"
 contains "batch payment redirects to paid page" "/Cart/Paid" "${PAY#* }"
 PAIDP=$(get_page "$JAR" "$BASE/Cart/Paid?reservationIds=$R1&reservationIds=$R2")
 contains "paid page shows confirmed status" "Confirmed" "$PAIDP"
-contains "paid page shows booking reference" "BH-" "$PAIDP"
+contains "paid page shows booking reference" "SH-" "$PAIDP"
 
 say "T16 admin vouchers: CRUD + single-use redemption limit (P4)"
 AD="$WORK/admin.jar"

@@ -1,0 +1,66 @@
+@model SportHub.ViewModels.AvailabilityGenerateViewModel
+@{
+    ViewData["Title"] = "Generate Availability";
+    Layout = "_AdminLayout";
+    var courts = ViewBag.Courts as List<SportHub.Models.Court> ?? new List<SportHub.Models.Court>();
+    var today = DateOnly.FromDateTime(DateTime.Today);
+}
+
+<div class="bh-admin-topbar">
+    <div>
+        <h2 class="bh-page-title mb-0">Generate Availability Slots</h2>
+        <p class="bh-page-sub mb-0">Bulk-create hourly slots for selected courts across a date range.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Back to Availability</a>
+</div>
+
+<form asp-action="Generate" method="post">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+    <div class="bh-form-section">
+        <h5 class="mb-3">Courts</h5>
+        @foreach (var group in courts.GroupBy(c => c.Facility!.Name))
+        {
+            <div class="mb-2">
+                <div class="fw-bold small text-muted mb-1">@group.Key</div>
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach (var court in group)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="CourtIds" value="@court.Id" id="court-@court.Id" checked="@Model.CourtIds.Contains(court.Id)" />
+                            <label class="form-check-label" for="court-@court.Id">@(court.Facility!.Category != null ? court.Facility.Category.UnitLabel : "Unit") @court.CourtNumber</label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        <span asp-validation-for="CourtIds" class="text-danger small"></span>
+    </div>
+
+    <div class="bh-form-section">
+        <h5 class="mb-3">Date Range &amp; Status</h5>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label asp-for="FromDate" class="form-label"></label>
+                <input asp-for="FromDate" type="date" class="form-control" min="@today.ToString("yyyy-MM-dd")" />
+                <span asp-validation-for="FromDate" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="ToDate" class="form-label"></label>
+                <input asp-for="ToDate" type="date" class="form-control" min="@today.ToString("yyyy-MM-dd")" />
+                <span asp-validation-for="ToDate" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Status" class="form-label"></label>
+                <select asp-for="Status" asp-items="Html.GetEnumSelectList<SportHub.Models.AvailabilityStatus>()" class="form-select"></select>
+            </div>
+        </div>
+        <div class="form-text mt-2">Existing slots are skipped. Days outside the facility's operating days are skipped.</div>
+    </div>
+
+    <button type="submit" class="btn btn-bh px-4">Generate</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

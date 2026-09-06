@@ -1,0 +1,20 @@
+@model SportHub.ViewModels.CategoryFormViewModel
+@{
+    ViewData["Title"] = "Edit Category";
+    Layout = "_AdminLayout";
+}
+
+<div class="bh-admin-topbar">
+    <div>
+        <h2 class="bh-page-title mb-0">Edit Category</h2>
+        <p class="bh-page-sub mb-0">@Model.Name</p>
+    </div>
+</div>
+
+<form asp-action="Edit" method="post">
+    <partial name="_Form" model="Model" />
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

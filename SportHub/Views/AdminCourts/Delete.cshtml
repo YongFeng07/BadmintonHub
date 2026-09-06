@@ -1,0 +1,33 @@
+@model SportHub.Models.Court
+@{
+    ViewData["Title"] = "Delete Court";
+    Layout = "_AdminLayout";
+    var reservationCount = (int)(ViewBag.ReservationCount ?? 0);
+}
+
+<div class="bh-form-section" style="max-width: 640px;">
+    <h2 class="bh-page-title mb-3">Delete Court @Model.CourtNumber?</h2>
+
+    @if (reservationCount > 0)
+    {
+        <div class="alert alert-danger">
+            <strong>Deletion is blocked.</strong> This court has @reservationCount reservation record(s).
+            Reservation history must be kept for audit, so courts with bookings cannot be deleted.
+            Set the court status to <em>Unavailable</em> instead.
+        </div>
+        <a asp-action="Index" class="btn btn-bh">Back to Courts</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit Court Status</a>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            This will permanently remove Court @Model.CourtNumber, its photos and its availability slots.
+            This action cannot be undone.
+        </div>
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger">Yes, delete this court</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    }
+</div>

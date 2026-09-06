@@ -1,0 +1,59 @@
+@model List<SportHub.Models.Facility>
+@{
+    ViewData["Title"] = "Facilities";
+    Layout = "_AdminLayout";
+}
+
+<div class="bh-admin-topbar">
+    <div>
+        <h2 class="bh-page-title mb-0">Facilities</h2>
+        <p class="bh-page-sub mb-0">@Model.Count facility(ies) across @Model.Select(f => f.Category?.Name).Distinct().Count() categor(ies).</p>
+    </div>
+    <a asp-action="Create" class="btn btn-bh">+ Add Facility</a>
+</div>
+
+<div class="table-responsive bh-table">
+    <table class="table table-hover mb-0 align-middle">
+        <thead>
+            <tr>
+                <th>Facility</th>
+                <th>Category</th>
+                <th>Hours</th>
+                <th>Courts</th>
+                <th>Photos</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var facility in Model)
+            {
+                <tr>
+                    <td>
+                        <strong>@facility.Name</strong>
+                        <div class="small text-muted">@facility.Address</div>
+                    </td>
+                    <td>@facility.Category?.Icon @facility.Category?.Name</td>
+                    <td class="small text-nowrap">@facility.OpeningTime.ToString(@"hh\:mm")–@facility.ClosingTime.ToString(@"hh\:mm")</td>
+                    <td>@facility.Courts.Count</td>
+                    <td>@facility.Photos.Count</td>
+                    <td>
+                        @if (facility.Status == SportHub.Models.FacilityStatus.Open)
+                        {
+                            <span class="badge bg-success">Open</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Closed</span>
+                        }
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="ManagePhotos" asp-route-id="@facility.Id" class="btn btn-sm btn-outline-secondary">Photos</a>
+                        <a asp-action="Edit" asp-route-id="@facility.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@facility.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

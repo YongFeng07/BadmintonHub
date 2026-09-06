@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Capture screenshots of all BadmintonHub pages with headless Microsoft Edge.
+# Capture screenshots of all SportHub pages with headless Microsoft Edge.
 #
 # Prereq: the app must already be running at $BASE, e.g.:
-#   Security__EnableCaptcha=false dotnet run --project BadmintonHub/BadmintonHub.csproj --no-launch-profile --urls http://localhost:5080
+#   Security__EnableCaptcha=false dotnet run --project SportHub/SportHub.csproj --no-launch-profile --urls http://localhost:5080
 # or Visual Studio F5 (then set BASE=https://localhost:7153). The captcha is
 # still RENDERED on the login/register pages (screenshot 05/06) — only the
 # server-side check is switched off so the scripted curl logins below work.
@@ -20,7 +20,7 @@ OUT="$(cd "$(dirname "$0")" && pwd)"
 EDGE="/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
 [ -f "$EDGE" ] || EDGE="/c/Program Files/Microsoft/Edge/Application/msedge.exe"
 PROFILE=$(mktemp -d /tmp/edge-shots-XXXX)
-STAGE=BadmintonHub/wwwroot/__shots__
+STAGE=SportHub/wwwroot/__shots__
 JAR_MEMBER=$(mktemp); JAR_ADMIN2=$(mktemp); JAR_ADMIN=$(mktemp); JAR_SUPER=$(mktemp)
 FAILED=""
 
@@ -76,10 +76,10 @@ shot "$BASE/Account/Login"                                05-login
 shot "$BASE/Account/Register"                             06-register
 shot "$BASE/?culture=zh-CN"                               07-home-zh
 shot "$BASE/?culture=ms-MY"                               08-home-ms
-shot "$BASE/Reservations/Verify?reference=BH-$(date +%Y)-000101" 09-verify
+shot "$BASE/Reservations/Verify?reference=SH-$(date +%Y)-000101" 09-verify
 
 echo "== Member pages =="
-login "$JAR_MEMBER" "member@badmintonhub.my" "Member@123"
+login "$JAR_MEMBER" "member@sporthub.my" "Member@123"
 auth_shot "$JAR_MEMBER" "$BASE/Reservations/Create?courtId=1"          10-member-booking
 auth_shot "$JAR_MEMBER" "$BASE/Reservations/MyReservations"            11-member-myreservations
 auth_shot "$JAR_MEMBER" "$BASE/Reservations/MyReservations?culture=zh-CN" 12-member-calendar-zh
@@ -87,11 +87,11 @@ auth_shot "$JAR_MEMBER" "$BASE/Payments/Index"                         13-member
 auth_shot "$JAR_MEMBER" "$BASE/Account/Profile"                        14-member-profile
 
 echo "== Admin (second account) pages =="
-login "$JAR_ADMIN2" "admin2@badmintonhub.my" "Admin@123"
+login "$JAR_ADMIN2" "admin2@sporthub.my" "Admin@123"
 auth_shot "$JAR_ADMIN2" "$BASE/AdminReservations/Index" 15-admin-reservations
 
 echo "== Admin pages =="
-login "$JAR_ADMIN" "admin@badmintonhub.my" "Admin@123"
+login "$JAR_ADMIN" "admin@sporthub.my" "Admin@123"
 auth_shot "$JAR_ADMIN" "$BASE/AdminDashboard/Index"   16-admin-dashboard
 auth_shot "$JAR_ADMIN" "$BASE/AdminReports/Index"     17-admin-reports
 auth_shot "$JAR_ADMIN" "$BASE/AdminUsers/Index"       18-admin-users
@@ -102,13 +102,13 @@ auth_shot "$JAR_ADMIN" "$BASE/AdminAvailability/Index" 22-admin-availability
 auth_shot "$JAR_ADMIN" "$BASE/AdminEmails/Index"      23-admin-demo-mail
 
 echo "== SuperAdmin pages =="
-login "$JAR_SUPER" "superadmin@badmintonhub.my" "SuperAdmin@123"
+login "$JAR_SUPER" "superadmin@sporthub.my" "SuperAdmin@123"
 auth_shot "$JAR_SUPER" "$BASE/AdminSettings/Index"    24-admin-system-settings
 
 echo "== P2: admin account maintenance + member edit + profile photo =="
 auth_shot "$JAR_SUPER" "$BASE/AdminAccounts/Index"    25-admin-accounts
 auth_shot "$JAR_SUPER" "$BASE/AdminAccounts/Create"   26-admin-account-create
-USER_PAGE=$(curl -s -b "$JAR_ADMIN" "$BASE/AdminUsers?search=member@badmintonhub.my")
+USER_PAGE=$(curl -s -b "$JAR_ADMIN" "$BASE/AdminUsers?search=member@sporthub.my")
 MEMBER_ID=$(printf '%s' "$USER_PAGE" | grep -oE 'Edit/[0-9]+' | head -1 | cut -d/ -f2)
 if [ -n "$MEMBER_ID" ]; then
   auth_shot "$JAR_ADMIN" "$BASE/AdminUsers/Edit/$MEMBER_ID" 27-admin-user-edit

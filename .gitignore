@@ -21,7 +21,7 @@ publish/
 App_Data/
 
 ## User-uploaded runtime files (seed photos only are committed)
-BadmintonHub/wwwroot/uploads/
+SportHub/wwwroot/uploads/
 
 ## Test results
 [Tt]est[Rr]esults/
@@ -40,4 +40,4 @@ appsettings.Secrets.json
 logs/
 
 # Seeded placeholder images are regenerated at startup (see docs/AUDIT.md item 7)
-BadmintonHub/wwwroot/images/
+SportHub/wwwroot/images/

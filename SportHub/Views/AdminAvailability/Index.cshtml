@@ -1,0 +1,122 @@
+@model SportHub.ViewModels.AvailabilityIndexViewModel
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    ViewData["Title"] = "Availability";
+    Layout = "_AdminLayout";
+    var today = DateOnly.FromDateTime(DateTime.Today);
+    var slotsByCourt = Model.Slots.GroupBy(s => s.CourtId).ToDictionary(g => g.Key, g => g.ToList());
+    var token = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+}
+
+<div class="bh-admin-topbar">
+    <div>
+        <h2 class="bh-page-title mb-0">Court Availability</h2>
+        <p class="bh-page-sub mb-0">Click a slot to cycle: Open → Maintenance → Blocked → Open. Booked slots are protected.</p>
+    </div>
+    <a asp-action="Generate" class="btn btn-bh btn-sm">+ Generate Slots</a>
+</div>
+
+<div class="bh-form-section">
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <form method="get" asp-action="Index" class="d-flex flex-wrap gap-2 align-items-center mb-0">
+            <label for="avFacility" class="form-label mb-0 fw-bold">Facility:</label>
+            <select id="avFacility" name="facilityId" class="form-select" style="width: 260px;" onchange="this.form.submit()">
+                @foreach (var facility in Model.Facilities)
+                {
+                    <option value="@facility.Id" selected="@(facility.Id == Model.FacilityId)">@facility.Name</option>
+                }
+            </select>
+            <label for="avDate" class="form-label mb-0 fw-bold">Date:</label>
+            <input type="date" id="avDate" name="date" class="form-control" style="width: 180px;" min="@today.ToString("yyyy-MM-dd")" value="@Model.Date.ToString("yyyy-MM-dd")" onchange="this.form.submit()" />
+        </form>
+        <button type="button" class="btn btn-sm btn-outline-success date-quick" data-offset="0" data-facility="@Model.FacilityId">Today</button>
+        <button type="button" class="btn btn-sm btn-outline-success date-quick" data-offset="1" data-facility="@Model.FacilityId">Tomorrow</button>
+        <button type="button" class="btn btn-sm btn-outline-success date-quick" data-offset="3" data-facility="@Model.FacilityId">+3 days</button>
+        <button type="button" class="btn btn-sm btn-outline-success date-quick" data-offset="7" data-facility="@Model.FacilityId">+7 days</button>
+        <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", new { date = Model.Date.AddDays(-1).ToString("yyyy-MM-dd"), facilityId = Model.FacilityId })">←</a>
+        <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", new { date = Model.Date.AddDays(1).ToString("yyyy-MM-dd"), facilityId = Model.FacilityId })">→</a>
+        <span class="ms-auto text-muted small">@Model.Date.ToString("dddd, dd MMM yyyy")</span>
+    </div>
+</div>
+
+<input type="hidden" id="avToken" value="@token" />
+
+<div class="table-responsive bh-table">
+    <table class="table mb-0 align-middle" id="slotGrid">
+        <thead>
+            <tr>
+                <th style="min-width: 110px;">Court</th>
+                <th>Hourly Slots (@Model.Facility!.OpeningTime.ToString(@"hh\:mm")–@Model.Facility!.ClosingTime.ToString(@"hh\:mm"))</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var court in Model.Courts)
+            {
+                var courtSlots = slotsByCourt.GetValueOrDefault(court.Id, new List<SportHub.ViewModels.SlotStatusViewModel>());
+                <tr>
+                    <td>
+                        <strong>Court @court.CourtNumber</strong>
+                        <div class="small text-muted">@court.CourtType · RM @court.HourlyRate.ToString("0.00")</div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach (var slot in courtSlots)
+                            {
+                                var clickable = slot.Status is "open" or "maintenance" or "blocked" or "closed";
+                                <button type="button"
+                                        class="slot-btn slot-@slot.Status"
+                                        data-court="@court.Id"
+                                        data-date="@Model.Date.ToString("yyyy-MM-dd")"
+                                        data-start="@slot.StartTime"
+                                        data-status="@slot.Status"
+                                        title="@slot.StartTime–@slot.EndTime · @slot.Label"
+                                        disabled="@(!clickable)">
+                                    @slot.StartTime
+                                </button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="bh-form-section mt-3">
+    <h5 class="mb-3">Maintenance / Block a Date Range</h5>
+    <p class="text-muted small">Applies a status to every existing slot of one court between two dates. Slots with bookings are left untouched.</p>
+    <form id="rangeForm" class="d-flex flex-wrap gap-2 align-items-end">
+        <input type="hidden" id="avToken2" value="@token" />
+        <div>
+            <label class="form-label">Court</label>
+            <select id="rangeCourt" class="form-select">
+                @foreach (var court in Model.Courts)
+                {
+                    <option value="@court.Id">Court @court.CourtNumber</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="form-label">From</label>
+            <input type="date" id="rangeFrom" class="form-control" min="@today.ToString("yyyy-MM-dd")" value="@today.ToString("yyyy-MM-dd")" />
+        </div>
+        <div>
+            <label class="form-label">To</label>
+            <input type="date" id="rangeTo" class="form-control" min="@today.ToString("yyyy-MM-dd")" value="@today.AddDays(2).ToString("yyyy-MM-dd")" />
+        </div>
+        <div>
+            <label class="form-label">Status</label>
+            <select id="rangeStatus" class="form-select">
+                <option value="Maintenance">Maintenance</option>
+                <option value="Blocked">Blocked</option>
+                <option value="Open">Open</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-bh">Apply Range</button>
+    </form>
+    <div id="rangeResult" class="mt-2 small"></div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin-availability.js" asp-append-version="true"></script>
+}

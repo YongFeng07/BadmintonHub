@@ -1,0 +1,20 @@
+@model SportHub.ViewModels.FacilityEditViewModel
+@{
+    ViewData["Title"] = "Add Facility";
+    Layout = "_AdminLayout";
+}
+
+<div class="bh-admin-topbar">
+    <div>
+        <h2 class="bh-page-title mb-0">Add Facility</h2>
+        <p class="bh-page-sub mb-0">Create a new facility inside a category, then add its courts.</p>
+    </div>
+</div>
+
+<form asp-action="Create" method="post">
+    <partial name="_Form" model="Model" />
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

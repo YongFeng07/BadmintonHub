@@ -1,7 +1,7 @@
-# BadmintonHub — Testing Plan & Evidence
+# SportHub — Testing Plan & Evidence
 
-This document is the systematic test plan for BadmintonHub. All testing is done
-**the Visual Studio way**: the primary mechanism is the `BadmintonHub.Tests`
+This document is the systematic test plan for SportHub. All testing is done
+**the Visual Studio way**: the primary mechanism is the `SportHub.Tests`
 xUnit project, which runs in **Visual Studio Test Explorer** (Test → Test
 Explorer → Run All). A supplementary bash end-to-end script (`tests/e2e.sh`)
 exercises the running web app over HTTP and is documented in section 4.
@@ -16,18 +16,18 @@ exercises the running web app over HTTP and is documented in section 4.
 
 ### In Visual Studio (primary)
 
-1. Open `BadmintonHub.sln` in Visual Studio 2022 (17.14+) or 2026.
+1. Open `SportHub.sln` in Visual Studio 2022 (17.14+) or 2026.
 2. **Build → Build Solution**.
-3. **Test → Test Explorer** — the `BadmintonHub.Tests` project is listed.
+3. **Test → Test Explorer** — the `SportHub.Tests` project is listed.
 4. Click **Run All** (or right-click the project → **Run Tests**).
 5. All 113 tests run against an in-memory database — no LocalDB, no web server
-   needed, and they cannot touch the real `App_Data/BadmintonHub.mdf`.
+   needed, and they cannot touch the real `App_Data/SportHub.mdf`.
 
 The same suite can be run from the command line (the CLI underneath Test
 Explorer is identical — VSTest):
 
 ```powershell
-dotnet test BadmintonHub.Tests\BadmintonHub.Tests.csproj
+dotnet test SportHub.Tests\SportHub.Tests.csproj
 ```
 
 ### Supplementary: end-to-end script
@@ -36,7 +36,7 @@ dotnet test BadmintonHub.Tests\BadmintonHub.Tests.csproj
 # 1. start the app (captcha server-side check off for scripted curl logins —
 #    the captcha UI itself is exercised manually / in screenshots 05–06)
 $env:Security__EnableCaptcha = "false"
-dotnet run --project BadmintonHub\BadmintonHub.csproj --no-launch-profile --urls http://localhost:5080
+dotnet run --project SportHub\SportHub.csproj --no-launch-profile --urls http://localhost:5080
 
 # 2. in a second terminal
 bash tests/e2e.sh
@@ -61,7 +61,7 @@ are real PBKDF2 hashes (all seeded users are treated as e-mail-verified).
 | `AuthServiceTests` (6) | Unknown email → generic error **and** attempt logged (anti-enumeration), failed counter increments, **lockout after 3 failures** (15 min, correct password refused), deactivated account blocked, **unverified e-mail gated with a "verify your email" response**, successful login resets counter and stamps `LastLoginAt` | Manual authentication (no Identity), lockout, email-verification gate, status control |
 | `AccountServiceTests` (8) | Registration creates an **unverified** member whose verification token is stored only as a SHA-256 hash (~24 h expiry); duplicate e-mail rejected; verification succeeds once (idempotent) and clears the token; wrong/expired tokens fail without verifying; verification resend answers neutrally for unknown/already-verified e-mails (anti-enumeration); **a successful password reset proves the mailbox and auto-verifies the account** | Revised spec: email verification, hashed single-use tokens |
 | `DemoEmailSenderTests` (1) | With no SMTP configured, outgoing mail is captured in the in-app demo mailbox (and reported as not delivered) | Demo mail fallback |
-| `ReservationServiceTests` (13) | Booking creation (Pending + Pending payment + `BH-yyyy-######` reference + notification), duration 1–4 rule, past-date rule, unknown court, maintenance court, window outside opening hours, **server-side double-booking protection** (identical + partial overlap), payment → Confirmed consistency, already-paid guard, ownership guard, cancel → refund rule, completed reservations cannot be cancelled | Core business process: reservation + payment |
+| `ReservationServiceTests` (13) | Booking creation (Pending + Pending payment + `SH-yyyy-######` reference + notification), duration 1–4 rule, past-date rule, unknown court, maintenance court, window outside opening hours, **server-side double-booking protection** (identical + partial overlap), payment → Confirmed consistency, already-paid guard, ownership guard, cancel → refund rule, completed reservations cannot be cancelled | Core business process: reservation + payment |
 | `AdminReservationsControllerTests` (9) | Not-found/invalid-status/illegal-transition errors (TempData), **whitelisted transitions only** (Pending→Confirmed, Pending→Rejected, Confirmed→Completed), rejection fails the pending payment, admin counter payment, admin cancellation with refund, index model | M4 reservation administration |
 | `CultureControllerTests` (6) | All three supported cultures stored in a 1-year localization cookie, unsupported culture ignored, local return URL honoured, **external return URL ignored (open-redirect guard)** | P6 multi-language + security |
 | `QrCodeHelperTests` (2) | Output is a valid PNG data URI (magic bytes verified) and content-dependent | QR confirmation code |
@@ -132,7 +132,7 @@ the team decided to skip that milestone. In particular:
 | T12 | Admin accounts + member edit + photo (P2) | Only SuperAdmin opens Admin Accounts; creating an admin provisions an account that **logs in immediately**; new admin is blocked from Admin Accounts; **SuperAdmin self-deactivation refused**; admin renames a member (visible in search); member uploads a photo (profile shows and serves it), then removes it |
 | T13 | Category/facility maintenance + catalog (P3) | Catalog lists seeded facilities with the **Top-5 badge**; category-chip filter and name search narrow results; facility detail page links its units and photos; booking two table-tennis slots for tonight makes the **low-availability alert appear**; admin creates/edits a category and a facility in it (court 99 included); facility photo upload is listed and served; **delete guards: category blocked while it owns a facility, facility blocked while it owns courts**; cleanup deletes court → facility → category in dependency order |
 | T14 | Booking cart (P4) | Two lines on one court; **subtotal equals the page's own line prices**; duration update re-prices (**line = 2×, subtotal = 3×**); batch-remove both selected lines → "2 item(s) removed" + empty-cart state |
-| T15 | Checkout + batch payment (P4) | Checkout with `WELCOME10` redirects to the payment step; **total due = subtotal − round(10%)**; batch payment (two reservations, one transaction) lands on the paid page with both `BH-` references Confirmed |
+| T15 | Checkout + batch payment (P4) | Checkout with `WELCOME10` redirects to the payment step; **total due = subtotal − round(10%)**; batch payment (two reservations, one transaction) lands on the paid page with both `SH-` references Confirmed |
 | T16 | Voucher administration (P4) | Role guards on admin vouchers; seeded list; admin creates a **limit-1 voucher**; duplicate code refused; member redeems once (redirect), **second redemption refused with "reached its redemption limit" and the cart line kept**; usage column shows **1 / 1** + limit-reached badge; edit and delete; deleted voucher really gone from the index (edit link asserted, not the flash text) |
 | T17 | Wishlist (P4) | Admin creates an **Unavailable** court; its detail page shows "Currently unavailable" + **Add to Wishlist**; add returns to the detail page (local return URL honoured — the suite fixes Git Bash path-mangling of `returnUrl=` so `Url.IsLocalUrl` sees the real value); detail page flips to the in-wishlist state; wishlist page lists the new court plus the **seeded demo rows**; removing the user's item leaves the seeded rows intact; cleanup deletes the court |
 
@@ -152,7 +152,7 @@ data on a fresh seed.
 ## 5. Test data safety
 
 - Unit tests use `UseInMemoryDatabase` — they **never** touch
-  `App_Data/BadmintonHub.mdf`.
+  `App_Data/SportHub.mdf`.
 - `e2e.sh` creates only throwaway accounts (`e2e.<timestamp>@example.com`),
   categories, facilities and courts (deleted again at the end of T13 in
   dependency order); it also books two table-tennis slots for tonight to make

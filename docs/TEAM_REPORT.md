@@ -1,4 +1,4 @@
-# BadmintonHub — Team Report (AMIT2014)
+# SportHub — Team Report (AMIT2014)
 
 > Team: LIM LI ZHE · YAP SJ · WONG YONG FENG · LEE XH. Nothing in this report
 > claims work that was not done; see `docs/AUDIT.md` for the pass/fail audit.
