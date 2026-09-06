@@ -29,23 +29,41 @@ public class AdminAccountsController : Controller
 
     private int CurrentUserId => int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
 
-    public async Task<IActionResult> Index(string? search)
+    // G-M6: AJAX search/sort/paging over admin/superadmin accounts.
+    public async Task<IActionResult> Index(string? search, string? sort, string? dir, int page = 1, int size = 10)
     {
+        var request = AjaxListRequest.From(Request.Query);
         var query = _db.Users
             .Where(u => u.Role == Role.Admin || u.Role == Role.SuperAdmin)
             .AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var term = search.Trim();
-            query = query.Where(u => u.FullName.Contains(term) || u.Email.Contains(term));
-        }
+        if (!string.IsNullOrWhiteSpace(request.Search))
+            query = query.Where(u => u.FullName.Contains(request.Search) || u.Email.Contains(request.Search));
 
+        query = (request.Sort, request.Descending) switch
+        {
+            ("name", false) => query.OrderBy(u => u.FullName),
+            ("name", true) => query.OrderByDescending(u => u.FullName),
+            ("email", false) => query.OrderBy(u => u.Email),
+            ("email", true) => query.OrderByDescending(u => u.Email),
+            ("role", false) => query.OrderBy(u => u.Role).ThenBy(u => u.FullName),
+            ("role", true) => query.OrderByDescending(u => u.Role).ThenBy(u => u.FullName),
+            _ => query.OrderBy(u => u.Role).ThenBy(u => u.FullName)
+        };
+
+        var total = await query.CountAsync();
+        var pager = AjaxPager.For(request, total);
         var model = new AdminAccountIndexViewModel
         {
-            Accounts = await query.OrderBy(u => u.Role).ThenBy(u => u.FullName).ToListAsync(),
-            Search = search
+            Page = new AjaxListPage<User>
+            {
+                Items = await query.Skip((pager.Page - 1) * pager.PageSize).Take(pager.PageSize).ToListAsync(),
+                Pager = pager
+            }
         };
+
+        if (Request.IsAjaxListRequest())
+            return PartialView("_AccountTable", model);
         return View(model);
     }
 

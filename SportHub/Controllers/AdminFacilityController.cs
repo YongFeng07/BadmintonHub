@@ -26,17 +26,41 @@ public class AdminFacilityController : Controller
         _imageService = imageService;
     }
 
-    // ---------- List ----------
+    // ---------- List (G-M6: AJAX search/sort/paging) ----------
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search, string? sort, string? dir, int page = 1, int size = 10)
     {
-        var facilities = await _db.Facilities
+        var request = AjaxListRequest.From(Request.Query);
+        var query = _db.Facilities
             .Include(f => f.Category)
             .Include(f => f.Courts)
             .Include(f => f.Photos)
-            .OrderBy(f => f.Name)
-            .ToListAsync();
-        return View(facilities);
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(request.Search))
+            query = query.Where(f => f.Name.Contains(request.Search) ||
+                                     (f.Address != null && f.Address.Contains(request.Search)));
+
+        query = (request.Sort, request.Descending) switch
+        {
+            ("name", false) => query.OrderBy(f => f.Name),
+            ("name", true) => query.OrderByDescending(f => f.Name),
+            ("category", false) => query.OrderBy(f => f.Category!.Name).ThenBy(f => f.Name),
+            ("category", true) => query.OrderByDescending(f => f.Category!.Name).ThenBy(f => f.Name),
+            _ => query.OrderBy(f => f.Name)
+        };
+
+        var total = await query.CountAsync();
+        var pager = AjaxPager.For(request, total);
+        var pageModel = new AjaxListPage<Facility>
+        {
+            Items = await query.Skip((pager.Page - 1) * pager.PageSize).Take(pager.PageSize).ToListAsync(),
+            Pager = pager
+        };
+
+        if (Request.IsAjaxListRequest())
+            return PartialView("_FacilityTable", pageModel);
+        return View(pageModel);
     }
 
     // ---------- Create ----------

@@ -14,4 +14,5 @@
   <data name="TabUpcoming" xml:space="preserve"><value>即将到来</value></data>
   <data name="TabCompleted" xml:space="preserve"><value>已完成</value></data>
   <data name="TabCancelled" xml:space="preserve"><value>已取消</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>搜索预订编号或场地号码…</value></data>
 </root>

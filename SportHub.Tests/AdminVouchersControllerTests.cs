@@ -2,7 +2,9 @@ using SportHub.Controllers;
 using SportHub.Data;
 using SportHub.Models;
 using SportHub.Services;
+using SportHub.ViewModels;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
@@ -21,11 +23,16 @@ public class AdminVouchersControllerTests
         public void SaveTempData(HttpContext context, IDictionary<string, object> values) { }
     }
 
-    private static (AdminVouchersController Controller, ApplicationDbContext Db) CreateController()
+    private static (AdminVouchersController Controller, ApplicationDbContext Db) CreateController(string query = "")
     {
         var db = TestDb.Create();
         var httpContext = new DefaultHttpContext();
-        var controller = new AdminVouchersController(new VoucherService(db))
+        // G-M6 list actions read AjaxListRequest.From(Request.Query), so the
+        // query string is where filters/sorts must live in tests too. The
+        // explicit QueryFeature is the recipe that makes Request.Query parse it.
+        httpContext.Features.Set<IQueryFeature>(new QueryFeature(httpContext.Features));
+        httpContext.Request.QueryString = QueryString.FromUriComponent(query);
+        var controller = new AdminVouchersController(new VoucherService(db), db)
         {
             ControllerContext = new ControllerContext { HttpContext = httpContext },
             TempData = new TempDataDictionary(httpContext, new NoopTempDataProvider())
@@ -62,17 +69,56 @@ public class AdminVouchersControllerTests
     public async Task Index_ListsVouchersNewestFirst()
     {
         var (controller, db) = CreateController();
-        var older = AddVoucher(db, "OLDER1");
-        var newer = AddVoucher(db, "NEWER1");
-        older.CreatedAt = DateTime.Now.AddHours(-2);
-        newer.CreatedAt = DateTime.Now;
-        db.SaveChanges();
+        AddVoucher(db, "OLDER1");
+        AddVoucher(db, "NEWER1");
 
-        var result = await controller.Index();
+        var result = await controller.Index(null, null, null, null);
 
         var view = Assert.IsType<ViewResult>(result);
-        var vouchers = Assert.IsType<List<Voucher>>(view.Model);
-        Assert.Equal(new[] { "NEWER1", "OLDER1" }, vouchers.Select(v => v.Code));
+        var vm = Assert.IsType<AdminVoucherIndexViewModel>(view.Model);
+        Assert.Equal(new[] { "NEWER1", "OLDER1" }, vm.Page.Items.Select(v => v.Code));
+    }
+
+    [Fact]
+    public async Task Index_SearchFiltersByCodeOrDescription()
+    {
+        // Note: SQL Server collation makes the live search case-insensitive;
+        // the InMemory provider compares exactly, so match case here.
+        var (controller, db) = CreateController("?search=SUMMER");
+        AddVoucher(db, "SUMMER10");
+        AddVoucher(db, "WINTER5");
+
+        var result = await controller.Index(null, null, null, null);
+
+        var vm = Assert.IsType<AdminVoucherIndexViewModel>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Equal("SUMMER10", Assert.Single(vm.Page.Items).Code);
+    }
+
+    [Fact]
+    public async Task DeleteBatch_RemovesOnlySelectedVouchers()
+    {
+        var (controller, db) = CreateController();
+        var keep = AddVoucher(db, "KEEP10");
+        var drop1 = AddVoucher(db, "DROP1");
+        var drop2 = AddVoucher(db, "DROP2");
+
+        var result = await controller.DeleteBatch(new List<int> { drop1.Id, drop2.Id });
+
+        Assert.IsType<RedirectToActionResult>(result);
+        var remaining = db.Vouchers.Select(v => v.Id).ToList();
+        Assert.Equal(new[] { keep.Id }, remaining);
+    }
+
+    [Fact]
+    public async Task DeleteBatch_EmptySelection_RemovesNothing()
+    {
+        var (controller, db) = CreateController();
+        AddVoucher(db);
+
+        var result = await controller.DeleteBatch(new List<int>());
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.Single(db.Vouchers);
     }
 
     [Fact]

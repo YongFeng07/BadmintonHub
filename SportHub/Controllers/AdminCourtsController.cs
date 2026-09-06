@@ -28,38 +28,59 @@ public class AdminCourtsController : Controller
     }
 
     // ---------- List with search / filter / pagination ----------
+    // G-M6: AJAX search/sort/paging. Filter selects and pager/sort links all
+    // carry the facility/type/status filters through every request (the old
+    // pagination dropped the facility filter — fixed via pager.Extra).
 
-    public async Task<IActionResult> Index(string? search, int? facilityId, CourtType? type, CourtStatus? status, int page = 1)
+    public async Task<IActionResult> Index(string? search, int? facilityId, CourtType? type, CourtStatus? status,
+        string? sort, string? dir, int page = 1, int size = 10)
     {
-        if (page < 1) page = 1;
+        var request = AjaxListRequest.From(Request.Query);
 
         var query = _db.Courts.Include(c => c.Facility).AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var term = search.Trim();
-            query = query.Where(c => c.CourtNumber.Contains(term));
-        }
+        if (!string.IsNullOrWhiteSpace(request.Search))
+            query = query.Where(c => c.CourtNumber.Contains(request.Search));
         if (facilityId.HasValue) query = query.Where(c => c.FacilityId == facilityId);
         if (type.HasValue) query = query.Where(c => c.CourtType == type);
         if (status.HasValue) query = query.Where(c => c.Status == status);
 
+        query = (request.Sort, request.Descending) switch
+        {
+            ("rate", false) => query.OrderBy(c => c.HourlyRate).ThenBy(c => c.CourtNumber),
+            ("rate", true) => query.OrderByDescending(c => c.HourlyRate).ThenBy(c => c.CourtNumber),
+            ("type", false) => query.OrderBy(c => c.CourtType).ThenBy(c => c.CourtNumber),
+            ("type", true) => query.OrderByDescending(c => c.CourtType).ThenBy(c => c.CourtNumber),
+            ("status", false) => query.OrderBy(c => c.Status).ThenBy(c => c.CourtNumber),
+            ("status", true) => query.OrderByDescending(c => c.Status).ThenBy(c => c.CourtNumber),
+            ("facility", false) => query.OrderBy(c => c.Facility!.Name).ThenBy(c => c.CourtNumber),
+            ("facility", true) => query.OrderByDescending(c => c.Facility!.Name).ThenBy(c => c.CourtNumber),
+            _ => request.Descending
+                ? query.OrderByDescending(c => c.CourtNumber)
+                : query.OrderBy(c => c.FacilityId).ThenBy(c => c.CourtNumber)
+        };
+
+        var total = await query.CountAsync();
+        var pager = AjaxPager.For(request, total);
+        pager.Extra["facilityId"] = facilityId?.ToString() ?? "";
+        pager.Extra["type"] = type?.ToString() ?? "";
+        pager.Extra["status"] = status?.ToString() ?? "";
+
         var vm = new AdminCourtIndexViewModel
         {
-            Search = search,
             FacilityId = facilityId,
             Type = type,
             Status = status,
-            Page = page,
-            PageSize = PageSize,
             Facilities = await _db.Facilities.OrderBy(f => f.Name).ToListAsync(),
-            TotalCount = await query.CountAsync(),
-            Courts = await query
-                .OrderBy(c => c.FacilityId).ThenBy(c => c.CourtNumber)
-                .Skip((page - 1) * PageSize)
-                .Take(PageSize)
-                .ToListAsync()
+            Page = new AjaxListPage<Court>
+            {
+                Items = await query.Skip((pager.Page - 1) * pager.PageSize).Take(pager.PageSize).ToListAsync(),
+                Pager = pager
+            }
         };
+
+        if (Request.IsAjaxListRequest())
+            return PartialView("_CourtTable", vm.Page);
         return View(vm);
     }
 

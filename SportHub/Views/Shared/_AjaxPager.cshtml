@@ -1,0 +1,50 @@
+@model SportHub.ViewModels.AjaxPager
+@{
+    // Shared G-M6 pager: count line, page-size select and page links. Rendered
+    // inside every AJAX list partial; ajax-list.js intercepts [data-ajax-page]
+    // and [data-ajax-size] and replaces only the list region.
+}
+@if (Model.TotalCount == 0)
+{
+    <div class="text-muted small">No matching records.</div>
+}
+else
+{
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 sh-pager border-top pt-3 mt-3">
+        <div class="text-muted small">
+            Showing <strong>@Model.From</strong>–<strong>@Model.To</strong> of <strong>@Model.TotalCount</strong>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <label class="small text-muted mb-0" for="ajaxPageSize">Per page</label>
+            <select class="form-select form-select-sm" style="width:auto;" data-ajax-size aria-label="Items per page">
+                @foreach (var size in new[] { 10, 25, 50 })
+                {
+                    <option value="@size" selected="@(Model.PageSize == size)">@size</option>
+                }
+            </select>
+            <nav aria-label="List pages">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                        <a class="page-link" data-ajax-page href="@Model.PageLink(Model.Page - 1)" aria-label="Previous">&laquo;</a>
+                    </li>
+                    @for (var p = 1; p <= Model.TotalPages; p++)
+                    {
+                        if (Model.TotalPages <= 7 || p == 1 || p == Model.TotalPages || Math.Abs(p - Model.Page) <= 2)
+                        {
+                            <li class="page-item @(p == Model.Page ? "active" : "")">
+                                <a class="page-link" data-ajax-page href="@Model.PageLink(p)">@p</a>
+                            </li>
+                        }
+                        else if (p == 2 || p == Model.TotalPages - 1)
+                        {
+                            <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                        }
+                    }
+                    <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" data-ajax-page href="@Model.PageLink(Model.Page + 1)" aria-label="Next">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+}

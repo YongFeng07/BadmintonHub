@@ -1,4 +1,4 @@
-@model SportHub.ViewModels.CategoryFormViewModel
+@model SportHub.ViewModels.AjaxListPage<SportHub.Models.Category>
 @{
     ViewData["Title"] = "Facility Categories";
     Layout = "_AdminLayout";
@@ -7,53 +7,20 @@
 <div class="sh-admin-topbar">
     <div>
         <h2 class="sh-page-title mb-0">Facility Categories</h2>
-        <p class="sh-page-sub mb-0">@Model.Categories.Count category(ies) — used by the public facility catalog.</p>
+        <p class="sh-page-sub mb-0">Used by the public facility catalog.</p>
     </div>
     <a asp-action="Create" class="btn btn-sh">+ Add Category</a>
 </div>
 
-<div class="table-responsive sh-table">
-    <table class="table table-hover mb-0 align-middle">
-        <thead>
-            <tr>
-                <th style="width: 80px;">Order</th>
-                <th>Category</th>
-                <th>Unit Label</th>
-                <th>Facilities</th>
-                <th>Status</th>
-                <th class="text-end">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var category in Model.Categories)
-            {
-                <tr>
-                    <td class="text-muted">@category.DisplayOrder</td>
-                    <td>
-                        <strong>@category.Icon @category.Name</strong>
-                        @if (!string.IsNullOrEmpty(category.Description))
-                        {
-                            <div class="small text-muted">@category.Description</div>
-                        }
-                    </td>
-                    <td><span class="badge badge-status" style="background:#eef3f8;color:#3c5670;">@category.UnitLabel</span></td>
-                    <td>@category.Facilities.Count</td>
-                    <td>
-                        @if (category.Status == SportHub.Models.CategoryStatus.Active)
-                        {
-                            <span class="badge bg-success">Active</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">Inactive</span>
-                        }
-                    </td>
-                    <td class="text-end">
-                        <a asp-action="Edit" asp-route-id="@category.Id" class="btn btn-sm btn-outline-primary">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@category.Id" class="btn btn-sm btn-outline-danger">Delete</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+<div data-ajax-list data-url="@Url.Action("Index")">
+    <form method="get" asp-action="Index" class="sh-form-section d-flex flex-wrap gap-2 align-items-center mb-3" data-ajax-filter>
+        <div class="flex-grow-1" style="min-width: 220px;">
+            <input type="text" name="search" class="form-control" placeholder="Search category name or description…" value="@Model.Pager.Search" />
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </form>
+
+    <div data-ajax-target>
+        <partial name="_CategoryTable" model="Model" />
+    </div>
 </div>

@@ -56,12 +56,12 @@ public class AdminCategoriesControllerTests
         AddCategory(db, "Zebra", 2);
         AddCategory(db, "Alpha", 1);
 
-        var result = await controller.Index();
+        var result = await controller.Index(null, null, null);
 
         var view = Assert.IsType<ViewResult>(result);
-        var vm = Assert.IsType<CategoryFormViewModel>(view.Model);
-        Assert.Equal("Alpha", vm.Categories[0].Name);
-        Assert.Equal("Zebra", vm.Categories[1].Name);
+        var vm = Assert.IsType<AjaxListPage<Category>>(view.Model);
+        Assert.Equal("Alpha", vm.Items[0].Name);
+        Assert.Equal("Zebra", vm.Items[1].Name);
     }
 
     [Fact]

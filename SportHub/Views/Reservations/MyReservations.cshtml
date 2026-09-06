@@ -83,46 +83,55 @@
                 </li>
             </ul>
 
-            @switch (Model.Tab)
+            @if (Model.Tab == "insights")
             {
-                case "completed":
-                    @await Html.PartialAsync("_ReservationTable", new Tuple<string, List<Reservation>>("completed", Model.Completed))
-                    break;
-                case "cancelled":
-                    @await Html.PartialAsync("_ReservationTable", new Tuple<string, List<Reservation>>("cancelled", Model.Cancelled))
-                    break;
-                case "insights":
-                    <div class="sh-form-section mb-3">
-                        <h2 class="h6 text-uppercase text-muted mb-2">Monthly bookings — last 6 months</h2>
-                        <canvas id="insightMonthlyChart" height="70"></canvas>
-                    </div>
-                    <div class="sh-form-section mb-3">
-                        <h2 class="h6 text-uppercase text-muted mb-2">Spend by month — last 6 months</h2>
-                        <canvas id="insightSpendChart" height="70"></canvas>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="sh-form-section h-100">
-                                <h2 class="h6 text-uppercase text-muted mb-2">Bookings by category</h2>
-                                <canvas id="insightCategoryChart" height="110"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="sh-form-section h-100">
-                                <h2 class="h6 text-uppercase text-muted mb-2">Booking outcomes</h2>
-                                <canvas id="insightOutcomeChart" height="110"></canvas>
-                                <p class="small text-muted mt-2 mb-0">
-                                    Cancellation rate: <strong>@Model.InsightCancellationRate.ToString("0.0")%</strong>
-                                    (@Model.InsightCancelled cancelled of
-                                    @(Model.InsightCancelled + Model.InsightCompleted + Model.InsightActive) bookings)
-                                </p>
-                            </div>
+                <div class="sh-form-section mb-3">
+                    <h2 class="h6 text-uppercase text-muted mb-2">Monthly bookings — last 6 months</h2>
+                    <canvas id="insightMonthlyChart" height="70"></canvas>
+                </div>
+                <div class="sh-form-section mb-3">
+                    <h2 class="h6 text-uppercase text-muted mb-2">Spend by month — last 6 months</h2>
+                    <canvas id="insightSpendChart" height="70"></canvas>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="sh-form-section h-100">
+                            <h2 class="h6 text-uppercase text-muted mb-2">Bookings by category</h2>
+                            <canvas id="insightCategoryChart" height="110"></canvas>
                         </div>
                     </div>
-                    break;
-                default:
-                    @await Html.PartialAsync("_ReservationTable", new Tuple<string, List<Reservation>>("upcoming", Model.Upcoming))
-                    break;
+                    <div class="col-md-6">
+                        <div class="sh-form-section h-100">
+                            <h2 class="h6 text-uppercase text-muted mb-2">Booking outcomes</h2>
+                            <canvas id="insightOutcomeChart" height="110"></canvas>
+                            <p class="small text-muted mt-2 mb-0">
+                                Cancellation rate: <strong>@Model.InsightCancellationRate.ToString("0.0")%</strong>
+                                (@Model.InsightCancelled cancelled of
+                                @(Model.InsightCancelled + Model.InsightCompleted + Model.InsightActive) bookings)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                @* G-M6: the active tab's list is searched/sorted/paged via AJAX without
+                   touching the calendar or the tab counts. *@
+                <div data-ajax-list data-url="@Url.Action("MyReservationsList")">
+                    <form class="mb-3" data-ajax-filter>
+                        <div class="input-group">
+                            <span class="input-group-text">🔍</span>
+                            <input type="search" name="search" class="form-control"
+                                   placeholder="@Localizer["SearchPlaceholder"]"
+                                   value="@Model.ActiveList.Page.Pager.Search" aria-label="@Localizer["SearchPlaceholder"]" />
+                        </div>
+                        <input type="hidden" name="tab" value="@Model.Tab" />
+                        <input type="hidden" name="date" value="@(Model.FilterDate?.ToString("yyyy-MM-dd"))" />
+                    </form>
+                    <div data-ajax-target>
+                        <partial name="_ReservationTable" model="Model.ActiveList" />
+                    </div>
+                </div>
             }
         </div>
     </div>

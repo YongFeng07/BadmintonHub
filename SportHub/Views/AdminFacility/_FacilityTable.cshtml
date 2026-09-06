@@ -1,0 +1,66 @@
+@model SportHub.ViewModels.AjaxListPage<SportHub.Models.Facility>
+@{
+    // G-M6 AJAX list region for facilities.
+    var pager = Model.Pager;
+}
+
+@if (Model.Items.Count == 0)
+{
+    <div class="sh-empty"><span class="emoji">🔍</span>No facilities match your search.</div>
+}
+else
+{
+    <div class="table-responsive sh-table">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("name")"
+                           aria-sort="@pager.AriaSortFor("name")">Facility <span class="sh-sort-arrow">@pager.ArrowFor("name")</span></a>
+                    </th>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("category")"
+                           aria-sort="@pager.AriaSortFor("category")">Category <span class="sh-sort-arrow">@pager.ArrowFor("category")</span></a>
+                    </th>
+                    <th>Hours</th>
+                    <th>Courts</th>
+                    <th>Photos</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var facility in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <strong>@facility.Name</strong>
+                            <div class="small text-muted">@facility.Address</div>
+                        </td>
+                        <td>@facility.Category?.Icon @facility.Category?.Name</td>
+                        <td class="small text-nowrap">@facility.OpeningTime.ToString(@"hh\:mm")–@facility.ClosingTime.ToString(@"hh\:mm")</td>
+                        <td>@facility.Courts.Count</td>
+                        <td>@facility.Photos.Count</td>
+                        <td>
+                            @if (facility.Status == SportHub.Models.FacilityStatus.Open)
+                            {
+                                <span class="badge bg-success">Open</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Closed</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="ManagePhotos" asp-route-id="@facility.Id" class="btn btn-sm btn-outline-secondary">Photos</a>
+                            <a asp-action="Edit" asp-route-id="@facility.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@facility.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<partial name="_AjaxPager" model="pager" />

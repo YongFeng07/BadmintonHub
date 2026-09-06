@@ -20,37 +20,62 @@ public class CourtsController : Controller
         _courtService = courtService;
     }
 
-    public async Task<IActionResult> Index(string? search, CourtType? type, string? sort)
+    // G-M6: AJAX search/sort/paging. Sort keys are whitelisted below; the JS
+    // engine (ajax-list.js) requests the list region only with X-Requested-With.
+    public async Task<IActionResult> Index(string? search, CourtType? type, string? sort, string? dir,
+        int page = 1, int size = 10)
     {
+        var request = AjaxListRequest.From(Request.Query);
+
         var query = _db.Courts
             .Include(c => c.Facility)
             .Include(c => c.Photos.OrderBy(p => p.DisplayOrder))
             .AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(search))
+        if (!string.IsNullOrWhiteSpace(request.Search))
         {
-            var term = search.Trim();
+            var term = request.Search;
             query = query.Where(c => c.CourtNumber.Contains(term) ||
-                                     (c.Description != null && c.Description.Contains(term)));
+                                     (c.Description != null && c.Description.Contains(term)) ||
+                                     (c.Facility != null && c.Facility.Name.Contains(term)));
         }
 
         if (type.HasValue)
             query = query.Where(c => c.CourtType == type);
 
-        query = sort switch
+        query = (request.Sort, request.Descending) switch
         {
-            "rate_asc" => query.OrderBy(c => c.HourlyRate),
-            "rate_desc" => query.OrderByDescending(c => c.HourlyRate),
-            _ => query.OrderBy(c => c.CourtNumber)
+            ("rate", false) => query.OrderBy(c => c.HourlyRate).ThenBy(c => c.CourtNumber),
+            ("rate", true) => query.OrderByDescending(c => c.HourlyRate).ThenBy(c => c.CourtNumber),
+            ("type", false) => query.OrderBy(c => c.CourtType).ThenBy(c => c.CourtNumber),
+            ("type", true) => query.OrderByDescending(c => c.CourtType).ThenBy(c => c.CourtNumber),
+            ("facility", false) => query.OrderBy(c => c.Facility!.Name).ThenBy(c => c.CourtNumber),
+            ("facility", true) => query.OrderByDescending(c => c.Facility!.Name).ThenBy(c => c.CourtNumber),
+            _ => request.Descending
+                ? query.OrderByDescending(c => c.CourtNumber)
+                : query.OrderBy(c => c.CourtNumber) // default: court number ascending
         };
+
+        var total = await query.CountAsync();
+        var pager = AjaxPager.For(request, total);
+        // The type filter lives in the filter form, so every pager/sort link must
+        // carry it through — otherwise sorting resets the filter silently.
+        if (type.HasValue)
+            pager.Extra["type"] = type.Value.ToString();
+
+        var courts = await query.Skip((pager.Page - 1) * pager.PageSize)
+            .Take(pager.PageSize)
+            .ToListAsync();
 
         var vm = new CourtIndexViewModel
         {
-            Search = search,
+            Search = request.Search,
             Type = type,
-            Sort = sort,
-            Courts = await query.ToListAsync()
+            Page = new AjaxListPage<Court> { Items = courts, Pager = pager }
         };
+
+        if (Request.IsAjaxListRequest())
+            return PartialView("_CourtGrid", vm.Page);
         return View(vm);
     }
 

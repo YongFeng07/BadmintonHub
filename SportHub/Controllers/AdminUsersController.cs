@@ -28,16 +28,15 @@ public class AdminUsersController : Controller
         _imageService = imageService;
     }
 
-    public async Task<IActionResult> Index(string? search, string? role, string? status, int page = 1)
+    // G-M6: AJAX search/sort/paging; role/status filters carried through every link.
+    public async Task<IActionResult> Index(string? search, string? role, string? status,
+        string? sort, string? dir, int page = 1, int size = 10)
     {
-        page = Math.Max(1, page);
+        var request = AjaxListRequest.From(Request.Query);
         var query = _db.Users.AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var term = search.Trim();
-            query = query.Where(u => u.FullName.Contains(term) || u.Email.Contains(term));
-        }
+        if (!string.IsNullOrWhiteSpace(request.Search))
+            query = query.Where(u => u.FullName.Contains(request.Search) || u.Email.Contains(request.Search));
 
         if (!string.IsNullOrWhiteSpace(role) && Enum.TryParse<Role>(role, true, out var parsedRole))
             query = query.Where(u => u.Role == parsedRole);
@@ -45,22 +44,42 @@ public class AdminUsersController : Controller
         if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<UserStatus>(status, true, out var parsedStatus))
             query = query.Where(u => u.Status == parsedStatus);
 
+        query = (request.Sort, request.Descending) switch
+        {
+            ("name", false) => query.OrderBy(u => u.FullName),
+            ("name", true) => query.OrderByDescending(u => u.FullName),
+            ("email", false) => query.OrderBy(u => u.Email),
+            ("email", true) => query.OrderByDescending(u => u.Email),
+            ("role", false) => query.OrderBy(u => u.Role).ThenBy(u => u.FullName),
+            ("role", true) => query.OrderByDescending(u => u.Role).ThenBy(u => u.FullName),
+            ("status", false) => query.OrderBy(u => u.Status).ThenBy(u => u.FullName),
+            ("status", true) => query.OrderByDescending(u => u.Status).ThenBy(u => u.FullName),
+            ("failed", false) => query.OrderBy(u => u.FailedLoginAttempts).ThenBy(u => u.FullName),
+            ("failed", true) => query.OrderByDescending(u => u.FailedLoginAttempts),
+            ("lastlogin", false) => query.OrderBy(u => u.LastLoginAt).ThenBy(u => u.FullName),
+            ("lastlogin", true) => query.OrderByDescending(u => u.LastLoginAt),
+            _ => query.OrderBy(u => u.Role).ThenBy(u => u.FullName)
+        };
+
         var total = await query.CountAsync();
-        var users = await query
-            .OrderBy(u => u.Role).ThenBy(u => u.FullName)
-            .Skip((page - 1) * AdminUsersIndexViewModel.PageSize)
-            .Take(AdminUsersIndexViewModel.PageSize)
-            .ToListAsync();
+        var pager = AjaxPager.For(request, total);
+        pager.Extra["role"] = role ?? "";
+        pager.Extra["status"] = status ?? "";
 
         var model = new AdminUsersIndexViewModel
         {
-            Users = users,
-            Search = search,
             RoleFilter = role,
             StatusFilter = status,
-            Page = page,
-            TotalCount = total
+            LockedCount = await query.CountAsync(u => u.LockoutEnd.HasValue && u.LockoutEnd > DateTime.Now),
+            Page = new AjaxListPage<User>
+            {
+                Items = await query.Skip((pager.Page - 1) * pager.PageSize).Take(pager.PageSize).ToListAsync(),
+                Pager = pager
+            }
         };
+
+        if (Request.IsAjaxListRequest())
+            return PartialView("_UserTable", model);
         return View(model);
     }
 

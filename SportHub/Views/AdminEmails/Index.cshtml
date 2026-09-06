@@ -1,4 +1,4 @@
-@model List<SportHub.Models.DemoEmail>
+@model SportHub.ViewModels.AjaxListPage<SportHub.Models.DemoEmail>
 @{
     ViewData["Title"] = "Demo Mail";
     Layout = "_AdminLayout";
@@ -10,42 +10,19 @@
 
 <p class="text-muted mt-2">
     Outbound emails captured in-app. Rows appear while no SMTP host is configured in
-    <code>appsettings.json</code> — this page lets the assignment demo show the verification and
-    password-reset emails exactly as they would arrive in a real inbox.
+    <code>appsettings.json</code> — this page lets the assignment demo show the verification,
+    receipt and reminder emails exactly as they would arrive in a real inbox.
 </p>
 
-@if (!Model.Any())
-{
-    <div class="sh-empty sh-card mt-3">
-        <span class="emoji">📭</span>
-        No emails captured yet. Register a member or request a password reset to see the mail here.
+<div data-ajax-list data-url="@Url.Action("Index")">
+    <form method="get" asp-action="Index" class="sh-form-section d-flex flex-wrap gap-2 align-items-center mb-3" data-ajax-filter>
+        <div class="flex-grow-1" style="min-width: 220px;">
+            <input type="text" name="search" class="form-control" placeholder="Search recipient or subject…" value="@Model.Pager.Search" />
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </form>
+
+    <div data-ajax-target>
+        <partial name="_MailTable" model="Model" />
     </div>
-}
-else
-{
-    <div class="table-responsive sh-form-section mt-3 p-0 overflow-hidden">
-        <table class="table table-hover align-middle sh-table mb-0">
-            <thead>
-                <tr>
-                    <th>To</th>
-                    <th>Subject</th>
-                    <th>Captured</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var mail in Model)
-                {
-                    <tr>
-                        <td>@mail.To</td>
-                        <td>@mail.Subject</td>
-                        <td class="text-muted small">@mail.CreatedAt.ToString("dd MMM yyyy HH:mm")</td>
-                        <td class="text-end">
-                            <a class="btn btn-sm btn-outline-success" asp-action="Details" asp-route-id="@mail.Id">View</a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+</div>

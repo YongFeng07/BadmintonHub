@@ -1,7 +1,10 @@
 using SportHub.Models;
 using SportHub.Services;
+using SportHub.Data;
+using SportHub.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace SportHub.Controllers;
 
@@ -13,17 +16,81 @@ namespace SportHub.Controllers;
 public class AdminVouchersController : Controller
 {
     private readonly IVoucherService _voucherService;
+    private readonly ApplicationDbContext _db;
 
-    public AdminVouchersController(IVoucherService voucherService)
+    public AdminVouchersController(IVoucherService voucherService, ApplicationDbContext db)
     {
         _voucherService = voucherService;
+        _db = db;
     }
 
-    // ---------- List ----------
+    // ---------- List (G-M6: AJAX search/sort/paging + batch delete) ----------
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search, string? status, string? sort, string? dir,
+        int page = 1, int size = 10)
     {
-        return View(await _voucherService.GetAllAsync());
+        var request = AjaxListRequest.From(Request.Query);
+        var query = _db.Vouchers.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(request.Search))
+            query = query.Where(v => v.Code.Contains(request.Search) ||
+                                     (v.Description != null && v.Description.Contains(request.Search)));
+
+        if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<VoucherStatus>(status, true, out var parsedStatus))
+            query = query.Where(v => v.Status == parsedStatus);
+
+        query = (request.Sort, request.Descending) switch
+        {
+            ("code", false) => query.OrderBy(v => v.Code),
+            ("code", true) => query.OrderByDescending(v => v.Code),
+            ("discount", false) => query.OrderBy(v => v.DiscountValue),
+            ("discount", true) => query.OrderByDescending(v => v.DiscountValue),
+            ("expiry", false) => query.OrderBy(v => v.ExpiryDate),
+            ("expiry", true) => query.OrderByDescending(v => v.ExpiryDate),
+            ("used", false) => query.OrderBy(v => v.UsageCount),
+            ("used", true) => query.OrderByDescending(v => v.UsageCount),
+            ("status", false) => query.OrderBy(v => v.Status),
+            ("status", true) => query.OrderByDescending(v => v.Status),
+            _ => query.OrderByDescending(v => v.Id) // newest first
+        };
+
+        var total = await query.CountAsync();
+        var pager = AjaxPager.For(request, total);
+        pager.Extra["status"] = status ?? "";
+
+        var model = new AdminVoucherIndexViewModel
+        {
+            StatusFilter = status,
+            Page = new AjaxListPage<Voucher>
+            {
+                Items = await query.Skip((pager.Page - 1) * pager.PageSize).Take(pager.PageSize).ToListAsync(),
+                Pager = pager
+            }
+        };
+
+        if (Request.IsAjaxListRequest())
+            return PartialView("_VoucherTable", model);
+        return View(model);
+    }
+
+    // G-M6 batch deletion: owner-scoped-style bulk action for the voucher list.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteBatch(List<int> itemIds)
+    {
+        var ids = itemIds.Where(id => id > 0).Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            TempData["ErrorMessage"] = "Select at least one voucher to delete.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var vouchers = await _db.Vouchers.Where(v => ids.Contains(v.Id)).ToListAsync();
+        _db.Vouchers.RemoveRange(vouchers);
+        await _db.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"{vouchers.Count} voucher(s) deleted.";
+        return RedirectToAction(nameof(Index));
     }
 
     // ---------- Create ----------

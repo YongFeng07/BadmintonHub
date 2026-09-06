@@ -1,20 +1,16 @@
 using SportHub.Models;
 using SportHub.Services;
 using Microsoft.EntityFrameworkCore;
-using QuestPDF.Infrastructure;
 
 namespace SportHub.Tests;
 
 /// <summary>
 /// M3 PDF e-receipt: a paid booking produces a real PDF document.
-/// (The community licence is also activated in Program.cs for the web app.)
+/// (The QuestPDF community licence is declared once per process: Program.cs for
+/// the web app and TestAssemblySetup's module initializer for the test assembly.)
 /// </summary>
 public class ReceiptPdfGeneratorTests
 {
-    static ReceiptPdfGeneratorTests()
-    {
-        QuestPDF.Settings.License = LicenseType.Community;
-    }
 
     [Fact]
     public async Task Generate_PaidReservation_ReturnsPdfBytes()

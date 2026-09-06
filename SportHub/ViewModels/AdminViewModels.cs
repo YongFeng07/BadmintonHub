@@ -125,25 +125,17 @@ public class AdminReportsViewModel
 }
 
 /// <summary>Filter/pagination state for the user administration grid.</summary>
+/// <summary>User management list (G-M6): AJAX search/sort/paging with kept filters.</summary>
 public class AdminUsersIndexViewModel
 {
-    public List<User> Users { get; set; } = new();
-
-    public string? Search { get; set; }
-
     public string? RoleFilter { get; set; }
 
     public string? StatusFilter { get; set; }
 
-    public int Page { get; set; } = 1;
+    /// <summary>Currently locked accounts across the filtered set (not just the page).</summary>
+    public int LockedCount { get; set; }
 
-    public const int PageSize = 10;
-
-    public int TotalCount { get; set; }
-
-    public int TotalPages => Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
-
-    public int LockedCount => Users.Count(u => u.LockoutEnd.HasValue && u.LockoutEnd > DateTime.Now);
+    public AjaxListPage<User> Page { get; set; } = new();
 }
 
 /// <summary>Admin-side member maintenance form (P2): basic profile fields only —
@@ -184,11 +176,10 @@ public class AdminUserDetailsViewModel
 }
 
 /// <summary>SuperAdmin-only admin-account listing (P2).</summary>
+/// <summary>SuperAdmin admin-account list (G-M6): AJAX search/sort/paging.</summary>
 public class AdminAccountIndexViewModel
 {
-    public List<User> Accounts { get; set; } = new();
-
-    public string? Search { get; set; }
+    public AjaxListPage<User> Page { get; set; } = new();
 }
 
 /// <summary>SuperAdmin-only admin-account creation form (P2).</summary>

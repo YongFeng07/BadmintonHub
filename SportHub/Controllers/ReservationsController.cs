@@ -122,6 +122,13 @@ public class ReservationsController : Controller
 
         var all = await query.OrderBy(r => r.ReservationDate).ThenBy(r => r.StartTime).ToListAsync();
 
+        // G-M6: the active tab's list is server-side searched/sorted/paged (AJAX).
+        if (view.Tab != "insights")
+        {
+            view.ActiveList = await BuildListAsync(userId, view.Tab, date,
+                AjaxListRequest.From(Request.Query));
+        }
+
         view.Upcoming = all
             .Where(r => r.Status is ReservationStatus.Pending or ReservationStatus.Confirmed && r.ReservationDate >= today)
             .OrderBy(r => r.ReservationDate).ThenBy(r => r.StartTime).ToList();
@@ -165,6 +172,80 @@ public class ReservationsController : Controller
             .ToDictionaryAsync(x => x.Day, x => x.Count);
 
         return View(view);
+    }
+
+    // GET /Reservations/MyReservationsList?tab=upcoming&search=…&sort=date&dir=asc&page=1&size=10
+    // G-M6 AJAX endpoint: returns only the active tab's list region (table + pager).
+    public async Task<IActionResult> MyReservationsList(string? tab, DateOnly? date)
+    {
+        var activeTab = tab is "completed" or "cancelled" ? tab : "upcoming";
+        var list = await BuildListAsync(CurrentUserId, activeTab, date, AjaxListRequest.From(Request.Query));
+        return PartialView("_ReservationTable", list);
+    }
+
+    /// <summary>G-M6: builds one tab's reservation list with the shared AJAX pager.</summary>
+    private async Task<MyReservationListViewModel> BuildListAsync(int userId, string tab, DateOnly? date,
+        AjaxListRequest request)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        var query = _db.Reservations
+            .Include(r => r.Court).ThenInclude(c => c!.Facility)
+            .Include(r => r.Payment)
+            .Where(r => r.UserId == userId);
+
+        if (date.HasValue)
+            query = query.Where(r => r.ReservationDate == date.Value);
+
+        // Status filter per tab (same rule the full page uses for the counts).
+        query = tab switch
+        {
+            "completed" => query.Where(r => r.Status == ReservationStatus.Completed),
+            "cancelled" => query.Where(r => r.Status == ReservationStatus.Cancelled ||
+                                            r.Status == ReservationStatus.Rejected),
+            _ => query.Where(r => r.Status == ReservationStatus.Pending ||
+                                  r.Status == ReservationStatus.Confirmed)
+        };
+        if (tab == "upcoming")
+            query = query.Where(r => r.ReservationDate >= today);
+
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var term = request.Search;
+            query = query.Where(r => r.ReservationReference.Contains(term) ||
+                                     (r.Court != null && r.Court.CourtNumber.Contains(term)));
+        }
+
+        // Sort whitelist; the default direction follows the tab's natural order.
+        var descending = request.Sort.Length == 0
+            ? tab != "upcoming"
+            : request.Descending;
+        query = request.Sort switch
+        {
+            "reference" when descending => query.OrderByDescending(r => r.ReservationReference),
+            "reference" => query.OrderBy(r => r.ReservationReference),
+            "court" when descending => query.OrderByDescending(r => r.Court!.CourtNumber),
+            "court" => query.OrderBy(r => r.Court!.CourtNumber),
+            "amount" when descending => query.OrderByDescending(r => r.TotalAmount),
+            "amount" => query.OrderBy(r => r.TotalAmount),
+            "status" when descending => query.OrderByDescending(r => r.Status),
+            "status" => query.OrderBy(r => r.Status),
+            "date" when descending => query.OrderByDescending(r => r.ReservationDate).ThenByDescending(r => r.StartTime),
+            _ when descending => query.OrderByDescending(r => r.ReservationDate).ThenByDescending(r => r.StartTime),
+            _ => query.OrderBy(r => r.ReservationDate).ThenBy(r => r.StartTime)
+        };
+
+        var total = await query.CountAsync();
+        var pager = AjaxPager.For(request, total);
+        var items = await query.Skip((pager.Page - 1) * pager.PageSize)
+            .Take(pager.PageSize)
+            .ToListAsync();
+
+        return new MyReservationListViewModel
+        {
+            Tab = tab,
+            Page = new AjaxListPage<Reservation> { Items = items, Pager = pager }
+        };
     }
 
     // Resource-level authorization: members can only open their own reservations.

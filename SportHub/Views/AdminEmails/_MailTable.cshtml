@@ -1,0 +1,84 @@
+@model SportHub.ViewModels.AjaxListPage<SportHub.Models.DemoEmail>
+@{
+    // G-M6 AJAX list region for the demo mailbox: sortable headers, batch delete
+    // and the shared pager.
+    var pager = Model.Pager;
+}
+
+@if (Model.Items.Count == 0)
+{
+    <div class="sh-empty sh-card mt-3">
+        <span class="emoji">📭</span>
+        @if (!string.IsNullOrEmpty(pager.Search))
+        {
+            <p class="mb-0">No mails match "@pager.Search".</p>
+        }
+        else
+        {
+            <p class="mb-0">No emails captured yet. Register a member or request a password reset to see the mail here.</p>
+        }
+    </div>
+}
+else
+{
+    <form method="post" asp-action="DeleteBatch" data-batch-form
+          onsubmit="return confirm('Delete the selected mails from the demo mailbox?');">
+        @Html.AntiForgeryToken()
+        <div class="d-flex flex-wrap align-items-center gap-2 border rounded p-2 mb-2 bg-light">
+            <label class="small mb-0 d-flex align-items-center gap-1">
+                <input type="checkbox" class="form-check-input mt-0" data-batch-select-all aria-label="Select all mails on this page" />
+                Select all on page
+            </label>
+            <span class="small text-muted"><strong data-batch-count>0</strong> selected</span>
+            <button type="submit" class="btn btn-sm btn-outline-danger ms-auto" data-batch-submit disabled>🗑 Delete Selected</button>
+        </div>
+
+        <div class="table-responsive sh-form-section mt-3 p-0 overflow-hidden">
+            <table class="table table-hover align-middle sh-table mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 2rem;"></th>
+                        <th>
+                            <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("to")"
+                               aria-sort="@pager.AriaSortFor("to")">To <span class="sh-sort-arrow">@pager.ArrowFor("to")</span></a>
+                        </th>
+                        <th>
+                            <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("subject")"
+                               aria-sort="@pager.AriaSortFor("subject")">Subject <span class="sh-sort-arrow">@pager.ArrowFor("subject")</span></a>
+                        </th>
+                        <th>
+                            <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("date")"
+                               aria-sort="@pager.AriaSortFor("date")">Captured <span class="sh-sort-arrow">@pager.ArrowFor("date")</span></a>
+                        </th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var mail in Model.Items)
+                    {
+                        <tr>
+                            <td class="text-center">
+                                <input type="checkbox" name="itemIds" value="@mail.Id" class="form-check-input"
+                                       aria-label="Select mail @mail.Subject" />
+                            </td>
+                            <td>@mail.To</td>
+                            <td>
+                                @mail.Subject
+                                @if (mail.Attachments.Count > 0)
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary ms-1">📎 @mail.Attachments.Count</span>
+                                }
+                            </td>
+                            <td class="text-muted small">@mail.CreatedAt.ToString("dd MMM yyyy HH:mm")</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-success" asp-action="Details" asp-route-id="@mail.Id">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </form>
+}
+
+<partial name="_AjaxPager" model="pager" />

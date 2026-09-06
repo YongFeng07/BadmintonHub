@@ -14,4 +14,5 @@
   <data name="TabUpcoming" xml:space="preserve"><value>Upcoming</value></data>
   <data name="TabCompleted" xml:space="preserve"><value>Completed</value></data>
   <data name="TabCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Search reference or court number…</value></data>
 </root>

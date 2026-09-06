@@ -1,21 +1,31 @@
-@* Reusable reservation list table. Model: (tab, reservations). *@
-@model Tuple<string, List<Reservation>>
+@* G-M6 member reservation list region. Model: MyReservationListViewModel (tab + paged list). *@
+@model SportHub.ViewModels.MyReservationListViewModel
+@{
+    var pager = Model.Page.Pager;
+}
 
-@if (!Model.Item2.Any())
+@if (Model.Page.Items.Count == 0)
 {
     <div class="sh-empty">
         <span class="emoji">🏸</span>
-        @switch (Model.Item1)
+        @if (!string.IsNullOrEmpty(pager.Search))
         {
-            case "completed":
-                <p class="mb-0">No completed reservations yet.</p>
-                break;
-            case "cancelled":
-                <p class="mb-0">No cancelled reservations.</p>
-                break;
-            default:
-                <p class="mb-0">No upcoming reservations. <a asp-action="Create">Book your first court!</a></p>
-                break;
+            <p class="mb-0">No reservations match "@pager.Search".</p>
+        }
+        else
+        {
+            @switch (Model.Tab)
+            {
+                case "completed":
+                    <p class="mb-0">No completed reservations yet.</p>
+                    break;
+                case "cancelled":
+                    <p class="mb-0">No cancelled reservations.</p>
+                    break;
+                default:
+                    <p class="mb-0">No upcoming reservations. <a asp-action="Create">Book your first court!</a></p>
+                    break;
+            }
         }
     </div>
 }
@@ -25,18 +35,33 @@ else
         <table class="table table-hover align-middle sh-table">
             <thead>
                 <tr>
-                    <th>Reference</th>
-                    <th>Court</th>
-                    <th>Date</th>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("reference")"
+                           aria-sort="@pager.AriaSortFor("reference")">Reference <span class="sh-sort-arrow">@pager.ArrowFor("reference")</span></a>
+                    </th>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("court")"
+                           aria-sort="@pager.AriaSortFor("court")">Court <span class="sh-sort-arrow">@pager.ArrowFor("court")</span></a>
+                    </th>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("date")"
+                           aria-sort="@pager.AriaSortFor("date")">Date <span class="sh-sort-arrow">@pager.ArrowFor("date")</span></a>
+                    </th>
                     <th>Time</th>
                     <th>Hours</th>
-                    <th>Status</th>
-                    <th class="text-end">Amount</th>
+                    <th>
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("status")"
+                           aria-sort="@pager.AriaSortFor("status")">Status <span class="sh-sort-arrow">@pager.ArrowFor("status")</span></a>
+                    </th>
+                    <th class="text-end">
+                        <a class="sh-sort-link" data-ajax-sort href="@pager.SortLink("amount")"
+                           aria-sort="@pager.AriaSortFor("amount")">Amount <span class="sh-sort-arrow">@pager.ArrowFor("amount")</span></a>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var r in Model.Item2)
+                @foreach (var r in Model.Page.Items)
                 {
                     <tr>
                         <td class="fw-semibold">@r.ReservationReference</td>
@@ -66,3 +91,5 @@ else
         </table>
     </div>
 }
+
+<partial name="_AjaxPager" model="pager" />

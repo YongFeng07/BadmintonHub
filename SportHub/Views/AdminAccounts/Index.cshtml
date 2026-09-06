@@ -9,90 +9,18 @@
     <a asp-action="Create" class="btn btn-sh btn-sm">＋ New Admin Account</a>
 </div>
 
-<div class="sh-form-section mt-3">
-    <form asp-action="Index" method="get" class="row g-2 align-items-end">
+<div data-ajax-list data-url="@Url.Action("Index")">
+    <form asp-action="Index" method="get" class="sh-form-section mt-3 row g-2 align-items-end" data-ajax-filter>
         <div class="col-md-4">
             <label class="form-label small mb-1">Search</label>
-            <input type="text" name="search" value="@Model.Search" class="form-control form-control-sm" placeholder="Name or email" />
+            <input type="text" name="search" value="@Model.Page.Pager.Search" class="form-control form-control-sm" placeholder="Name or email" />
         </div>
         <div class="col-md-2 d-grid">
             <button type="submit" class="btn btn-sh btn-sm">Filter</button>
         </div>
     </form>
-</div>
 
-<div class="table-responsive sh-form-section mt-3">
-    <table class="table table-hover align-middle sh-table mb-0">
-        <thead>
-            <tr>
-                <th></th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Last Login</th>
-                <th class="text-end">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var account in Model.Accounts)
-            {
-                <tr>
-                    <td class="pe-1">
-                        @if (account.PhotoUrl != null)
-                        {
-                            <img src="@account.PhotoUrl" alt="" class="sh-avatar-md" />
-                        }
-                        else
-                        {
-                            var initials = string.Concat(account.FullName
-                                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                                .Select(w => char.ToUpperInvariant(w[0]))
-                                .Take(2));
-                            <span class="sh-avatar-md sh-avatar-initials">@initials</span>
-                        }
-                    </td>
-                    <td>
-                        <span class="fw-semibold">@account.FullName</span>
-                        @if (account.Phone != null)
-                        {
-                            <div class="small text-muted">@account.Phone</div>
-                        }
-                    </td>
-                    <td>@account.Email</td>
-                    <td>
-                        <span class="badge @(account.Role == Role.SuperAdmin ? "bg-danger" : "bg-warning text-dark")">@account.Role</span>
-                    </td>
-                    <td>
-                        @if (account.Status == UserStatus.Active)
-                        {
-                            <span class="badge bg-success">Active</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-dark">@account.Status</span>
-                        }
-                    </td>
-                    <td>@(account.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "never")</td>
-                    <td class="text-end text-nowrap">
-                        <a asp-action="Edit" asp-route-id="@account.Id" class="btn btn-sm btn-outline-secondary" title="Edit account">✏️ Edit</a>
-                        @if (account.Status == UserStatus.Active)
-                        {
-                            <form asp-action="SetStatus" asp-route-id="@account.Id" method="post" class="d-inline">
-                                <input type="hidden" name="status" value="Deactivated" />
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Deactivate</button>
-                            </form>
-                        }
-                        else
-                        {
-                            <form asp-action="SetStatus" asp-route-id="@account.Id" method="post" class="d-inline">
-                                <input type="hidden" name="status" value="Active" />
-                                <button type="submit" class="btn btn-sm btn-outline-success">Activate</button>
-                            </form>
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div data-ajax-target>
+        <partial name="_AccountTable" model="Model" />
+    </div>
 </div>

@@ -14,6 +14,9 @@ public class MyReservationsViewModel
 
     public string Tab { get; set; } = "upcoming";
 
+    /// <summary>G-M6: the active tab's list with search/sort/paging applied.</summary>
+    public MyReservationListViewModel ActiveList { get; set; } = new();
+
     /// <summary>Calendar month currently displayed.</summary>
     public int Year { get; set; }
 
@@ -42,4 +45,12 @@ public class MyReservationsViewModel
     public int InsightActive { get; set; }
 
     public double InsightCancellationRate { get; set; }
+}
+
+/// <summary>G-M6: one tab's reservation list with the shared AJAX pager.</summary>
+public class MyReservationListViewModel
+{
+    public string Tab { get; set; } = "upcoming";
+
+    public AjaxListPage<Reservation> Page { get; set; } = new();
 }

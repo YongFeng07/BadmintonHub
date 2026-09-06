@@ -14,4 +14,5 @@
   <data name="TabUpcoming" xml:space="preserve"><value>Akan Datang</value></data>
   <data name="TabCompleted" xml:space="preserve"><value>Selesai</value></data>
   <data name="TabCancelled" xml:space="preserve"><value>Dibatalkan</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Cari rujukan atau nombor gelanggang…</value></data>
 </root>

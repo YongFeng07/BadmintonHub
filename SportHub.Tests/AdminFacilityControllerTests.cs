@@ -86,11 +86,11 @@ public class AdminFacilityControllerTests
         });
         db.SaveChanges();
 
-        var result = await controller.Index();
+        var result = await controller.Index(null, null, null);
 
         var view = Assert.IsType<ViewResult>(result);
-        var facilities = Assert.IsAssignableFrom<List<Facility>>(view.Model);
-        Assert.Equal("Squash Court", facilities.Single(f => f.Name == "Squash Den").Category!.Name);
+        var page = Assert.IsType<AjaxListPage<Facility>>(view.Model);
+        Assert.Equal("Squash Court", page.Items.Single(f => f.Name == "Squash Den").Category!.Name);
     }
 
     [Fact]

@@ -10,81 +10,26 @@
     </div>
 </div>
 
-<form method="get" asp-action="Index" class="sh-form-section d-flex flex-wrap gap-2 align-items-center">
-    <div class="flex-grow-1" style="min-width: 200px;">
-        <label class="form-label visually-hidden" for="search">Search</label>
-        <input type="text" id="search" name="search" class="form-control" placeholder="Search court number or description…" value="@Model.Search" />
-    </div>
-    <div>
-        <label class="form-label visually-hidden" for="type">Court type</label>
-        <select id="type" name="type" class="form-select">
-            <option value="">All Types</option>
-            @foreach (var t in Enum.GetValues<CourtType>())
-            {
-                <option value="@t" selected="@(Model.Type == t)">@t</option>
-            }
-        </select>
-    </div>
-    <div>
-        <label class="form-label visually-hidden" for="sort">Sort</label>
-        <select id="sort" name="sort" class="form-select">
-            <option value="">Court Number</option>
-            <option value="rate_asc" selected="@(Model.Sort == "rate_asc")">Price: Low to High</option>
-            <option value="rate_desc" selected="@(Model.Sort == "rate_desc")">Price: High to Low</option>
-        </select>
-    </div>
-    <button type="submit" class="btn btn-sh">Filter</button>
-    <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
-</form>
+<div data-ajax-list data-url="@Url.Action("Index")">
+    <form method="get" asp-action="Index" class="sh-form-section d-flex flex-wrap gap-2 align-items-center mb-4" data-ajax-filter>
+        <div class="flex-grow-1" style="min-width: 220px;">
+            <label class="form-label visually-hidden" for="search">Search</label>
+            <input type="text" id="search" name="search" class="form-control" placeholder="Search court number, facility or description…" value="@Model.Search" />
+        </div>
+        <div>
+            <label class="form-label visually-hidden" for="type">Court type</label>
+            <select id="type" name="type" class="form-select">
+                <option value="">All Types</option>
+                @foreach (var t in Enum.GetValues<CourtType>())
+                {
+                    <option value="@t" selected="@(Model.Type == t)">@t</option>
+                }
+            </select>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </form>
 
-@if (Model.Courts.Count == 0)
-{
-    <div class="sh-empty">
-        <span class="emoji">🔍</span>
-        No courts match your search.
+    <div data-ajax-target>
+        <partial name="_CourtGrid" model="Model.Page" />
     </div>
-}
-else
-{
-    <div class="row g-4">
-        @foreach (var court in Model.Courts)
-        {
-            var primaryPhoto = court.Photos.OrderBy(p => p.DisplayOrder).FirstOrDefault();
-            <div class="col-md-6 col-lg-4">
-                <div class="card sh-card sh-court-card h-100">
-                    @if (primaryPhoto != null)
-                    {
-                        <img src="@primaryPhoto.FilePath" class="card-img-top" alt="Court @court.CourtNumber" />
-                    }
-                    <div class="card-body d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">Court @court.CourtNumber</h5>
-                            <span class="badge badge-status" style="background:#eef3f8;color:#3c5670;">@court.CourtType</span>
-                        </div>
-                        <p class="text-muted small mb-3 flex-grow-1">
-                            @(string.IsNullOrEmpty(court.Description) ? "Indoor badminton court." : court.Description.Length > 90 ? court.Description[..90] + "…" : court.Description)
-                        </p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold text-sh-green">RM @court.HourlyRate.ToString("0.00") <span class="text-muted fw-normal">/ hour</span></span>
-                            <div>
-                                @if (court.Status == CourtStatus.Available)
-                                {
-                                    <span class="badge badge-status badge-open">Available</span>
-                                }
-                                else if (court.Status == CourtStatus.Maintenance)
-                                {
-                                    <span class="badge badge-status badge-maintenance">Maintenance</span>
-                                }
-                                else
-                                {
-                                    <span class="badge badge-status badge-unavailable">Unavailable</span>
-                                }
-                                <a asp-action="Details" asp-route-id="@court.Id" class="btn btn-sh btn-sm ms-2">Details</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-}
+</div>

@@ -19,18 +19,37 @@ public class AdminCategoriesController : Controller
 
     public AdminCategoriesController(ApplicationDbContext db) => _db = db;
 
-    // ---------- List ----------
+    // ---------- List (G-M6: AJAX search/sort/paging) ----------
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search, string? sort, string? dir, int page = 1, int size = 10)
     {
-        var vm = new CategoryFormViewModel
+        var request = AjaxListRequest.From(Request.Query);
+        var query = _db.Categories.Include(c => c.Facilities).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(request.Search))
+            query = query.Where(c => c.Name.Contains(request.Search) ||
+                                     (c.Description != null && c.Description.Contains(request.Search)));
+
+        query = (request.Sort, request.Descending) switch
         {
-            Categories = await _db.Categories
-                .Include(c => c.Facilities)
-                .OrderBy(c => c.DisplayOrder).ThenBy(c => c.Name)
-                .ToListAsync()
+            ("order", false) => query.OrderBy(c => c.DisplayOrder).ThenBy(c => c.Name),
+            ("order", true) => query.OrderByDescending(c => c.DisplayOrder).ThenBy(c => c.Name),
+            ("name", false) => query.OrderBy(c => c.Name),
+            ("name", true) => query.OrderByDescending(c => c.Name),
+            _ => query.OrderBy(c => c.DisplayOrder).ThenBy(c => c.Name)
         };
-        return View(vm);
+
+        var total = await query.CountAsync();
+        var pager = AjaxPager.For(request, total);
+        var pageModel = new AjaxListPage<Category>
+        {
+            Items = await query.Skip((pager.Page - 1) * pager.PageSize).Take(pager.PageSize).ToListAsync(),
+            Pager = pager
+        };
+
+        if (Request.IsAjaxListRequest())
+            return PartialView("_CategoryTable", pageModel);
+        return View(pageModel);
     }
 
     // ---------- Create ----------

@@ -773,3 +773,32 @@ a { text-decoration-thickness: 1px; text-underline-offset: 2px; }
         transition-duration: .01ms !important;
     }
 }
+
+/* ============================================================
+   G-M6 shared AJAX lists: pager, sortable headers, loading state
+   ============================================================ */
+.sh-ajax-loading {
+    opacity: .55;
+    transition: opacity .15s ease;
+}
+.sh-pager .page-link {
+    color: var(--sh-green);
+    border-radius: 6px;
+    margin: 0 1px;
+}
+.sh-pager .page-item.active .page-link {
+    background: var(--sh-green);
+    border-color: var(--sh-green);
+    color: #fff;
+}
+.sh-pager .page-item.disabled .page-link {
+    color: var(--sh-muted, #8a97a3);
+    background: transparent;
+}
+.sh-sort-link {
+    color: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.sh-sort-link:hover { color: var(--sh-green); }
+.sh-sort-arrow { color: var(--sh-green); font-weight: 700; }
