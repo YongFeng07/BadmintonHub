@@ -45,6 +45,11 @@ public class ReservationService : IReservationService
         if (await _courtService.HasOverlappingReservationAsync(courtId, date, startTime, endTime))
             return (false, "That time slot has just been booked by someone else. Please choose another slot.", null);
 
+        // G-M3: another member's active cart hold soft-blocks the direct booking too
+        // (the same rule the cart and checkout paths enforce).
+        if (await BookingRules.HasActiveHoldAsync(_db, courtId, date, startTime, endTime, userId))
+            return (false, "That slot is currently being held in another member's cart. It is released automatically after 15 minutes if not checked out.", null);
+
         var maxId = await _db.Reservations.MaxAsync(r => (int?)r.Id) ?? 0;
         var reservation = new Reservation
         {
@@ -79,8 +84,62 @@ public class ReservationService : IReservationService
             Type = NotificationType.Reservation
         });
 
-        await _db.SaveChangesAsync();
+        // G-M3: claim the hourly slots atomically. The unique (CourtId, Date,
+        // StartTime) index turns a concurrent double booking into a DbUpdateException.
+        BookingRules.ClaimWindow(_db, reservation);
+
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // The pre-check raced with another booking; the index caught the loser.
+            _db.ChangeTracker.Clear();
+            return (false, "That time slot has just been booked by someone else. Please choose another slot.", null);
+        }
+
         return (true, null, reservation);
+    }
+
+    /// <summary>
+    /// G-M3 payment timeout: cancels Pending reservations that were not paid within
+    /// <paramref name="timeout"/>, fails their payment record, releases their slot
+    /// claims and notifies the member. Returns how many were released.
+    /// </summary>
+    public async Task<int> ReleaseUnpaidPendingAsync(TimeSpan timeout)
+    {
+        var cutoff = DateTime.Now.Subtract(timeout);
+        var stale = await _db.Reservations
+            .Include(r => r.Payment)
+            .Where(r => r.Status == ReservationStatus.Pending && r.CreatedAt < cutoff)
+            .ToListAsync();
+
+        foreach (var reservation in stale)
+        {
+            reservation.Status = ReservationStatus.Cancelled;
+            reservation.CancellationReason = "Payment was not completed within 30 minutes, so the booking was released.";
+            reservation.CancelledAt = DateTime.Now;
+            reservation.UpdatedAt = DateTime.Now;
+
+            if (reservation.Payment != null && reservation.Payment.Status == PaymentStatus.Pending)
+                reservation.Payment.Status = PaymentStatus.Failed;
+
+            await BookingRules.ReleaseWindowAsync(_db, reservation.Id);
+
+            _db.Notifications.Add(new Notification
+            {
+                UserId = reservation.UserId,
+                Title = "Booking released",
+                Message = $"Booking {reservation.ReservationReference} was released because payment was not received within 30 minutes. The slots are available again.",
+                Type = NotificationType.Reservation
+            });
+        }
+
+        if (stale.Count > 0)
+            await _db.SaveChangesAsync();
+
+        return stale.Count;
     }
 
     public async Task<(bool Success, string? Error)> MarkPaidAsync(
@@ -157,6 +216,9 @@ public class ReservationService : IReservationService
         // Business rule: a paid booking that is cancelled becomes a refund.
         if (reservation.Payment != null && reservation.Payment.Status == PaymentStatus.Paid)
             reservation.Payment.Status = PaymentStatus.Refunded;
+
+        // G-M3: the cancelled booking's hourly claims go back on the market.
+        await BookingRules.ReleaseWindowAsync(_db, reservation.Id);
 
         _db.Notifications.Add(new Notification
         {

@@ -139,6 +139,10 @@ public class AdminReservationsController : Controller
             reservation.Payment.Status = PaymentStatus.Failed;
         }
 
+        // G-M3: a rejected booking releases its hourly slot claims.
+        if (newStatus == ReservationStatus.Rejected)
+            await BookingRules.ReleaseWindowAsync(_db, reservation.Id);
+
         _db.Notifications.Add(new Notification
         {
             UserId = reservation.UserId,

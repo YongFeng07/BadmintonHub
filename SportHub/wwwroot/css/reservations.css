@@ -41,6 +41,20 @@
     opacity: .9;
 }
 
+/* G-M3: held by another member's cart — soft-locked for up to 15 minutes. */
+.slot-chip-held {
+    background: #eef2ff;
+    color: #3f4f9e;
+    border: 1px solid #c3cdf5;
+    opacity: .9;
+}
+
+/* G-M3: "Held until …" indicator on a cart row (same indigo as the held chip). */
+.cart-hold {
+    color: #3f4f9e;
+    font-weight: 500;
+}
+
 .slot-chip-closed,
 .slot-chip-unavailable,
 .slot-chip-past {

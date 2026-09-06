@@ -44,6 +44,7 @@
                 <div class="sh-form-section mb-3">
                     <h2 class="h6 text-uppercase text-muted mb-3">2 · Pick your slot</h2>
                     <p class="small text-muted mb-2">Green slots are bookable. Choose a duration first — the system verifies the whole window stays open and prevents double bookings.</p>
+                    <div id="slotSummary" class="small mb-2"></div>
                     <div class="mb-3">
                         <span class="form-label small mb-1 d-block">Duration</span>
                         @for (var h = 1; h <= 4; h++)
@@ -77,7 +78,7 @@
                     <button type="submit" class="btn btn-outline-success w-100 mt-2" id="addToCartBtn" disabled
                             formaction="@Url.Action("AddItem", "Cart")">🛒 Add to Cart</button>
                     <div class="small text-muted mt-2 text-center">
-                        Add to Cart keeps the slot while you continue browsing — pay for everything at checkout.
+                        🔒 Add to Cart holds the slot for 15 minutes (shown as “Held” to others) and is released automatically if you don't check out. Availability is re-verified at checkout.
                     </div>
                 </div>
             </div>

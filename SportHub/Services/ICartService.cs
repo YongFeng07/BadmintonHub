@@ -24,4 +24,10 @@ public interface ICartService
 
     /// <summary>Empties the member's cart; returns the number removed.</summary>
     Task<int> ClearAsync(int userId);
+
+    /// <summary>
+    /// G-M3: clears the hold flag from cart lines whose 15-minute hold has expired;
+    /// returns how many were released. Called periodically by CartHoldWorker.
+    /// </summary>
+    Task<int> ReleaseExpiredHoldsAsync();
 }

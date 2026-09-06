@@ -191,4 +191,116 @@ public class ReservationServiceTests
         Assert.False(success);
         Assert.Contains("cannot be cancelled", error);
     }
+
+    // ---------- G-M3: atomic slot claims, cart-hold soft locks, payment timeout ----------
+
+    [Fact]
+    public async Task Create_ClaimsOneSlotPerBookedHour()
+    {
+        var (service, db, memberId, courtId) = Create();
+        var date = FutureDate(3);
+
+        var (success, error, reservation) = await service.CreateAsync(memberId, courtId, date, new TimeOnly(9, 0), 2, null);
+
+        Assert.True(success, error);
+        var slots = await db.ReservationSlots
+            .Where(s => s.ReservationId == reservation!.Id)
+            .OrderBy(s => s.StartTime)
+            .ToListAsync();
+        Assert.Equal(2, slots.Count);
+        Assert.All(slots, s => Assert.Equal(courtId, s.CourtId));
+        Assert.All(slots, s => Assert.Equal(date, s.Date));
+        Assert.Equal(new TimeOnly(9, 0), slots[0].StartTime);
+        Assert.Equal(new TimeOnly(10, 0), slots[1].StartTime);
+    }
+
+    [Fact]
+    public async Task Cancel_ReleasesClaimedSlots()
+    {
+        var (service, db, memberId, courtId) = Create();
+        var (_, _, reservation) = await service.CreateAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 2, null);
+
+        var (success, error) = await service.CancelAsync(reservation!.Id, memberId, "Change of plan");
+
+        Assert.True(success, error);
+        Assert.Equal(0, await db.ReservationSlots.CountAsync());
+    }
+
+    [Fact]
+    public async Task Create_OtherMembersCartHold_Blocks()
+    {
+        var (service, db, memberId, courtId) = Create();
+        var otherUserId = db.Users.Single(u => u.Email == "admin2@test.local").Id;
+        var date = FutureDate(3);
+        db.CartItems.Add(new CartItem
+        {
+            UserId = otherUserId,
+            CourtId = courtId,
+            Date = date,
+            StartTime = new TimeOnly(9, 0),
+            DurationHours = 1,
+            HeldUntil = DateTime.Now.AddMinutes(10)
+        });
+        await db.SaveChangesAsync();
+
+        var (success, error, _) = await service.CreateAsync(memberId, courtId, date, new TimeOnly(9, 0), 1, null);
+
+        Assert.False(success);
+        Assert.Contains("held in another member's cart", error);
+        Assert.Equal(0, await db.Reservations.CountAsync());
+    }
+
+    [Fact]
+    public async Task Create_OwnCartHold_DoesNotBlock()
+    {
+        var (service, db, memberId, courtId) = Create();
+        var date = FutureDate(3);
+        db.CartItems.Add(new CartItem
+        {
+            UserId = memberId,
+            CourtId = courtId,
+            Date = date,
+            StartTime = new TimeOnly(9, 0),
+            DurationHours = 1,
+            HeldUntil = DateTime.Now.AddMinutes(10)
+        });
+        await db.SaveChangesAsync();
+
+        var (success, error, _) = await service.CreateAsync(memberId, courtId, date, new TimeOnly(9, 0), 1, null);
+
+        Assert.True(success, error);
+    }
+
+    [Fact]
+    public async Task ReleaseUnpaidPendingAsync_StalePending_CancelsAndReleases()
+    {
+        var (service, db, memberId, courtId) = Create();
+        var (_, _, reservation) = await service.CreateAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1, null);
+        reservation!.CreatedAt = DateTime.Now.Subtract(TimeSpan.FromMinutes(31));
+        await db.SaveChangesAsync();
+
+        var released = await service.ReleaseUnpaidPendingAsync(TimeSpan.FromMinutes(30));
+
+        Assert.Equal(1, released);
+        Assert.Equal(ReservationStatus.Cancelled, reservation.Status);
+        Assert.Contains("30 minutes", reservation.CancellationReason);
+        Assert.NotNull(reservation.CancelledAt);
+        Assert.Equal(PaymentStatus.Failed, db.Payments.Single().Status);
+        Assert.Equal(0, await db.ReservationSlots.CountAsync());
+        Assert.Contains(db.Notifications, n => n.Title == "Booking released" && n.UserId == memberId);
+    }
+
+    [Fact]
+    public async Task ReleaseUnpaidPendingAsync_FreshPending_Untouched()
+    {
+        var (service, db, memberId, courtId) = Create();
+        var (_, _, reservation) = await service.CreateAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1, null);
+
+        var released = await service.ReleaseUnpaidPendingAsync(TimeSpan.FromMinutes(30));
+
+        Assert.Equal(0, released);
+        Assert.Equal(ReservationStatus.Pending, reservation!.Status);
+        Assert.Equal(PaymentStatus.Pending, db.Payments.Single().Status);
+        Assert.Single(db.ReservationSlots); // claim survives
+    }
 }

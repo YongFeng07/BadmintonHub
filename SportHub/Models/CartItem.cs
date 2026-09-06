@@ -32,4 +32,12 @@ public class CartItem
     public int DurationHours { get; set; } = 1;
 
     public DateTime AddedAt { get; set; } = DateTime.Now;
+
+    /// <summary>
+    /// G-M3: while this is in the future the line holds its slot (other members see
+    /// "Held" and cannot book it). Set on add, refreshed on update, cleared by
+    /// CartHoldWorker after the hold expires — the hold never outlives its window.
+    /// </summary>
+    [Display(Name = "Held Until")]
+    public DateTime? HeldUntil { get; set; }
 }

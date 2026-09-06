@@ -30,6 +30,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
     public DbSet<Voucher> Vouchers => Set<Voucher>();
     public DbSet<VoucherRedemption> VoucherRedemptions => Set<VoucherRedemption>();
+    public DbSet<ReservationSlot> ReservationSlots => Set<ReservationSlot>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -127,6 +128,20 @@ public class ApplicationDbContext : DbContext
             .HasOne(r => r.User)
             .WithMany()
             .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Hourly slot claims live and die with their reservation; a court with claims
+        // cannot be deleted (same rule as reservations).
+        modelBuilder.Entity<ReservationSlot>()
+            .HasOne(s => s.Reservation)
+            .WithMany()
+            .HasForeignKey(s => s.ReservationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ReservationSlot>()
+            .HasOne(s => s.Court)
+            .WithMany()
+            .HasForeignKey(s => s.CourtId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

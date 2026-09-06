@@ -2,7 +2,8 @@ namespace SportHub.ViewModels;
 
 /// <summary>
 /// One time-slot status for the availability grid.
-/// Status values: open | booked | maintenance | blocked | closed | unavailable | past
+/// Status values: open | booked | held | maintenance | blocked | closed | unavailable | past
+/// "held" (G-M3): the hour sits in another member's cart under a 15-minute hold.
 /// </summary>
 public class SlotStatusViewModel
 {

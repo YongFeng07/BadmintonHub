@@ -103,6 +103,9 @@ builder.Services.AddHostedService<ReservationStatusUpdaterService>();
 // G-M2: overdue vouchers flip to Expired automatically (startup + every 6 hours).
 builder.Services.AddHostedService<VoucherExpiryWorker>();
 
+// G-M3: expired 15-minute cart holds are released back to "Open".
+builder.Services.AddHostedService<CartHoldWorker>();
+
 var app = builder.Build();
 
 // Apply pending migrations and seed demo data when the database is empty.

@@ -191,4 +191,81 @@ public class CartServiceTests
         Assert.Equal(1, await service.CountAsync(memberId));
         Assert.Equal(1, await service.CountAsync(otherUserId));
     }
+
+    // ---------- G-M3: 15-minute cart holds ----------
+
+    [Fact]
+    public async Task Add_SetsFifteenMinuteHold()
+    {
+        var (service, db, memberId, _, courtId) = Create();
+        var before = DateTime.Now;
+
+        var (success, error, item) = await service.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
+
+        Assert.True(success, error);
+        Assert.NotNull(item!.HeldUntil);
+        Assert.True(item.HeldUntil > before);
+        Assert.True(item.HeldUntil <= DateTime.Now.Add(CartService.HoldDuration));
+        Assert.NotNull((await db.CartItems.SingleAsync()).HeldUntil);
+    }
+
+    [Fact]
+    public async Task Add_OtherMembersActiveHold_Blocks()
+    {
+        var (service, db, memberId, otherUserId, courtId) = Create();
+        await service.AddAsync(otherUserId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
+
+        var (success, error, _) = await service.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
+
+        Assert.False(success);
+        Assert.Contains("held in another member's cart", error);
+        Assert.Equal(1, await db.CartItems.CountAsync()); // only the holder's line
+    }
+
+    [Fact]
+    public async Task Add_ExpiredHold_DoesNotBlock()
+    {
+        var (service, db, memberId, otherUserId, courtId) = Create();
+        var (_, _, other) = await service.AddAsync(otherUserId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
+        other!.HeldUntil = DateTime.Now.Subtract(TimeSpan.FromMinutes(1)); // stale hold
+        await db.SaveChangesAsync();
+
+        var (success, error, _) = await service.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
+
+        Assert.True(success, error);
+    }
+
+    [Fact]
+    public async Task Update_MoveOntoOwnHold_SucceedsAndRefreshesHold()
+    {
+        var (service, db, memberId, _, courtId) = Create();
+        var (_, _, item) = await service.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
+        item!.HeldUntil = DateTime.Now.Subtract(TimeSpan.FromMinutes(1)); // own stale hold at 09:00
+        await db.SaveChangesAsync();
+
+        // Moving to 09:30 overlaps the item's own (stale) hold — own holds never block.
+        var (success, error) = await service.UpdateAsync(memberId, item.Id, null, new TimeOnly(9, 30), 1);
+
+        Assert.True(success, error);
+        var updated = await db.CartItems.SingleAsync();
+        Assert.Equal(new TimeOnly(9, 30), updated.StartTime);
+        Assert.NotNull(updated.HeldUntil);
+        Assert.True(updated.HeldUntil > DateTime.Now); // hold refreshed
+    }
+
+    [Fact]
+    public async Task ReleaseExpiredHoldsAsync_ReleasesOnlyExpired()
+    {
+        var (service, db, memberId, otherUserId, courtId) = Create();
+        var (_, _, expired) = await service.AddAsync(memberId, courtId, FutureDate(3), new TimeOnly(9, 0), 1);
+        var (_, _, active) = await service.AddAsync(otherUserId, courtId, FutureDate(3), new TimeOnly(13, 0), 1);
+        expired!.HeldUntil = DateTime.Now.Subtract(TimeSpan.FromSeconds(5));
+        await db.SaveChangesAsync();
+
+        var released = await service.ReleaseExpiredHoldsAsync();
+
+        Assert.Equal(1, released);
+        Assert.Null((await db.CartItems.SingleAsync(i => i.Id == expired.Id)).HeldUntil);
+        Assert.NotNull((await db.CartItems.SingleAsync(i => i.Id == active!.Id)).HeldUntil);
+    }
 }

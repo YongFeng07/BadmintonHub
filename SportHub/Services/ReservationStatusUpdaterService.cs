@@ -6,14 +6,20 @@ namespace SportHub.Services;
 
 /// <summary>
 /// M2 additional feature: automatic reservation status update.
-/// Every 30 minutes, bookings whose date has passed move from Pending/Confirmed to Completed,
-/// keeping reservation statuses consistent without manual work.
+/// Every 30 minutes, bookings whose date has passed move from Pending/Confirmed to
+/// Completed, keeping reservation statuses consistent without manual work.
+/// G-M3 adds the payment timeout on the same schedule: Pending reservations not
+/// paid within 30 minutes are cancelled, their payment failed, their slot claims
+/// released and the member notified.
 /// </summary>
 public class ReservationStatusUpdaterService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ReservationStatusUpdaterService> _logger;
     private static readonly TimeSpan ScanInterval = TimeSpan.FromMinutes(30);
+
+    /// <summary>G-M3: unpaid Pending reservations are released after this long.</summary>
+    public static readonly TimeSpan PaymentTimeout = TimeSpan.FromMinutes(30);
 
     public ReservationStatusUpdaterService(IServiceScopeFactory scopeFactory, ILogger<ReservationStatusUpdaterService> logger)
     {
@@ -28,6 +34,7 @@ public class ReservationStatusUpdaterService : BackgroundService
             try
             {
                 await UpdateOverdueReservationsAsync(stoppingToken);
+                await ReleaseTimedOutPaymentsAsync();
             }
             catch (Exception ex)
             {
@@ -54,5 +61,14 @@ public class ReservationStatusUpdaterService : BackgroundService
 
         if (updated > 0)
             _logger.LogInformation("Auto-completed {Count} overdue reservation(s).", updated);
+    }
+
+    private async Task ReleaseTimedOutPaymentsAsync()
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var reservations = scope.ServiceProvider.GetRequiredService<IReservationService>();
+        var released = await reservations.ReleaseUnpaidPendingAsync(PaymentTimeout);
+        if (released > 0)
+            _logger.LogInformation("Released {Count} unpaid pending reservation(s) (30-minute timeout).", released);
     }
 }

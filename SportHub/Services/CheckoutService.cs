@@ -164,6 +164,9 @@ public class CheckoutService : ICheckoutService
                     Method = PaymentMethod.OnlineTransfer,
                     Status = PaymentStatus.Pending
                 });
+                // G-M3: hourly claims join the transaction; the unique index turns a
+                // concurrent double booking into the DbUpdateException below.
+                BookingRules.ClaimWindow(_db, reservation);
                 reservations.Add(reservation);
             }
 
@@ -183,6 +186,13 @@ public class CheckoutService : ICheckoutService
             await _db.SaveChangesAsync();
             await transaction.CommitAsync();
             return (true, null, reservations, warning);
+        }
+        catch (DbUpdateException)
+        {
+            // Two checkouts raced on the same hour; the unique slot index picked a loser.
+            await transaction.RollbackAsync();
+            return (false, "One of your slots was just booked by another member. Your cart has not been changed — please remove that line and choose another slot.",
+                new List<Reservation>(), null);
         }
         catch
         {

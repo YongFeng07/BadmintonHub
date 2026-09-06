@@ -20,6 +20,9 @@ public class CartService : ICartService
         _courts = courts;
     }
 
+    /// <summary>G-M3: a cart line holds its slot for this long before it is released.</summary>
+    public static readonly TimeSpan HoldDuration = TimeSpan.FromMinutes(15);
+
     public async Task<List<CartItem>> GetItemsAsync(int userId)
     {
         return await _db.CartItems
@@ -45,7 +48,7 @@ public class CartService : ICartService
             return (false, "This slot is already in your cart.", null);
 
         var error = await BookingRules.ValidateWindowAsync(
-            _db, _courts, courtId, date, startTime, durationHours, await OtherWindowsAsync(userId));
+            _db, _courts, courtId, date, startTime, durationHours, await OtherWindowsAsync(userId), userId);
         if (error != null)
             return (false, error, null);
 
@@ -55,7 +58,8 @@ public class CartService : ICartService
             CourtId = courtId,
             Date = date,
             StartTime = startTime,
-            DurationHours = durationHours
+            DurationHours = durationHours,
+            HeldUntil = DateTime.Now.Add(HoldDuration)
         };
         _db.CartItems.Add(item);
         await _db.SaveChangesAsync();
@@ -74,15 +78,40 @@ public class CartService : ICartService
         var newDuration = durationHours ?? item.DurationHours;
 
         var error = await BookingRules.ValidateWindowAsync(
-            _db, _courts, item.CourtId, newDate, newStart, newDuration, await OtherWindowsAsync(userId, itemId));
+            _db, _courts, item.CourtId, newDate, newStart, newDuration,
+            await OtherWindowsAsync(userId, itemId), userId);
         if (error != null)
             return (false, error);
 
         item.Date = newDate;
         item.StartTime = newStart;
         item.DurationHours = newDuration;
+        // Changing a line refreshes its hold — the 15 minutes start over.
+        item.HeldUntil = DateTime.Now.Add(HoldDuration);
         await _db.SaveChangesAsync();
         return (true, null);
+    }
+
+    /// <summary>
+    /// G-M3: clears holds that have run past their time so the slots show as
+    /// available again. Called by CartHoldWorker on a fixed interval; the hold is
+    /// also treated as expired by every availability query, so a missed sweep
+    /// cannot block a booking.
+    /// </summary>
+    public async Task<int> ReleaseExpiredHoldsAsync()
+    {
+        var now = DateTime.Now;
+        var stale = await _db.CartItems
+            .Where(i => i.HeldUntil != null && i.HeldUntil < now)
+            .ToListAsync();
+
+        foreach (var item in stale)
+            item.HeldUntil = null;
+
+        if (stale.Count > 0)
+            await _db.SaveChangesAsync();
+
+        return stale.Count;
     }
 
     public async Task<(bool Success, string? Error)> RemoveAsync(int userId, int itemId)

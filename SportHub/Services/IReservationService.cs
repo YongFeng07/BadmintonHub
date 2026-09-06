@@ -19,4 +19,12 @@ public interface IReservationService
     /// <summary>Cancels an upcoming booking (owner or staff). Paid payments become refunded.</summary>
     Task<(bool Success, string? Error)> CancelAsync(
         int reservationId, int userId, string? reason, bool isBackOffice = false);
+
+    /// <summary>
+    /// G-M3: cancels Pending reservations whose payment was not received within
+    /// <paramref name="timeout"/>, fails their payment record, releases their slot
+    /// claims and notifies the member. Returns how many were released.
+    /// Called periodically by ReservationStatusUpdaterService.
+    /// </summary>
+    Task<int> ReleaseUnpaidPendingAsync(TimeSpan timeout);
 }

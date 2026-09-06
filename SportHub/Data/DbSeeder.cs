@@ -25,6 +25,9 @@ public static class DbSeeder
         EnsureSystemSettings(db);
         EnsureCategories(db);
         EnsureVouchers(db);
+        // G-M3: backfill atomic slot claims for active reservations in pre-G3 databases.
+        // (Fresh databases get their rows seeded right after the reservations below.)
+        EnsureReservationSlots(db);
 
         if (db.Facilities.Any()) return;
 
@@ -388,6 +391,12 @@ public static class DbSeeder
         db.Reservations.AddRange(allReservations);
         db.SaveChanges();
 
+        // G-M3: claim the booked hours for the seeded active reservations. The seeded
+        // Pending booking (priya, court 01) also has a Pending payment, so the 30-minute
+        // payment-timeout worker cancels and releases it on the first boot — deliberate:
+        // it demos the auto-release flow end to end.
+        EnsureReservationSlots(db);
+
         // ---------- 7. Payments (one per reservation) ----------
         var paymentSpecs = new List<(Reservation R, string Email, PaymentMethod Method, PaymentStatus Status, string Ref, DateOnly? PaidOn)>();
 
@@ -630,5 +639,41 @@ public static class DbSeeder
             });
         }
         db.SaveChanges();
+    }
+
+    // ---------- Idempotent atomic slot claims (G-M3) ----------
+
+    /// <summary>
+    /// Backfills ReservationSlot rows for active (Pending/Confirmed) reservations so the
+    /// (CourtId, Date, StartTime) unique index covers bookings created before the G3
+    /// migration. Idempotent: only inserts hours that are not already claimed.
+    /// </summary>
+    private static void EnsureReservationSlots(ApplicationDbContext db)
+    {
+        var active = db.Reservations
+            .Where(r => r.Status == ReservationStatus.Pending || r.Status == ReservationStatus.Confirmed)
+            .ToList();
+        if (active.Count == 0) return;
+
+        var existing = db.ReservationSlots.ToList();
+        var added = 0;
+        foreach (var reservation in active)
+        {
+            for (var i = 0; i < reservation.DurationHours; i++)
+            {
+                var slotStart = reservation.StartTime.AddHours(i);
+                if (existing.Any(s => s.ReservationId == reservation.Id && s.StartTime == slotStart))
+                    continue;
+                db.ReservationSlots.Add(new ReservationSlot
+                {
+                    ReservationId = reservation.Id,
+                    CourtId = reservation.CourtId,
+                    Date = reservation.ReservationDate,
+                    StartTime = slotStart
+                });
+                added++;
+            }
+        }
+        if (added > 0) db.SaveChanges();
     }
 }

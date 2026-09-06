@@ -59,6 +59,10 @@
                                 <div class="small text-muted">
                                     @item.StartTime.ToString("HH:mm") – @item.StartTime.AddHours(item.DurationHours).ToString("HH:mm")
                                 </div>
+                                @if (item.HeldUntil.HasValue && item.HeldUntil > DateTime.Now)
+                                {
+                                    <div class="small cart-hold">🔒 Held until @item.HeldUntil.Value.ToString("HH:mm")</div>
+                                }
                             </td>
                             <td>
                                 <form asp-action="Update" method="post" class="d-flex align-items-center gap-2">

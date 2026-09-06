@@ -35,6 +35,15 @@ public class CourtService : ICourtService
             .Select(r => new { r.CourtId, r.StartTime, r.EndTime })
             .ToListAsync();
 
+        // G-M3: active cart holds (any member) show as "Held" so nobody is surprised
+        // when the slot is not bookable for the next few minutes.
+        var holds = await _db.CartItems
+            .Where(i => i.Date == date &&
+                        (courtId == null || i.CourtId == courtId) &&
+                        i.HeldUntil != null && i.HeldUntil > DateTime.Now)
+            .Select(i => new { i.CourtId, i.StartTime, i.DurationHours })
+            .ToListAsync();
+
         var slots = new List<SlotStatusViewModel>();
 
         foreach (var court in courts)
@@ -80,6 +89,11 @@ public class CourtService : ICourtService
                 else if (reservations.Any(r => r.CourtId == court.Id && r.StartTime < end && r.EndTime > start))
                 {
                     status = "booked"; label = "Booked";
+                }
+                else if (holds.Any(h => h.CourtId == court.Id &&
+                                        h.StartTime < end && h.StartTime.AddHours(h.DurationHours) > start))
+                {
+                    status = "held"; label = "Held";
                 }
                 else
                 {

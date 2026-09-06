@@ -103,6 +103,14 @@ $(function () {
                 }
                 slots = res.slots;
                 $grid.empty();
+
+                // G-M3: at-a-glance remaining-slot indicator above the grid.
+                var openCount = slots.filter(function (s) { return s.status === 'open'; }).length;
+                var heldCount = slots.filter(function (s) { return s.status === 'held'; }).length;
+                var summary = openCount + ' open slot' + (openCount === 1 ? '' : 's');
+                if (heldCount > 0) summary += ' · ' + heldCount + ' held';
+                $('#slotSummary').text(summary);
+
                 slots.forEach(function (s) {
                     var $b = $('<button type="button" class="btn slot-chip"></button>')
                         .text(s.startTime)
