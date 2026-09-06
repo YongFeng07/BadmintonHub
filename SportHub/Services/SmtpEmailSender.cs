@@ -13,8 +13,15 @@ namespace SportHub.Services;
 /// </summary>
 public class SmtpEmailSender : IEmailService
 {
+    /// <summary>
+    /// Seeded demo accounts use placeholder domains that cannot receive mail
+    /// (example.com is IANA-reserved). Real delivery would only produce
+    /// bounces — these are captured in-app like the no-SMTP fallback.
+    /// </summary>
+    private static readonly string[] DemoDomains = { "@example.com", "@sporthub.my" };
+
     private readonly IConfiguration _config;
-    private readonly ApplicationDbContext _db; // captures failed sends for the demo mail page
+    private readonly ApplicationDbContext _db; // keeps an in-app copy of every outbound mail
 
     public SmtpEmailSender(IConfiguration config, ApplicationDbContext db)
     {
@@ -25,49 +32,69 @@ public class SmtpEmailSender : IEmailService
     public async Task<bool> SendAsync(string to, string subject, string htmlBody,
         IReadOnlyCollection<EmailAttachment>? attachments = null)
     {
-        var message = new MimeMessage();
-        message.From.Add(new MailboxAddress(
-            _config["Email:Smtp:FromName"] ?? "SportHub",
-            _config["Email:Smtp:FromAddress"] ?? "noreply@sporthub.my"));
-        message.To.Add(MailboxAddress.Parse(to));
-        message.Subject = subject;
+        var demoAddress = DemoDomains.Any(d => to.EndsWith(d, StringComparison.OrdinalIgnoreCase));
 
-        var body = new BodyBuilder { HtmlBody = htmlBody };
-        if (attachments != null)
+        if (!demoAddress)
         {
-            foreach (var attachment in attachments)
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(
+                _config["Email:Smtp:FromName"] ?? "SportHub",
+                _config["Email:Smtp:FromAddress"] ?? "noreply@sporthub.my"));
+            message.To.Add(MailboxAddress.Parse(to));
+            message.Subject = subject;
+
+            var body = new BodyBuilder { HtmlBody = htmlBody };
+            if (attachments != null)
             {
-                body.Attachments.Add(attachment.FileName, attachment.Content,
-                    ContentType.Parse(attachment.ContentType));
+                foreach (var attachment in attachments)
+                {
+                    body.Attachments.Add(attachment.FileName, attachment.Content,
+                        ContentType.Parse(attachment.ContentType));
+                }
+            }
+            message.Body = body.ToMessageBody();
+
+            try
+            {
+                var host = _config["Email:Smtp:Host"];
+                if (string.IsNullOrEmpty(host))
+                    throw new InvalidOperationException("Email:Smtp:Host is not configured.");
+
+                using var client = new SmtpClient();
+                var port = _config.GetValue("Email:Smtp:Port", 587);
+                var secureOptions = _config.GetValue("Email:Smtp:EnableSsl", true)
+                    ? SecureSocketOptions.StartTls
+                    : SecureSocketOptions.None;
+                await client.ConnectAsync(host, port, secureOptions);
+
+                var username = _config["Email:Smtp:Username"];
+                if (!string.IsNullOrEmpty(username))
+                    await client.AuthenticateAsync(username, _config["Email:Smtp:Password"] ?? string.Empty);
+
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+            }
+            catch (Exception)
+            {
+                // A failed send must never break the flow (e.g. booking): capture the
+                // message in-app so it is still demonstrable and retryable.
+                await CaptureAsync(to, subject, htmlBody, attachments);
+                return false;
             }
         }
-        message.Body = body.ToMessageBody();
 
+        // Keep an in-app copy of every outbound mail (sent or captured) so the
+        // admin demo mailbox always shows what went out — otherwise enabling
+        // real SMTP would make the mailbox go dark.
+        await CaptureAsync(to, subject, htmlBody, attachments);
+        return !demoAddress;
+    }
+
+    private async Task CaptureAsync(string to, string subject, string htmlBody,
+        IReadOnlyCollection<EmailAttachment>? attachments)
+    {
         try
         {
-            var host = _config["Email:Smtp:Host"];
-            if (string.IsNullOrEmpty(host))
-                throw new InvalidOperationException("Email:Smtp:Host is not configured.");
-
-            using var client = new SmtpClient();
-            var port = _config.GetValue("Email:Smtp:Port", 587);
-            var secureOptions = _config.GetValue("Email:Smtp:EnableSsl", true)
-                ? SecureSocketOptions.StartTls
-                : SecureSocketOptions.None;
-            await client.ConnectAsync(host, port, secureOptions);
-
-            var username = _config["Email:Smtp:Username"];
-            if (!string.IsNullOrEmpty(username))
-                await client.AuthenticateAsync(username, _config["Email:Smtp:Password"] ?? string.Empty);
-
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
-            return true;
-        }
-        catch (Exception)
-        {
-            // A failed send must never break the flow (e.g. booking): capture the
-            // message in-app so it is still demonstrable and retryable.
             _db.DemoEmails.Add(new DemoEmail
             {
                 To = to,
@@ -83,7 +110,10 @@ public class SmtpEmailSender : IEmailService
                     .ToList() ?? new List<DemoEmailAttachment>()
             });
             await _db.SaveChangesAsync();
-            return false;
+        }
+        catch (Exception)
+        {
+            // Capturing is best-effort; it must never fail the send path.
         }
     }
 }
