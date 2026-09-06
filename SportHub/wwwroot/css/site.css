@@ -410,6 +410,10 @@ a { text-decoration-thickness: 1px; text-underline-offset: 2px; }
     border-radius: var(--sh-radius);
     box-shadow: var(--sh-shadow-md);
     padding: .35rem;
+    /* The SuperAdmin menu has ~18 items; on short pages it can grow past the
+       viewport bottom and hide Logout. Scroll inside the menu instead. */
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
 }
 .sh-dropdown .dropdown-item { border-radius: var(--sh-radius-sm); padding: .45rem .8rem; font-size: .92rem; }
 .sh-dropdown .dropdown-item:hover { background: var(--sh-green-50); color: var(--sh-green-900); }
